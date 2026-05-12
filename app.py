@@ -105,6 +105,11 @@ if st.button("🚀 INICIAR ANÁLISIS TÉCNICO"):
                     'biodiv': biodiversidad.consultar_biodiversidad_zona(gdf_impacto),
                     'mapa_url': mapas.obtener_url_mapa_estatico(gdf_impacto, ctx['bioma_principal'])
                 }
+                # Calcular Adicionalidad Biótica
+                final_data = st.session_state['final_data']
+                score_bio, razon_bio = adicionalidad.calcular_adicionalidad_biotica(final_data['biodiv'])
+                final_data['score_biotico'] = score_bio
+                final_data['razon_biotica'] = razon_bio
             except Exception as e:
                 st.error(f"Hubo un error en el procesamiento: {str(e)}")
                 st.exception(e)
@@ -125,7 +130,7 @@ if st.session_state.get('analisis_finalizado'):
     m1, m2, m3 = st.columns(3)
     m1.metric("Bioma Impactado", ctx['bioma_principal'])
     m2.metric("ATC Rango 1", f"{atc_results['Rango 1']['atc_total']:.2f} ha")
-    m3.metric("Tasa BAU (Bioma)", f"{bau_results['tasa_bau_anual']*100:.4f}%", help="Tasa de pérdida anual histórica del bioma impactado en Colombia (Hansen GFC 2001-2023).")
+    m3.metric("Índice Adic. Biótica", f"x{final_data.get('score_biotico', 1.0)}", help=final_data.get('razon_biotica', ''))
     
     tab_res, tab_det, tab_biodiv = st.tabs(["📊 Comparativa de Rangos", "🌲 Detalle FCAFU", "🦋 Biodiversidad (GBIF)"])
     
