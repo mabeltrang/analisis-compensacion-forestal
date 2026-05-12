@@ -9,8 +9,17 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
     Procesa el inventario forestal estndar de Unergy.
     Calcula N, S, SN, A, B, C y FCAFU por cobertura.
     """
-    # Leer el excel
-    df = pd.read_excel(excel_path)
+    # Leer el excel - Intentar detectar la fila de encabezado
+    # Primero leemos sin encabezado para buscar la fila que contiene 'ID' o 'Cobertura'
+    df_raw = pd.read_excel(excel_path, header=None)
+    header_row = 0
+    for i, row in df_raw.iterrows():
+        row_str = [str(x).lower() for x in row.values]
+        if any('cobertura' in s for s in row_str) or any('nombre cientifico' in s for s in row_str):
+            header_row = i
+            break
+            
+    df = pd.read_excel(excel_path, header=header_row)
     
     # Normalizar nombres de columnas (quitar tildes, espacios y a minsculas)
     def normalize(s):
