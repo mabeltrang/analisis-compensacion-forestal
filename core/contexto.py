@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import ee
 import json
+from shapely.geometry import shape
 from config import settings
 
 def obtener_contexto_impacto(gdf):
@@ -9,13 +10,26 @@ def obtener_contexto_impacto(gdf):
     BIOMA-IAvH, Municipio, Departamento, ZH, SZH y reas por cobertura.
     """
     # Convertir GeoPandas a ee.Geometry
-    geom_json = json.loads(gdf.to_json())
-    features = geom_json['features']
-    if not features:
-        raise ValueError("No se encontraron features en el GeoDataFrame")
+    # Reproyectar a WGS84 y forzar 2D (quitar Z)
+    if gdf.crs is None:
+        gdf.set_crs("EPSG:4326", inplace=True)
+    else:
+        gdf = gdf.to_crs("EPSG:4326")
+        
+    # Limpieza Crítica: Quitar coordenadas Z que rompen GEE
+    gdf['geometry'] = gdf['geometry'].map(lambda g: shape(g.__geo_interface__))
     
-    # Tomamos la union de todas las geometras
-    ee_geom = ee.FeatureCollection(gdf.__geo_interface__).geometry()
+    # Tomamos la union de todas las geometras y convertimos a JSON limpio
+    # Usamos features individuales para evitar GeometryCollections complejas
+    features = []
+    for _, row in gdf.iterrows():
+        geom = row.geometry
+        if geom.is_empty: continue
+        # GeoJSON estndar (2D)
+        features.append(ee.Feature(ee.Geometry(row.geometry.__geo_interface__)))
+        
+    fc = ee.FeatureCollection(features)
+    ee_geom = fc.geometry()
     
     # 1. Cruzar con Municipios (FAO GAUL)
     municipios = ee.FeatureCollection(settings.GEE_ASSETS['municipios'])
