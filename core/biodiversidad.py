@@ -7,8 +7,8 @@ GBIF_API_URL = "https://api.gbif.org/v1/occurrence/search"
 
 TAXONES = {
     'Aves': 'Aves',
-    'Plantas': 'Plantae',
-    'Mamiferos': 'Mammalia',
+    'Plantas': 'Magnoliopsida', # Clase representativa para plantas vasculares
+    'Mamíferos': 'Mammalia',
     'Reptiles': 'Reptilia',
     'Anfibios': 'Amphibia'
 }
@@ -17,11 +17,12 @@ def consultar_biodiversidad_zona(gdf_zona):
     """
     Consulta GBIF para una zona especfica (GeoDataFrame).
     """
-    if gdf_zona.empty:
-        return {}
-        
-    # Obtener bounding box para la consulta
-    bounds = gdf_zona.total_bounds # [minx, miny, maxx, maxy]
+    # 1. Crear un buffer de 10km alrededor de la zona para tener una caracterización regional
+    # Necesitamos proyectar temporalmente a metros (EPSG:3116 o similar) para el buffer
+    gdf_buffer = gdf_zona.to_crs("EPSG:3116").buffer(10000).to_crs("EPSG:4326")
+    bounds = gdf_buffer.total_bounds # [minx, miny, maxx, maxy]
+    
+    # Formato WKT para GBIF
     geometry_wkt = f"POLYGON(({bounds[0]} {bounds[1]}, {bounds[2]} {bounds[1]}, {bounds[2]} {bounds[3]}, {bounds[0]} {bounds[3]}, {bounds[0]} {bounds[1]}))"
     
     resultados = {
@@ -58,10 +59,19 @@ def consultar_biodiversidad_zona(gdf_zona):
             # Identificar amenazadas en la zona
             resultados['especies_amenazadas'] = [sp for sp in especies if sp in lista_amenazadas]
             
-            # 2. Consultas por taxn
-            for label, kingdom in TAXONES.items():
-                params['kingdomName'] = kingdom
-                resp_tax = requests.get(GBIF_API_URL, params=params)
+            # 2. Consultas por taxón (Clases)
+            for label, class_name in TAXONES.items():
+                params_tax = params.copy()
+                if label == 'Plantas':
+                    params_tax['kingdomName'] = 'Plantae'
+                else:
+                    params_tax['classKey'] = class_name # Error corregido: GBIF usa classKey para Aves, etc.
+                    # Nota: GBIF API a veces requiere el ID numrico, pero intentamos con nombre
+                    # Si falla, usamos el parmetro 'class'
+                    params_tax.pop('classKey', None)
+                    params_tax['class'] = class_name
+                
+                resp_tax = requests.get(GBIF_API_URL, params=params_tax)
                 if resp_tax.status_code == 200:
                     tax_data = resp_tax.json()
                     tax_especies = {occ.get('species') for occ in tax_data.get('results', []) if occ.get('species')}

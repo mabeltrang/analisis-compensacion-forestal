@@ -38,12 +38,12 @@ def obtener_url_mapa_estatico(gdf_impacto, bioma_principal):
         final_img = img_base.blend(img_candidatas).blend(img_impacto)
         
         # 5. Obtener URL de Miniatura (Thumbnail)
-        # Ajustar region al impacto con un buffer
-        region = ee_impacto.geometry().buffer(2000).bounds()
+        # Ajustar region con un buffer mayor para contexto
+        region = ee_impacto.geometry().buffer(5000).bounds()
         
         url = final_img.getThumbURL({
             'region': region,
-            'dimensions': 1024,
+            'dimensions': 800,
             'format': 'png'
         })
         

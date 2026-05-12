@@ -131,24 +131,35 @@ if st.session_state.get('analisis_finalizado'):
     
     with tab_res:
         st.markdown("#### Suficiencia de Hectáreas por Rango")
-        comp_list = []
-        for r, r_data in atc_results.items():
-            c_data = cand_results.get(r, {})
-            comp_list.append({
-                "Rango": r,
-                "ATC Requerido (ha)": round(r_data['atc_total'], 2),
-                "Candidatas Total": round(c_data.get('total', 0), 2),
-                "Preservación (ha)": round(c_data.get('ha_conservar', 0), 2),
-                "Restauración (ha)": round(c_data.get('ha_restaurar', 0), 2),
-                "Adicionalidad (ha/año)": round(c_data.get('total', 0) * bau_results['tasa_bau_anual'], 4),
-                "Estado": "✅ Suficiente" if c_data.get('total', 0) >= r_data['atc_total'] else "❌ Insuficiente"
-            })
-        st.dataframe(pd.DataFrame(comp_list), use_container_width=True)
         
-        if final_data.get('mapa_url'):
-            st.markdown("#### 🗺️ Localización Preliminar (Impacto vs Candidatas)")
-            st.image(final_data['mapa_url'], caption="Rojo: Impacto | Verde: Áreas Candidatas (Bioma Principal)")
-            st.info("Nota: Las áreas candidatas se filtran por bioma, exclusiones legales y cercanía según el rango.")
+        # Layout Columnas: Tabla (2/3) y Mapa (1/3)
+        col_tab, col_map = st.columns([2, 1])
+        
+        with col_tab:
+            comp_list = []
+            for r, r_data in atc_results.items():
+                c_data = cand_results.get(r, {})
+                comp_list.append({
+                    "Rango": r,
+                    "ATC Req. (ha)": round(r_data['atc_total'], 2),
+                    "Candidatas": round(c_data.get('total', 0), 2),
+                    "Preserv.": round(c_data.get('ha_conservar', 0), 2),
+                    "Restaur.": round(c_data.get('ha_restaurar', 0), 2),
+                    "Adic. (ha/año)": round(c_data.get('total', 0) * bau_results['tasa_bau_anual'], 4),
+                    "Estado": "✅ OK" if c_data.get('total', 0) >= r_data['atc_total'] else "❌ Insuf"
+                })
+            st.dataframe(pd.DataFrame(comp_list), use_container_width=True)
+        
+        with col_map:
+            if final_data.get('mapa_url'):
+                st.markdown("**Vista Preliminar GEE**")
+                st.image(final_data['mapa_url'], use_container_width=True)
+                with st.expander("🔍 Ver mapa ampliado"):
+                    st.image(final_data['mapa_url'], use_container_width=True)
+            else:
+                st.warning("No se pudo generar el mapa estático.")
+        
+        st.info("💡 **Adicionalidad**: Estimación del beneficio ambiental directo al proteger/restaurar estas hectáreas frente a la tasa de pérdida del bioma.")
     
     with tab_det:
         st.markdown("#### Cálculo del Factor por Cobertura")
