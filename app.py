@@ -15,7 +15,7 @@ from core import (
 )
 from config import settings
 
-st.set_page_config(page_title="Unergy - Compensacin Forestal 2026", layout="wide", page_icon="🌳")
+st.set_page_config(page_title="Unergy - Compensación Forestal 2026", layout="wide", page_icon="🌳")
 
 # Estilos CSS para mejorar la esttica
 st.markdown("""
@@ -26,14 +26,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🌳 Sistema de Anlisis de Compensacin Forestal")
+st.title("🌳 Sistema de Análisis de Compensación Forestal")
 st.subheader("Unergy Energía Digital - Manual de Compensaciones 2026")
 st.markdown("---")
 
 # --- SIDEBAR: Configuracin y GEE ---
 with st.sidebar:
     st.image("https://unergy.io/wp-content/uploads/2021/05/Logo-Unergy-01.png", width=200) # Logo placeholder
-    st.header("⚙️ Configuracin")
+    st.header("⚙️ Configuración")
     gee_json = st.file_uploader("Cargar Service Account GEE (JSON)", type=['json'])
     
     if gee_json:
@@ -47,23 +47,23 @@ with st.sidebar:
         st.sidebar.warning(f"⚠️ {msg}")
     
     st.markdown("---")
-    st.info("Este sistema procesa automticamente los 5 rangos jerrquicos del Manual 2026.")
+    st.info("Este sistema procesa automáticamente los 5 rangos jerárquicos del Manual 2026.")
 
 # --- ENTRADAS ---
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown("### 📝 Informacin Base")
+    st.markdown("### 📝 Información Base")
     nombre_proyecto = st.text_input("Nombre del Proyecto", placeholder="Ej: P.S. Valledupar")
-    codigo_proyecto = st.text_input("Cdigo del Proyecto", placeholder="Ej: COLCES193")
+    codigo_proyecto = st.text_input("Código del Proyecto", placeholder="Ej: COLCES193")
 
 with c2:
     st.markdown("### 📂 Carga de Archivos")
-    file_impacto = st.file_uploader("Polgono de Impacto (KMZ, KML o ZIP)", type=['kmz', 'kml', 'zip'])
+    file_impacto = st.file_uploader("Polígono de Impacto (KMZ, KML o ZIP)", type=['kmz', 'kml', 'zip'])
     file_inv = st.file_uploader("Inventario Forestal (Excel Unergy)", type=['xlsx'])
 
 st.markdown("---")
 
-if st.button("🚀 INICIAR ANLISIS TCNICO"):
+if st.button("🚀 INICIAR ANÁLISIS TÉCNICO"):
     if not (file_impacto and file_inv and nombre_proyecto and codigo_proyecto):
         st.error("❌ Por favor complete todos los datos antes de continuar.")
     else:
@@ -92,7 +92,7 @@ if st.button("🚀 INICIAR ANLISIS TCNICO"):
                 bau_results = adicionalidad.calcular_tasa_bau(ctx['bioma_principal'])
                 
                 # --- VISUALIZACIN DE RESULTADOS ---
-                st.success("✅ Anlisis Finalizado")
+                st.success("✅ Análisis Finalizado")
                 
                 m1, m2, m3 = st.columns(3)
                 m1.metric("Bioma Impactado", ctx['bioma_principal'])
@@ -102,20 +102,20 @@ if st.button("🚀 INICIAR ANLISIS TCNICO"):
                 tab_res, tab_det, tab_biodiv = st.tabs(["📊 Comparativa de Rangos", "🌲 Detalle FCAFU", "🦋 Biodiversidad (GBIF)"])
                 
                 with tab_res:
-                    st.markdown("#### Suficiencia de Hectreas por Rango")
+                    st.markdown("#### Suficiencia de Hectáreas por Rango")
                     comp_list = []
                     for r, r_data in atc_results.items():
                         c_data = cand_results.get(r, {})
                         comp_list.append({
                             "Rango": r,
                             "ATC Requerido (ha)": round(r_data['atc_total'], 2),
-                            "Hectreas Candidatas": round(c_data.get('total', 0), 2),
+                            "Hectáreas Candidatas": round(c_data.get('total', 0), 2),
                             "Estado": "✅ Suficiente" if c_data.get('total', 0) >= r_data['atc_total'] else "❌ Insuficiente"
                         })
                     st.dataframe(pd.DataFrame(comp_list), use_container_width=True)
                 
                 with tab_det:
-                    st.markdown("#### Clculo del Factor por Cobertura")
+                    st.markdown("#### Cálculo del Factor por Cobertura")
                     fcafu_df = []
                     for cob, d in inv_results.items():
                         fcafu_df.append({
@@ -131,7 +131,7 @@ if st.button("🚀 INICIAR ANLISIS TCNICO"):
                 with tab_biodiv:
                     st.info("Consulta a GBIF en progreso para reas candidatas...")
                     # Simular o ejecutar consulta
-                    st.write("Caracterizacin por taxn disponible en los reportes descargables.")
+                    st.write("Caracterización por taxón disponible en los reportes descargables.")
 
                 # --- DESCARGAS ---
                 st.markdown("---")
