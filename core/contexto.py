@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import ee
 import json
-from shapely.geometry import shape
+from shapely.geometry import shape, mapping
+from shapely.ops import transform
 from config import settings
 
 def obtener_contexto_impacto(gdf):
@@ -17,16 +18,18 @@ def obtener_contexto_impacto(gdf):
         gdf = gdf.to_crs("EPSG:4326")
         
     # Limpieza Crítica: Quitar coordenadas Z que rompen GEE
-    gdf['geometry'] = gdf['geometry'].map(lambda g: shape(g.__geo_interface__))
+    def strip_z(geom):
+        return transform(lambda x, y, z=None: (x, y), geom)
+        
+    gdf['geometry'] = gdf['geometry'].apply(strip_z)
     
     # Tomamos la union de todas las geometras y convertimos a JSON limpio
-    # Usamos features individuales para evitar GeometryCollections complejas
     features = []
     for _, row in gdf.iterrows():
         geom = row.geometry
         if geom.is_empty: continue
-        # GeoJSON estndar (2D)
-        features.append(ee.Feature(ee.Geometry(row.geometry.__geo_interface__)))
+        # Usamos mapping para asegurar un dict GeoJSON limpio
+        features.append(ee.Feature(ee.Geometry(mapping(geom))))
         
     fc = ee.FeatureCollection(features)
     ee_geom = fc.geometry()
