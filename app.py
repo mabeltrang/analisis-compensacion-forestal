@@ -1,7 +1,18 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 import os
 import pandas as pd
-from core import inputs, inventario, utils, contexto, atc, rangos, adicionalidad, biodiversidad, reportes
+from core import (
+    inputs, 
+    inventario, 
+    utils, 
+    contexto, 
+    atc, 
+    rangos, 
+    adicionalidad, 
+    biodiversidad, 
+    reportes
+)
 from config import settings
 
 st.set_page_config(page_title="Unergy - Compensacin Forestal 2026", layout="wide", page_icon="🌳")
