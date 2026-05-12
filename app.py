@@ -144,13 +144,14 @@ if st.session_state.get('analisis_finalizado'):
             comp_list = []
             for r, r_data in atc_results.items():
                 c_data = cand_results.get(r, {})
+                balance = adicionalidad.analizar_balance_biodiversidad(c_data, final_data.get('biodiv', {}))
+                
                 comp_list.append({
                     "Rango": r,
                     "ATC Req. (ha)": round(r_data['atc_total'], 2),
                     "Candidatas": round(c_data.get('total', 0), 2),
-                    "Preserv.": round(c_data.get('ha_conservar', 0), 2),
-                    "Restaur.": round(c_data.get('ha_restaurar', 0), 2),
-                    "Adic. (ha/año)": round(c_data.get('total', 0) * bau_results['tasa_bau_anual'], 4),
+                    "Potencial Biodiv.": balance['analisis'],
+                    "Adic. (ha/año)": round(c_data.get('total', 0) * bau_results['tasa_bau_anual'] * final_data.get('score_biotico', 1.0), 4),
                     "Estado": "✅ OK" if c_data.get('total', 0) >= r_data['atc_total'] else "❌ Insuf"
                 })
             st.dataframe(pd.DataFrame(comp_list), use_container_width=True)

@@ -37,7 +37,28 @@ def calcular_adicionalidad_biotica(bd_results):
         
     return round(score, 2), " | ".join(razones) if razones else "Estándar"
 
-def calcular_tasa_bau(bioma_nombre):
+def analizar_balance_biodiversidad(candidatas_rango, bd_results):
+    """
+    Analiza el balance entre Ganancia Neta (Restauración) y Pérdida Evitada (Conservación).
+    """
+    ha_cons = candidatas_rango.get('ha_conservar', 0)
+    ha_rest = candidatas_rango.get('ha_restaurar', 0)
+    
+    amenazadas = len(bd_results.get('especies_amenazadas', []))
+    riqueza = bd_results.get('riqueza_total', 0)
+    
+    balance = {
+        'valor_proteccion': "Alto" if (ha_cons > 0 and (amenazadas > 0 or riqueza > 100)) else "Bajo",
+        'valor_recuperacion': "Alto" if (ha_rest > 0 and riqueza > 50) else "Bajo",
+        'analisis': ""
+    }
+    
+    if ha_cons > ha_rest:
+        balance['analisis'] = f"Prioridad: Protección de refugios. El área conserva hábitat crítico para {riqueza} especies."
+    else:
+        balance['analisis'] = f"Prioridad: Ganancia neta. La restauración permitirá expandir el hábitat regional en {ha_rest:.1f} ha."
+        
+    return balance
     # (El resto de la funcin se mantiene igual hasta el return)
     # ... (omitido para brevedad en el chunk, pero el usuario quiere que se mantenga)
     # 1. Obtener la geometra del bioma
