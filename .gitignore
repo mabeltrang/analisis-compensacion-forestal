@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+
+# Project specific
+credentials/*.json
+outputs/*
+!outputs/.gitkeep
+temp/
+
+# Streamlit
+.streamlit/

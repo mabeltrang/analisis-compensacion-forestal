@@ -1,0 +1,14 @@
+streamlit
+pandas
+geopandas
+shapely
+fiona
+openpyxl
+earthengine-api
+python-docx
+requests
+pykml
+fastkml
+typing-extensions
+matplotlib
+scipy

@@ -1,0 +1,29 @@
+cobertura,valor_a,grado_tran
+Bosque denso alto,1.0,Natural
+Bosque denso bajo,1.0,Natural
+Bosque abierto alto,0.9,Natural
+Bosque abierto bajo,0.9,Natural
+Bosque de galeria y ripario,0.9,Natural
+Bosque fragmentado,0.8,Natural
+Vegetacion secundaria alta,0.6,Natural
+Vegetacion secundaria baja,0.5,Natural
+Arbustal denso,0.7,Natural
+Arbustal abierto,0.5,Natural
+Herbazal denso,0.5,Natural
+Pastos arbolados,0.0,Transformado
+Pastos enmalezados,0.0,Transformado
+Pastos limpios,0.0,Transformado
+Mosaico de pastos y cultivos,0.0,Transformado
+Mosaico de cultivos pastos y espacios naturales,0.0,Transformado
+Tejido urbano continuo,0.0,Transformado
+Tejido urbano discontinuo,0.0,Transformado
+Zonas industriales o comerciales,0.0,Transformado
+Red vial ferroviaria y terrenos asociados,0.0,Transformado
+Aeropuertos,0.0,Transformado
+Lagunas lagos y cienagas naturales,0.0,Natural
+Rios de 50 metros,0.0,Natural
+Cuerpos de agua artificiales,0.0,Transformado
+Cultivos transitorios,0.0,Transformado
+Cultivos permanentes herbaceos arbustivos y arboreos,0.0,Transformado
+Cultivos agroforestales,0.0,Transformado
+Cultivos confinados,0.0,Transformado
