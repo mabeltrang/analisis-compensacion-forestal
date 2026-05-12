@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import ee
 import json
 from config import settings
@@ -29,7 +30,7 @@ def obtener_contexto_impacto(gdf):
     # 3. Cruzar con Ecosistemas (BIOMA-IAvH)
     ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
     # Recortar ecosistemas al polgono de impacto
-    eco_impacto = ecosistemas.filterBounds(ee_geom).map(lambda f: f.intersection(ee_geom, 1))
+    eco_impacto = ecosistemas.filterBounds(ee_geom).map(lambda f: f.setGeometry(f.geometry().intersection(ee_geom, 1)))
     
     # Obtener Bioma Principal (el que tenga mayor rea)
     bioma_data = eco_impacto.reduceColumns(ee.Reducer.frequencyHistogram(), ['BIOMA_IAVH']).getInfo()
