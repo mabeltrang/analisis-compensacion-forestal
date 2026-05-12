@@ -17,6 +17,9 @@ from config import settings
 
 st.set_page_config(page_title="Unergy - Compensación Forestal 2026", layout="wide", page_icon="🌳")
 
+# Asegurar que la carpeta de salidas exista
+os.makedirs(settings.OUTPUTS_DIR, exist_ok=True)
+
 # Estilos CSS para mejorar la esttica
 st.markdown("""
     <style>
