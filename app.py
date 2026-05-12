@@ -11,7 +11,8 @@ from core import (
     rangos, 
     adicionalidad, 
     biodiversidad, 
-    reportes
+    reportes,
+    mapas
 )
 from config import settings
 
@@ -100,7 +101,9 @@ if st.button("🚀 INICIAR ANÁLISIS TÉCNICO"):
                     'proyecto': nombre_proyecto, 'codigo': codigo_proyecto,
                     'contexto': ctx, 'inventario_full': inv_results,
                     'atc': atc_results, 'candidatas': cand_results, 'bau': bau_results,
-                    'gdf_impacto': gdf_impacto
+                    'gdf_impacto': gdf_impacto,
+                    'biodiv': biodiversidad.consultar_biodiversidad_zona(gdf_impacto),
+                    'mapa_url': mapas.obtener_url_mapa_estatico(gdf_impacto, ctx['bioma_principal'])
                 }
             except Exception as e:
                 st.error(f"Hubo un error en el procesamiento: {str(e)}")
@@ -122,7 +125,7 @@ if st.session_state.get('analisis_finalizado'):
     m1, m2, m3 = st.columns(3)
     m1.metric("Bioma Impactado", ctx['bioma_principal'])
     m2.metric("ATC Rango 1", f"{atc_results['Rango 1']['atc_total']:.2f} ha")
-    m3.metric("Tasa BAU", f"{bau_results['tasa_bau_anual']*100:.4f}%")
+    m3.metric("Tasa BAU (Bioma)", f"{bau_results['tasa_bau_anual']*100:.4f}%", help="Tasa de pérdida anual histórica del bioma impactado en Colombia (Hansen GFC 2001-2023).")
     
     tab_res, tab_det, tab_biodiv = st.tabs(["📊 Comparativa de Rangos", "🌲 Detalle FCAFU", "🦋 Biodiversidad (GBIF)"])
     
@@ -134,10 +137,18 @@ if st.session_state.get('analisis_finalizado'):
             comp_list.append({
                 "Rango": r,
                 "ATC Requerido (ha)": round(r_data['atc_total'], 2),
-                "Hectáreas Candidatas": round(c_data.get('total', 0), 2),
+                "Candidatas Total": round(c_data.get('total', 0), 2),
+                "Preservación (ha)": round(c_data.get('ha_conservar', 0), 2),
+                "Restauración (ha)": round(c_data.get('ha_restaurar', 0), 2),
+                "Adicionalidad (ha/año)": round(c_data.get('total', 0) * bau_results['tasa_bau_anual'], 4),
                 "Estado": "✅ Suficiente" if c_data.get('total', 0) >= r_data['atc_total'] else "❌ Insuficiente"
             })
         st.dataframe(pd.DataFrame(comp_list), use_container_width=True)
+        
+        if final_data.get('mapa_url'):
+            st.markdown("#### 🗺️ Localización Preliminar (Impacto vs Candidatas)")
+            st.image(final_data['mapa_url'], caption="Rojo: Impacto | Verde: Áreas Candidatas (Bioma Principal)")
+            st.info("Nota: Las áreas candidatas se filtran por bioma, exclusiones legales y cercanía según el rango.")
     
     with tab_det:
         st.markdown("#### Cálculo del Factor por Cobertura")
@@ -154,8 +165,23 @@ if st.session_state.get('analisis_finalizado'):
         st.table(pd.DataFrame(fcafu_df))
     
     with tab_biodiv:
-        st.info("Consulta a GBIF en progreso para reas candidatas...")
-        st.write("Caracterización por taxón disponible en los reportes descargables.")
+        bd = final_data.get('biodiv', {})
+        st.markdown("#### Caracterización Biótica en Zona de Impacto (GBIF)")
+        
+        b1, b2, b3 = st.columns(3)
+        b1.metric("Registros Totales", bd.get('registros_totales', 0))
+        b2.metric("Riqueza Especies", bd.get('riqueza_total', 0))
+        b3.metric("Especies Amenazadas", len(bd.get('especies_amenazadas', [])))
+        
+        st.markdown("---")
+        st.markdown("**Distribución por Taxón**")
+        st.bar_chart(bd.get('taxones', {}))
+        
+        if bd.get('especies_amenazadas'):
+            st.warning("⚠️ **Especies Amenazadas detectadas en la zona:**")
+            st.write(", ".join(bd['especies_amenazadas']))
+        
+        st.info("La adicionalidad en biodiversidad se garantiza priorizando la restauración en áreas con baja conectividad pero alto potencial biótico según GBIF.")
 
     # --- DESCARGAS ---
     st.markdown("---")
