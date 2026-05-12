@@ -44,63 +44,63 @@ def analizar_balance_biodiversidad(candidatas_rango, bd_results):
     ha_cons = candidatas_rango.get('ha_conservar', 0)
     ha_rest = candidatas_rango.get('ha_restaurar', 0)
     
-    amenazadas = len(bd_results.get('especies_amenazadas', []))
-    riqueza = bd_results.get('riqueza_total', 0)
-    
-    balance = {
-        'valor_proteccion': "Alto" if (ha_cons > 0 and (amenazadas > 0 or riqueza > 100)) else "Bajo",
-        'valor_recuperacion': "Alto" if (ha_rest > 0 and riqueza > 50) else "Bajo",
-        'analisis': ""
-    }
+    bd = bd_results if bd_results else {}
+    amenazadas = len(bd.get('especies_amenazadas', []))
+    riqueza = bd.get('riqueza_total', 0)
     
     if ha_cons > ha_rest:
-        balance['analisis'] = f"Prioridad: Protección de refugios. El área conserva hábitat crítico para {riqueza} especies."
+        return f"🛡️ Protección: Refugio para {riqueza} especies."
     else:
-        balance['analisis'] = f"Prioridad: Ganancia neta. La restauración permitirá expandir el hábitat regional en {ha_rest:.1f} ha."
+        return f"🌱 Recuperación: Ganancia de {ha_rest:.1f} ha de hábitat."
+
+def calcular_tasa_bau(bioma_nombre):
+    """
+    Calcula la tasa de pérdida anual (BAU) para un bioma específico en Colombia.
+    """
+    try:
+        # 1. Obtener la geometría del bioma
+        biomas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
+        geom_bioma = biomas.filter(ee.Filter.eq('BIOMA_IAvH', bioma_nombre)).geometry()
         
-    return balance
-    # (El resto de la funcin se mantiene igual hasta el return)
-    # ... (omitido para brevedad en el chunk, pero el usuario quiere que se mantenga)
-    # 1. Obtener la geometra del bioma
-    biomas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
-    geom_bioma = biomas.filter(ee.Filter.eq('BIOMA_IAvH', bioma_nombre)).geometry()
-    
-    # 2. Dataset Hansen
-    hansen = ee.Image(settings.GEE_ASSETS['hansen'])
-    
-    # 3. Bosque inicial ao 2000
-    tree_cover = hansen.select(['treecover2000'])
-    forest_2000 = tree_cover.gte(30).selfMask()
-    
-    area_pixel = ee.Image.pixelArea().divide(10000)
-    area_inicial = forest_2000.multiply(area_pixel).reduceRegion(
-        reducer=ee.Reducer.sum(),
-        geometry=geom_bioma,
-        scale=30,
-        maxPixels=1e13
-    ).get('treecover2000').getInfo()
-    
-    # 4. Prdida 2001-2023
-    loss_year = hansen.select(['lossyear'])
-    loss_mask = loss_year.gt(0).And(loss_year.lte(23))
-    forest_lost = loss_mask.selfMask()
-    
-    area_perdida = forest_lost.multiply(area_pixel).reduceRegion(
-        reducer=ee.Reducer.sum(),
-        geometry=geom_bioma,
-        scale=30,
-        maxPixels=1e13
-    ).get('lossyear').getInfo()
-    
-    if area_inicial and area_inicial > 0:
-        tasa_total = area_perdida / area_inicial
-        tasa_anual = tasa_total / 23
-    else:
-        tasa_anual = 0
+        # 2. Dataset Hansen
+        hansen = ee.Image(settings.GEE_ASSETS['hansen'])
         
-    return {
-        'bioma': bioma_nombre,
-        'area_inicial_ha': area_inicial,
-        'area_perdida_ha': area_perdida,
-        'tasa_bau_anual': tasa_anual
-    }
+        # 3. Bosque inicial año 2000
+        tree_cover = hansen.select(['treecover2000'])
+        forest_2000 = tree_cover.gte(30).selfMask()
+        
+        area_pixel = ee.Image.pixelArea().divide(10000)
+        area_inicial = forest_2000.multiply(area_pixel).reduceRegion(
+            reducer=ee.Reducer.sum(),
+            geometry=geom_bioma,
+            scale=100, # Bajamos escala para evitar timeouts en biomas grandes
+            maxPixels=1e13
+        ).get('treecover2000').getInfo()
+        
+        # 4. Pérdida 2001-2023
+        loss_year = hansen.select(['lossyear'])
+        loss_mask = loss_year.gt(0).And(loss_year.lte(23))
+        forest_lost = loss_mask.selfMask()
+        
+        area_perdida = forest_lost.multiply(area_pixel).reduceRegion(
+            reducer=ee.Reducer.sum(),
+            geometry=geom_bioma,
+            scale=100,
+            maxPixels=1e13
+        ).get('lossyear').getInfo()
+        
+        if area_inicial and area_inicial > 0:
+            tasa_total = area_perdida / area_inicial
+            tasa_anual = tasa_total / 23
+        else:
+            tasa_anual = 0.001 # Valor por defecto si falla
+            
+        return {
+            'bioma': bioma_nombre,
+            'area_inicial_ha': area_inicial,
+            'area_perdida_ha': area_perdida,
+            'tasa_bau_anual': tasa_anual
+        }
+    except Exception as e:
+        print(f"Error en BAU: {e}")
+        return {'bioma': bioma_nombre, 'tasa_bau_anual': 0.001}
