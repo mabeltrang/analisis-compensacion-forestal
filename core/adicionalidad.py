@@ -6,9 +6,9 @@ def calcular_tasa_bau(bioma_nombre):
     Calcula la tasa de prdida anual (BAU) para un bioma especfico en Colombia
     usando Hansen Global Forest Change.
     """
-    # 1. Obtener la geometra del Bioma en todo el pas
-    ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
-    geom_bioma = ecosistemas.filter(ee.Filter.eq('BIOMA_IAVH', bioma_nombre)).geometry()
+    # 1. Obtener la geometra del bioma
+    biomas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
+    geom_bioma = biomas.filter(ee.Filter.eq('BIOMA_IAvH', bioma_nombre)).geometry()
     
     # 2. Dataset Hansen
     hansen = ee.Image(settings.GEE_ASSETS['hansen'])
