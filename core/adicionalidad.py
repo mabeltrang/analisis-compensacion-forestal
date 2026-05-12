@@ -28,7 +28,7 @@ def calcular_tasa_bau(bioma_nombre):
     
     # 4. Prdida 2001-2023
     loss_year = hansen.select(['lossyear'])
-    loss_mask = loss_year.gt(0).and(loss_year.lte(23))
+    loss_mask = loss_year.gt(0).And(loss_year.lte(23))
     forest_lost = loss_mask.selfMask()
     
     area_perdida = forest_lost.multiply(area_pixel).reduceRegion(
