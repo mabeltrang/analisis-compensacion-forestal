@@ -1,11 +1,25 @@
 import ee
+from shapely.geometry import mapping
+from shapely.ops import transform
 from config import settings
 
 def construir_areas_candidatas(gdf, contexto):
     """
     Construye las reas candidatas para los 5 rangos en GEE.
     """
-    ee_geom = ee.FeatureCollection(gdf.__geo_interface__).geometry()
+    # Limpieza Crítica: Quitar coordenadas Z que rompen GEE
+    def strip_z(geom):
+        return transform(lambda x, y, z=None: (x, y), geom)
+        
+    gdf_2d = gdf.copy()
+    gdf_2d['geometry'] = gdf_2d['geometry'].apply(strip_z)
+    
+    features = []
+    for _, row in gdf_2d.iterrows():
+        if row.geometry.is_empty: continue
+        features.append(ee.Feature(ee.Geometry(mapping(row.geometry))))
+        
+    ee_geom = ee.FeatureCollection(features).geometry()
     bioma_impacto = contexto['bioma_principal']
     mun_nombre = contexto['municipio']
     szh_nombre = contexto['szh']
