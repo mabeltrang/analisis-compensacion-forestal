@@ -42,7 +42,7 @@ def obtener_contexto_impacto(gdf):
     # 2. Cruzar con ZH (Zonas Hidrogrficas)
     zh_col = ee.FeatureCollection(settings.GEE_ASSETS['zh'])
     zh_intersect = zh_col.filterBounds(ee_geom)
-    zh_data = zh_intersect.first().toDictionary().select(['nom_zh', 'nom_szh', 'nom_ah']).getInfo()
+    zh_data = zh_intersect.first().toDictionary().select(['nom_zh', 'nom_szh']).getInfo()
     
     # 3. Cruzar con Ecosistemas (BIOMA-IAvH)
     ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
@@ -50,7 +50,7 @@ def obtener_contexto_impacto(gdf):
     eco_impacto = ecosistemas.filterBounds(ee_geom).map(lambda f: f.setGeometry(f.geometry().intersection(ee_geom, 1)))
     
     # Obtener Bioma Principal (el que tenga mayor rea)
-    bioma_data = eco_impacto.reduceColumns(ee.Reducer.frequencyHistogram(), ['BIOMA_IAVH']).getInfo()
+    bioma_data = eco_impacto.reduceColumns(ee.Reducer.frequencyHistogram(), ['BIOMA_IAvH']).getInfo()
     biomas_hist = bioma_data['histogram']
     bioma_principal = max(biomas_hist, key=biomas_hist.get) if biomas_hist else "Desconocido"
     

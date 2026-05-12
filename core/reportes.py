@@ -82,10 +82,15 @@ def generar_reporte_word(datos, output_path):
     # Seccin 1: Punto de Partida
     doc.add_heading("1. PUNTO DE PARTIDA Y CONTEXTO", level=1)
     p = doc.add_paragraph()
-    p.add_run("El rea de impacto se localiza en el municipio de ").add_run(f"{datos['contexto']['municipio']}").bold = True
-    p.add_run(f", departamento de {datos['contexto']['departamento']}. ")
-    p.add_run(f"Pertenece al Bioma IAvH ").add_run(f"{datos['contexto']['bioma_principal']}").bold = True
-    p.add_run(f" y a la Zona Hidrogrfica de {datos['contexto']['zh']}.")
+    p.add_run("El área de impacto se localiza en el municipio de ")
+    p.add_run(f"{datos['contexto']['municipio']}").bold = True
+    p.add_run(", departamento de ")
+    p.add_run(f"{datos['contexto']['departamento']}").bold = True
+    p.add_run(". Hidrográficamente pertenece a la Zona Hidrográfica ")
+    p.add_run(f"{datos['contexto']['zh']}").bold = True
+    p.add_run(" y a la Subzona Hidrográfica ")
+    p.add_run(f"{datos['contexto']['szh']}").bold = True
+    p.add_run(".")
     
     # Seccin 2: Clculo del FCAFU
     doc.add_heading("2. CLCULO DEL FACTOR DE COMPENSACIN (FCAFU)", level=1)

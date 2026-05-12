@@ -42,9 +42,9 @@ def construir_areas_candidatas(gdf, contexto):
         
         # 2. Filtrar por Bioma
         if es_otro_bioma:
-            candidatas = candidatas.filter(ee.Filter.neq('BIOMA_IAVH', filtro_bioma))
+            candidatas = candidatas.filter(ee.Filter.neq('BIOMA_IAvH', filtro_bioma))
         else:
-            candidatas = candidatas.filter(ee.Filter.eq('BIOMA_IAVH', filtro_bioma))
+            candidatas = candidatas.filter(ee.Filter.eq('BIOMA_IAvH', filtro_bioma))
             
         # 3. Excluir Coberturas no elegibles
         for cob in settings.COBERTURAS_EXCLUIDAS:
