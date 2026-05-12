@@ -12,18 +12,39 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
     # Leer el excel
     df = pd.read_excel(excel_path)
     
-    # Columnas obligatorias
-    cols_req = ['Nombre cientifico', 'DAP A en metros', 'Cobertura']
-    for col in cols_req:
-        if col not in df.columns:
-            raise ValueError(f"Falta la columna obligatoria: {col}")
-            
-    # Limpieza de datos
-    df['Nombre cientifico'] = df['Nombre cientifico'].str.strip().str.capitalize()
-    df['Cobertura'] = df['Cobertura'].str.strip()
+    # Normalizar nombres de columnas (quitar tildes, espacios y a minsculas)
+    def normalize(s):
+        import unicodedata
+        return "".join(c for c in unicodedata.normalize('NFD', str(s)) if unicodedata.category(c) != 'Mn').lower().strip()
+    
+    df.columns = [normalize(c) for c in df.columns]
+    
+    # Mapeo de columnas esperadas
+    col_map = {
+        'nombre cientifico': ['nombre cientifico', 'nombre cientifico', 'sp', 'especie'],
+        'dap_m': ['dap a (m)', 'dap a en metros', 'dap a (metros)', 'dap'],
+        'cobertura': ['cobertura', 'cobertura_id', 'tipo_cobertura'],
+        'ab_total': ['ab t (m2)', 'ab t en metros cuadrados', 'area basal total']
+    }
+    
+    final_cols = {}
+    for key, options in col_map.items():
+        found = False
+        for opt in options:
+            norm_opt = normalize(opt)
+            if norm_opt in df.columns:
+                final_cols[key] = norm_opt
+                found = True
+                break
+        if not found and key != 'ab_total': # AB total puede ser opcional
+            raise ValueError(f"No se encontr una columna equivalente a: {key} (Opciones buscadas: {options})")
+
+    # Limpieza de datos usando los nombres encontrados
+    df['Nombre cientifico'] = df[final_cols['nombre cientifico']].str.strip().str.capitalize()
+    df['Cobertura'] = df[final_cols['cobertura']].str.strip()
     
     # Convertir DAP a cm
-    df['DAP_cm'] = df['DAP A en metros'] * 100
+    df['DAP_cm'] = df[final_cols['dap_m']] * 100
     
     # Filtrar por DAP mnimo
     df_filtrado = df[df['DAP_cm'] >= dap_min].copy()
@@ -79,7 +100,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
             'C': c,
             'FCAFU': fcafu,
             'amenazadas': amenazadas,
-            'area_basal_total': group['AB T en metros cuadrados'].sum() if 'AB T en metros cuadrados' in group.columns else 0
+            'area_basal_total': group[final_cols['ab_total']].sum() if 'ab_total' in final_cols else 0
         }
         
     return resultados
