@@ -1,170 +1,288 @@
 # -*- coding: utf-8 -*-
+"""
+biodiversidad.py
+
+Consulta GBIF devolviendo LISTAS de especies (no solo conteos),
+lo que permite calcular:
+  - Métrica B: densidad de amenazadas por hectárea
+  - Métrica C: especies únicas en candidata (adicionalidad real)
+               y complementariedad respecto a la zona de impacto
+"""
+import os
+import math
 import requests
 import pandas as pd
-import os
 from config import settings
 
 GBIF_API_URL = "https://api.gbif.org/v1/occurrence/search"
 
 TAXONES = {
-    'Aves':      'Aves',
-    'Plantas':   'Magnoliopsida',
-    'Mamíferos': 'Mammalia',
-    'Reptiles':  'Reptilia',
-    'Anfibios':  'Amphibia'
+    'Aves':      {'class': 'Aves'},
+    'Plantas':   {'kingdom': 'Plantae'},
+    'Mamíferos': {'class': 'Mammalia'},
+    'Reptiles':  {'class': 'Reptilia'},
+    'Anfibios':  {'class': 'Amphibia'},
 }
 
 
-def _bounds_from_geojson(geojson):
+# ─────────────────────────────────────────────────────────────────────────────
+# Geometría: GeoJSON → WKT
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _geojson_to_wkt(geojson):
     """
-    Extrae [minx, miny, maxx, maxy] de un GeoJSON de tipo Polygon/MultiPolygon.
-    Devuelve None si no es posible.
+    Convierte un dict GeoJSON Polygon/MultiPolygon (de GEE)
+    a WKT válido para el parámetro geometry de GBIF.
+    Retorna None si el input es None o no reconocido.
     """
     if not geojson:
         return None
     try:
-        coords_flat = []
         geom_type = geojson.get('type')
-        coords = geojson.get('coordinates', [])
+        coords    = geojson.get('coordinates', [])
+
+        def ring_str(ring):
+            return ' '.join(f'{c[0]} {c[1]}' for c in ring)
 
         if geom_type == 'Polygon':
-            for ring in coords:
-                coords_flat.extend(ring)
+            rings = ','.join(f'({ring_str(r)})' for r in coords)
+            return f'POLYGON({rings})'
         elif geom_type == 'MultiPolygon':
-            for poly in coords:
-                for ring in poly:
-                    coords_flat.extend(ring)
+            polys = ','.join(
+                '(' + ','.join(f'({ring_str(r)})' for r in poly) + ')'
+                for poly in coords
+            )
+            return f'MULTIPOLYGON({polys})'
         else:
             return None
-
-        xs = [c[0] for c in coords_flat]
-        ys = [c[1] for c in coords_flat]
-        return [min(xs), min(ys), max(xs), max(ys)]
     except Exception:
         return None
 
 
-def _wkt_from_bounds(bounds):
-    """Convierte bounds [minx, miny, maxx, maxy] a WKT de polígono rectangular."""
-    minx, miny, maxx, maxy = bounds
+def _bounds_wkt_from_gdf(gdf):
+    """WKT del bounding box con buffer 10 km de un GeoDataFrame."""
+    buf = gdf.to_crs('EPSG:3116').buffer(10000).to_crs('EPSG:4326')
+    minx, miny, maxx, maxy = buf.total_bounds
     return (
-        f"POLYGON(({minx} {miny}, {maxx} {miny}, "
-        f"{maxx} {maxy}, {minx} {maxy}, {minx} {miny}))"
+        f'POLYGON(({minx} {miny},{maxx} {miny},'
+        f'{maxx} {maxy},{minx} {maxy},{minx} {miny}))'
     )
 
 
-def _consultar_gbif(geometry_wkt, lista_amenazadas):
+# ─────────────────────────────────────────────────────────────────────────────
+# Carga lista de amenazadas
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _cargar_amenazadas():
+    path = os.path.join(settings.CONFIG_DIR, 'especies_amenazadas_co.csv')
+    try:
+        df = pd.read_csv(path)
+        return set(df['nombre_cientifico'].tolist())
+    except Exception:
+        return set()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Consulta GBIF núcleo — devuelve SET de especies
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _consultar_gbif_especies(wkt):
     """
-    Consulta GBIF para un WKT dado.
-    Retorna dict con riqueza, taxones y especies amenazadas.
+    Consulta GBIF para un WKT y devuelve el SET de nombres de especies
+    registradas (hasta 1000 ocurrencias recientes en Colombia).
+    Retorna set vacío si falla o wkt es None.
     """
+    if not wkt:
+        return set()
     params = {
-        'geometry':         geometry_wkt,
+        'geometry':         wkt,
         'country':          'CO',
         'hasCoordinate':    'true',
         'year':             '2010,2024',
         'limit':            1000,
-        'occurrenceStatus': 'PRESENT'
+        'occurrenceStatus': 'PRESENT',
     }
-
-    resultado = {
-        'riqueza_total':      0,
-        'taxones':            {},
-        'especies_amenazadas': [],
-        'registros_totales':  0
-    }
-
     try:
-        response = requests.get(GBIF_API_URL, params=params, timeout=30)
-        if response.status_code != 200:
-            return resultado
-
-        data = response.json()
-        resultado['registros_totales'] = data.get('count', 0)
-
-        especies = {
-            occ.get('species')
-            for occ in data.get('results', [])
-            if occ.get('species')
-        }
-        resultado['riqueza_total']      = len(especies)
-        resultado['especies_amenazadas'] = [sp for sp in especies if sp in lista_amenazadas]
-
-        # Consulta por taxón
-        for label, class_name in TAXONES.items():
-            params_tax = params.copy()
-            if label == 'Plantas':
-                params_tax['kingdomName'] = 'Plantae'
-            else:
-                params_tax['class'] = class_name
-
-            resp_tax = requests.get(GBIF_API_URL, params=params_tax, timeout=30)
-            if resp_tax.status_code == 200:
-                tax_data  = resp_tax.json()
-                tax_spp   = {
-                    occ.get('species')
-                    for occ in tax_data.get('results', [])
-                    if occ.get('species')
-                }
-                resultado['taxones'][label] = len(tax_spp)
-            else:
-                resultado['taxones'][label] = 0
-
+        resp = requests.get(GBIF_API_URL, params=params, timeout=30)
+        if resp.status_code != 200:
+            return set()
+        resultados = resp.json().get('results', [])
+        return {r.get('species') for r in resultados if r.get('species')}
     except Exception as e:
-        print(f"Error GBIF: {e}")
+        print(f'[GBIF] Error: {e}')
+        return set()
 
+
+def _consultar_por_taxon(wkt):
+    """
+    Consulta GBIF separada por grupo taxonómico.
+    Retorna dict {grupo: set_de_especies}.
+    """
+    if not wkt:
+        return {k: set() for k in TAXONES}
+    resultado = {}
+    params_base = {
+        'geometry':         wkt,
+        'country':          'CO',
+        'hasCoordinate':    'true',
+        'year':             '2010,2024',
+        'limit':            1000,
+        'occurrenceStatus': 'PRESENT',
+    }
+    for label, filtro in TAXONES.items():
+        p = {**params_base, **filtro}
+        try:
+            r = requests.get(GBIF_API_URL, params=p, timeout=30)
+            if r.status_code == 200:
+                spp = {o.get('species') for o in r.json().get('results', []) if o.get('species')}
+                resultado[label] = spp
+            else:
+                resultado[label] = set()
+        except Exception:
+            resultado[label] = set()
     return resultado
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Métricas B y C
+# ─────────────────────────────────────────────────────────────────────────────
+
+def calcular_metricas(
+    especies_zona,
+    especies_impacto,
+    area_zona_ha,
+    area_impacto_ha,
+    amenazadas_set,
+):
+    """
+    Calcula métricas de adicionalidad biótica para una zona candidata.
+
+    Métrica B — Densidad de amenazadas por hectárea:
+        densidad_amenazadas_zona    vs.  densidad_amenazadas_impacto
+        Si zona > impacto → adicionalidad positiva en amenazadas.
+
+    Métrica C — Complementariedad (especies únicas):
+        unicas_zona = especies en zona que NO están en impacto
+        complementariedad = |unicas_zona| / |zona ∪ impacto|
+        → Qué fracción de la biodiversidad de compensación es genuinamente nueva.
+
+    Retorna dict con todos los valores calculados.
+    """
+    amenazadas_zona    = especies_zona    & amenazadas_set
+    amenazadas_impacto = especies_impacto & amenazadas_set
+
+    # ── Métrica B ──
+    dens_zona    = len(amenazadas_zona)    / max(area_zona_ha,    1)
+    dens_impacto = len(amenazadas_impacto) / max(area_impacto_ha, 1)
+    ratio_b      = dens_zona / max(dens_impacto, 1e-9)
+
+    # ── Métrica C ──
+    unicas_zona  = especies_zona - especies_impacto
+    union        = especies_zona | especies_impacto
+    complement   = len(unicas_zona) / max(len(union), 1)  # 0..1
+
+    # ── Score combinado (B+C) para semáforo ──
+    # Promedio ponderado: 60% complementariedad, 40% ratio amenazadas
+    score = 0.6 * complement + 0.4 * min(ratio_b, 2) / 2
+
+    return {
+        # Conteos
+        'riqueza_zona':          len(especies_zona),
+        'riqueza_impacto':       len(especies_impacto),
+        'amenazadas_zona':       sorted(amenazadas_zona),
+        'amenazadas_impacto':    sorted(amenazadas_impacto),
+        'n_amenazadas_zona':     len(amenazadas_zona),
+        'n_amenazadas_impacto':  len(amenazadas_impacto),
+        # Especies únicas (adicionalidad C)
+        'unicas_zona':           sorted(unicas_zona),
+        'n_unicas':              len(unicas_zona),
+        'complementariedad':     round(complement, 3),
+        # Densidad amenazadas (adicionalidad B)
+        'dens_amenazadas_zona':  round(dens_zona,    5),
+        'dens_amenazadas_imp':   round(dens_impacto, 5),
+        'ratio_amenazadas':      round(ratio_b, 3),
+        # Score final
+        'score_bc':              round(score, 3),
+        'valoracion': (
+            '🟢 Alta'   if score > 0.5 else
+            '🟡 Media'  if score > 0.2 else
+            '🔴 Baja'
+        ),
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API pública
+# ─────────────────────────────────────────────────────────────────────────────
+
 def consultar_biodiversidad_zona(gdf_zona):
     """
-    Consulta GBIF para la zona de IMPACTO (buffer 10 km).
-    Retorna dict estándar de biodiversidad.
+    GBIF para la zona de IMPACTO (buffer 10 km).
+    Retorna dict con especies (set), conteos por taxón y amenazadas.
     """
-    gdf_buffer = gdf_zona.to_crs("EPSG:3116").buffer(10000).to_crs("EPSG:4326")
-    bounds = gdf_buffer.total_bounds  # [minx, miny, maxx, maxy]
-    wkt = _wkt_from_bounds(bounds)
+    amenazadas = _cargar_amenazadas()
+    wkt        = _bounds_wkt_from_gdf(gdf_zona)
+    especies   = _consultar_gbif_especies(wkt)
+    por_taxon  = _consultar_por_taxon(wkt)
 
-    amenazadas_df  = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
-    lista_amenazadas = amenazadas_df['nombre_cientifico'].tolist()
+    return {
+        'wkt':                   wkt,
+        'especies':              especies,               # set completo
+        'riqueza_total':         len(especies),
+        'taxones':               {k: len(v) for k, v in por_taxon.items()},
+        'especies_amenazadas':   sorted(especies & amenazadas),
+        'registros_totales':     len(especies),          # aprox
+    }
 
-    return _consultar_gbif(wkt, lista_amenazadas)
 
-
-def consultar_biodiversidad_candidatas(cand_results):
+def consultar_biodiversidad_candidatas(cand_results, bd_impacto, progress_callback=None):
     """
-    Consulta GBIF para cada rango candidato usando la geometría
-    devuelta por rangos.construir_areas_candidatas (geom_geojson).
+    GBIF para cada rango candidato, separando Conservar y Restaurar.
+    Calcula métricas B+C comparando con la zona de impacto.
 
-    Retorna dict por rango con:
-      - bd_conservar: biodiversidad en subzona Natural  (pérdida evitada)
-      - bd_restaurar: biodiversidad en subzona Transformada (ganancia potencial)
-      - bd_total: biodiversidad en toda la zona del rango
-      - adicionalidad_neta: riqueza_candidata - riqueza_impacto (se calcula en app.py)
+    cand_results : dict de rangos.construir_areas_candidatas()
+    bd_impacto   : dict de consultar_biodiversidad_zona()
+    progress_callback(rango, i, total) : opcional
+
+    Retorna dict {rango: {conservar: {...}, restaurar: {...}, total: {...}}}
+    donde cada sub-dict contiene las métricas B+C.
     """
-    amenazadas_df    = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
-    lista_amenazadas = amenazadas_df['nombre_cientifico'].tolist()
+    amenazadas      = _cargar_amenazadas()
+    especies_imp    = bd_impacto.get('especies', set())
+    area_impacto_ha = 1.0   # Se actualizará si el contexto tiene el dato
 
     resultados = {}
+    total      = len(cand_results)
 
-    for rango, datos in cand_results.items():
-        geojson = datos.get('geom_geojson')
-        bounds  = _bounds_from_geojson(geojson)
+    for i, (rango, datos) in enumerate(cand_results.items()):
+        if progress_callback:
+            progress_callback(rango, i, total)
 
-        if not bounds:
-            resultados[rango] = {
-                'bd_total':     {'riqueza_total': 0, 'taxones': {}, 'especies_amenazadas': [], 'registros_totales': 0},
-                'error':        'Sin geometría disponible'
-            }
-            continue
+        ha_cons = datos.get('ha_conservar', 1)
+        ha_rest = datos.get('ha_restaurar', 1)
+        ha_tot  = datos.get('total', 1)
 
-        wkt = _wkt_from_bounds(bounds)
+        wkt_cons = _geojson_to_wkt(datos.get('geom_conservar'))
+        wkt_rest = _geojson_to_wkt(datos.get('geom_restaurar'))
+        wkt_tot  = _geojson_to_wkt(datos.get('geom_total'))
 
-        # Consulta principal para toda la zona del rango
-        bd_total = _consultar_gbif(wkt, lista_amenazadas)
+        spp_cons = _consultar_gbif_especies(wkt_cons)
+        spp_rest = _consultar_gbif_especies(wkt_rest)
+        spp_tot  = _consultar_gbif_especies(wkt_tot)
 
         resultados[rango] = {
-            'bd_total': bd_total,
+            'conservar': calcular_metricas(
+                spp_cons, especies_imp, ha_cons, area_impacto_ha, amenazadas
+            ),
+            'restaurar': calcular_metricas(
+                spp_rest, especies_imp, ha_rest, area_impacto_ha, amenazadas
+            ),
+            'total': calcular_metricas(
+                spp_tot,  especies_imp, ha_tot,  area_impacto_ha, amenazadas
+            ),
         }
+
+    if progress_callback:
+        progress_callback('Listo', total, total)
 
     return resultados
