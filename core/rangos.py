@@ -9,12 +9,14 @@ def construir_areas_candidatas(gdf, contexto):
     """
     Construye las áreas candidatas para los 5 rangos en GEE.
     Retorna por rango:
-        ha_conservar   : hectáreas de cobertura Natural (a conservar)
-        ha_restaurar   : hectáreas de cobertura Transformada (a restaurar)
-        total          : suma de las anteriores
-        geom_conservar : GeoJSON Polygon del bbox de features Naturales → para GBIF
-        geom_restaurar : GeoJSON Polygon del bbox de features Transformadas → para GBIF
-        geom_total     : GeoJSON Polygon del bbox del área de búsqueda del rango
+        ha_conservar      : hectáreas de cobertura Natural
+        ha_restaurar      : hectáreas de cobertura Transformada
+        total             : suma
+        geom_conservar    : GeoJSON Polygon (bbox con buffer 10 km del centroide) → GBIF
+        geom_restaurar    : GeoJSON Polygon (bbox con buffer 10 km del centroide) → GBIF
+        geom_total        : GeoJSON Polygon del área de búsqueda del rango → mapa
+        geom_conservar_ee : GeoJSON de la unión real de features Naturales → mapa
+        geom_restaurar_ee : GeoJSON de la unión real de features Transformadas → mapa
     """
 
     def strip_z(geom):
@@ -29,7 +31,6 @@ def construir_areas_candidatas(gdf, contexto):
             continue
         features.append(ee.Feature(ee.Geometry(mapping(row.geometry))))
 
-    ee_geom       = ee.FeatureCollection(features).geometry()
     bioma_impacto = contexto['bioma_principal']
     mun_nombre    = contexto['municipio']
     szh_nombre    = contexto['szh']
@@ -63,30 +64,48 @@ def construir_areas_candidatas(gdf, contexto):
 
         return cands.map(procesar).filter(ee.Filter.gt('area_ha_real', 0.01))
 
-    def _fc_to_geojson_polygon(fc):
+    def _centroid_buffer_geojson(fc, buffer_m=10000):
         """
-        Retorna un dict GeoJSON Polygon (bbox) de la FC.
-        Devuelve None si la FC está vacía o falla.
-        Usa dissolve+bounds para obtener una geometría válida.
+        Buffer de buffer_m metros alrededor del centroide de la FC.
+        Mucho más pequeño que el bbox completo → GBIF funciona mejor.
+        Retorna dict GeoJSON Polygon o None si FC vacía.
         """
         try:
             n = fc.size().getInfo()
             if n == 0:
                 return None
-            # union de todas las geometrías → bounds
-            geom = fc.geometry().bounds().getInfo()
-            # getInfo() devuelve dict con 'type' y 'coordinates'
+            centroid = fc.geometry().centroid(100)
+            buffered = centroid.buffer(buffer_m).bounds()
+            geom = buffered.getInfo()
             if geom and geom.get('type') in ('Polygon', 'MultiPolygon'):
                 return geom
-            # Si viene como Feature o FeatureCollection, extraer geometría
             if geom and geom.get('type') == 'Feature':
                 return geom.get('geometry')
             return geom
         except Exception:
             return None
 
-    def _geom_to_geojson_polygon(ee_geom_obj):
-        """Convierte un ee.Geometry a dict GeoJSON. Devuelve None si falla."""
+    def _fc_union_geojson(fc):
+        """
+        Unión real de todas las geometrías de la FC → para visualizar en mapa.
+        Retorna dict GeoJSON o None.
+        """
+        try:
+            n = fc.size().getInfo()
+            if n == 0:
+                return None
+            geom = fc.geometry().getInfo()
+            if geom and geom.get('type') in ('Polygon', 'MultiPolygon',
+                                              'GeometryCollection'):
+                return geom
+            if geom and geom.get('type') == 'Feature':
+                return geom.get('geometry')
+            return geom
+        except Exception:
+            return None
+
+    def _geom_to_geojson(ee_geom_obj):
+        """Convierte ee.Geometry a dict GeoJSON. Retorna None si falla."""
         try:
             geom = ee_geom_obj.bounds().getInfo()
             if geom and geom.get('type') in ('Polygon', 'MultiPolygon'):
@@ -98,29 +117,27 @@ def construir_areas_candidatas(gdf, contexto):
             return None
 
     def clasificar_y_resumir(fc, geom_busqueda):
-        # El asset ECCMC usa GRADO_TRAN con valores 'Natural' y 'Transformado'
         conservar_fc = fc.filter(ee.Filter.eq('GRADO_TRAN', 'Natural'))
         restaurar_fc = fc.filter(ee.Filter.eq('GRADO_TRAN', 'Transformado'))
 
         n = fc.size().getInfo()
         ha_conservar = conservar_fc.aggregate_sum('area_ha_real').getInfo() if n > 0 else 0.0
         ha_restaurar = restaurar_fc.aggregate_sum('area_ha_real').getInfo() if n > 0 else 0.0
-
-        # Si ha_conservar o ha_restaurar son None (GEE puede retornar None en suma vacía)
         ha_conservar = float(ha_conservar) if ha_conservar is not None else 0.0
         ha_restaurar = float(ha_restaurar) if ha_restaurar is not None else 0.0
 
-        geom_conservar = _fc_to_geojson_polygon(conservar_fc)
-        geom_restaurar = _fc_to_geojson_polygon(restaurar_fc)
-        geom_total     = _geom_to_geojson_polygon(geom_busqueda)
-
         return {
-            'ha_conservar':   ha_conservar,
-            'ha_restaurar':   ha_restaurar,
-            'total':          ha_conservar + ha_restaurar,
-            'geom_conservar': geom_conservar,
-            'geom_restaurar': geom_restaurar,
-            'geom_total':     geom_total,
+            'ha_conservar':      ha_conservar,
+            'ha_restaurar':      ha_restaurar,
+            'total':             ha_conservar + ha_restaurar,
+            # Para GBIF: buffer 10 km del centroide (zona manejable)
+            'geom_conservar':    _centroid_buffer_geojson(conservar_fc, 10000),
+            'geom_restaurar':    _centroid_buffer_geojson(restaurar_fc, 10000),
+            # Para el mapa: bbox del área de búsqueda
+            'geom_total':        _geom_to_geojson(geom_busqueda),
+            # Para el mapa: geometría real de las features (polígonos reales)
+            'geom_conservar_ee': _fc_union_geojson(conservar_fc),
+            'geom_restaurar_ee': _fc_union_geojson(restaurar_fc),
         }
 
     r1 = filtrar_candidatas(geom_mun, bioma_impacto)
