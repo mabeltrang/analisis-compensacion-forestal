@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ee
+import streamlit as st
 from shapely.geometry import mapping
 from shapely.ops import transform
 from config import settings
@@ -73,6 +74,17 @@ def construir_areas_candidatas(gdf, contexto):
             return None
 
     def clasificar_y_resumir(fc, geom_busqueda):
+        # ── DEBUG TEMPORAL ────────────────────────────────────────────────────
+        n_debug = fc.size().getInfo()
+        if n_debug > 0:
+            sample = fc.limit(3).getInfo()
+            props  = sample['features'][0]['properties']
+            st.write(f"DEBUG columnas disponibles: {list(props.keys())}")
+            st.write(f"DEBUG GRADO_TRAN valores: {[f['properties'].get('GRADO_TRAN') for f in sample['features']]}")
+        else:
+            st.write("DEBUG: fc vacío en este rango")
+        # ─────────────────────────────────────────────────────────────────────
+
         conservar_fc = fc.filter(ee.Filter.eq('GRADO_TRAN', 'Natural'))
         restaurar_fc = fc.filter(ee.Filter.eq('GRADO_TRAN', 'Transformado'))
 
