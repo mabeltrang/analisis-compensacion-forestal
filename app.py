@@ -146,11 +146,14 @@ if st.session_state.get('analisis_finalizado'):
                 c_data = cand_results.get(r, {})
                 balance = adicionalidad.analizar_balance_biodiversidad(c_data, final_data.get('biodiv', {}))
                 
+                # Fix: analizar_balance_biodiversidad puede retornar string o dict
+                potencial_biodiv = balance['analisis'] if isinstance(balance, dict) else balance
+
                 comp_list.append({
                     "Rango": r,
                     "ATC Req. (ha)": round(r_data['atc_total'], 2),
                     "Candidatas": round(c_data.get('total', 0), 2),
-                    "Potencial Biodiv.": balance['analisis'],
+                    "Potencial Biodiv.": potencial_biodiv,
                     "Adic. (ha/año)": round(c_data.get('total', 0) * bau_results['tasa_bau_anual'] * final_data.get('score_biotico', 1.0), 4),
                     "Estado": "✅ OK" if c_data.get('total', 0) >= r_data['atc_total'] else "❌ Insuf"
                 })
