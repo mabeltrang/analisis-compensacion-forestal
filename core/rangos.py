@@ -7,16 +7,6 @@ from config import settings
 
 
 def construir_areas_candidatas(gdf, contexto):
-    """
-    Construye las áreas candidatas para los 5 rangos en GEE.
-    Retorna por rango:
-        ha_conservar   : hectáreas de cobertura Natural (a conservar)
-        ha_restaurar   : hectáreas de cobertura Transformada (a restaurar)
-        total          : suma de las anteriores
-        geom_conservar : GeoJSON bounds de las features Naturales   → para GBIF
-        geom_restaurar : GeoJSON bounds de las features Transformadas → para GBIF
-        geom_total     : GeoJSON bounds del área de búsqueda del rango
-    """
 
     def strip_z(geom):
         return transform(lambda x, y, z=None: (x, y), geom)
@@ -40,6 +30,16 @@ def construir_areas_candidatas(gdf, contexto):
     municipios  = ee.FeatureCollection(settings.GEE_ASSETS['municipios'])
     zh_col      = ee.FeatureCollection(settings.GEE_ASSETS['zh'])
     sinap       = ee.FeatureCollection(settings.GEE_ASSETS['sinap'])
+
+    # ── DEBUG: ver columnas reales del asset ──────────────────────────────────
+    sample = ecosistemas.limit(1).getInfo()
+    props  = sample['features'][0]['properties']
+    st.error("🔍 DEBUG — Columnas del asset (borra este bloque después)")
+    st.write(list(props.keys()))
+    st.write("Valores de ejemplo:")
+    st.write(props)
+    st.stop()
+    # ─────────────────────────────────────────────────────────────────────────
 
     geom_mun = municipios.filter(ee.Filter.eq('ADM2_NAME', mun_nombre)).geometry()
     geom_szh = zh_col.filter(ee.Filter.eq('nom_szh', szh_nombre)).geometry()
@@ -65,7 +65,6 @@ def construir_areas_candidatas(gdf, contexto):
         return cands.map(procesar).filter(ee.Filter.gt('area_ha_real', 0.01))
 
     def _fc_bounds_geojson(fc):
-        """Bounding box de un FeatureCollection como dict GeoJSON. None si vacío."""
         try:
             if fc.size().getInfo() == 0:
                 return None
@@ -74,17 +73,6 @@ def construir_areas_candidatas(gdf, contexto):
             return None
 
     def clasificar_y_resumir(fc, geom_busqueda):
-        # ── DEBUG TEMPORAL ────────────────────────────────────────────────────
-        n_debug = fc.size().getInfo()
-        if n_debug > 0:
-            sample = fc.limit(3).getInfo()
-            props  = sample['features'][0]['properties']
-            st.write(f"DEBUG columnas disponibles: {list(props.keys())}")
-            st.write(f"DEBUG GRADO_TRAN valores: {[f['properties'].get('GRADO_TRAN') for f in sample['features']]}")
-        else:
-            st.write("DEBUG: fc vacío en este rango")
-        # ─────────────────────────────────────────────────────────────────────
-
         conservar_fc = fc.filter(ee.Filter.eq('GRADO_TRAN', 'Natural'))
         restaurar_fc = fc.filter(ee.Filter.eq('GRADO_TRAN', 'Transformado'))
 
