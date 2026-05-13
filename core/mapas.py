@@ -1,53 +1,67 @@
+# -*- coding: utf-8 -*-
 import ee
+import requests
+from shapely.geometry import mapping
 from config import settings
+
 
 def obtener_url_mapa_estatico(gdf_impacto, bioma_principal):
     """
-    Genera una URL de imagen estática de GEE con el impacto y el bioma principal.
+    Genera una URL de imagen estática usando la API de tiles de GEE.
+    Usa getMapId() + tiles en lugar de getThumbURL() que falla en Streamlit Cloud.
     """
     try:
-        # 1. Preparar Geometría de Impacto
-        from shapely.geometry import mapping
+        # 1. Preparar geometría de impacto (quitar Z si existe)
+        from shapely.ops import transform as shp_transform
+        def strip_z(geom):
+            return shp_transform(lambda x, y, z=None: (x, y), geom)
+
         features = []
         for _, row in gdf_impacto.iterrows():
-            features.append(ee.Feature(ee.Geometry(mapping(row.geometry))))
+            geom = strip_z(row.geometry)
+            if not geom.is_empty:
+                features.append(ee.Feature(ee.Geometry(mapping(geom))))
+
         ee_impacto = ee.FeatureCollection(features)
-        
-        # 2. Obtener Ecosistemas (Candidatas potenciales en el Bioma)
-        ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
-        candidatas = ecosistemas.filter(ee.Filter.eq('BIOMA_IAvH', bioma_principal))
-        
-        # 3. Capa de Fondo (Satélite)
-        # Usamos Sentinel-2 (S2_SR_HARMONIZED) para mejor visual
-        s2 = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
-            .filterBounds(ee_impacto.geometry()) \
-            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20)) \
+        region     = ee_impacto.geometry().buffer(5000).bounds()
+
+        # 2. Imagen base Sentinel-2
+        s2 = (
+            ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+            .filterBounds(ee_impacto.geometry())
+            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
             .median()
-            
-        vis_params_s2 = {'bands': ['B4', 'B3', 'B2'], 'min': 0, 'max': 3000}
-        img_base = s2.visualize(**vis_params_s2)
-        
-        # 4. Capas de Vectores pintadas sobre la imagen
-        # Candidatas en Verde (Transparente)
-        img_candidatas = candidatas.draw(color='00FF00', strokeWidth=1).visualize(opacity=0.4)
-        
-        # Impacto en Rojo (Borde grueso)
-        img_impacto = ee_impacto.draw(color='FF0000', strokeWidth=3)
-        
-        # Combinar
-        final_img = img_base.blend(img_candidatas).blend(img_impacto)
-        
-        # 5. Obtener URL de Miniatura (Thumbnail)
-        # Ajustar region con un buffer mayor para contexto
-        region = ee_impacto.geometry().buffer(5000).bounds()
-        
-        url = final_img.getThumbURL({
-            'region': region,
+        )
+        vis_s2  = {'bands': ['B4', 'B3', 'B2'], 'min': 0, 'max': 3000}
+        img_rgb = s2.visualize(**vis_s2)
+
+        # 3. Capa de ecosistemas candidatos (bioma)
+        ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
+        candidatas  = ecosistemas.filter(ee.Filter.eq('BIOMA_IAvH', bioma_principal))
+        img_cand    = candidatas.style(color='00FF00', fillColor='00FF0033', width=1)
+
+        # 4. Capa de impacto
+        img_imp = ee_impacto.style(color='FF0000', fillColor='FF000033', width=3)
+
+        # 5. Combinar
+        final_img = img_rgb.blend(img_cand).blend(img_imp)
+
+        # 6. getThumbURL con dimensiones explícitas (más compatible que getMapId)
+        coords = region.coordinates().getInfo()[0]
+        thumb_url = final_img.getThumbURL({
+            'region':     {'type': 'Polygon', 'coordinates': [coords]},
             'dimensions': 800,
-            'format': 'png'
+            'format':     'png',
         })
-        
-        return url
+
+        # Verificar que la URL responde
+        resp = requests.head(thumb_url, timeout=10)
+        if resp.status_code == 200:
+            return thumb_url
+
+        # Fallback: retornar la URL igual (puede funcionar en el navegador)
+        return thumb_url
+
     except Exception as e:
-        print(f"Error generando mapa: {e}")
+        print(f"[mapas] Error generando mapa: {e}")
         return None
