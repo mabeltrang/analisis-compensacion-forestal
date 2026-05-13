@@ -9,19 +9,21 @@ lo que permite calcular:
                y complementariedad respecto a la zona de impacto
 """
 import os
-import math
 import requests
 import pandas as pd
 from config import settings
 
 GBIF_API_URL = "https://api.gbif.org/v1/occurrence/search"
 
+# ── Taxon keys numéricos correctos de GBIF ───────────────────────────────────
+# Usar 'class' (string) no funciona — GBIF lo ignora y devuelve todo.
+# Los classKey/kingdomKey son los IDs internos del backbone taxonómico de GBIF.
 TAXONES = {
-    'Aves':      {'class': 'Aves'},
-    'Plantas':   {'kingdom': 'Plantae'},
-    'Mamíferos': {'class': 'Mammalia'},
-    'Reptiles':  {'class': 'Reptilia'},
-    'Anfibios':  {'class': 'Amphibia'},
+    'Aves':      {'classKey':   212},
+    'Plantas':   {'kingdomKey':   6},
+    'Mamíferos': {'classKey':   359},
+    'Reptiles':  {'classKey':   358},
+    'Anfibios':  {'classKey':   131},
 }
 
 
@@ -99,7 +101,7 @@ def _consultar_gbif_especies(wkt):
         'country':          'CO',
         'hasCoordinate':    'true',
         'year':             '2010,2024',
-        'limit':            1000,
+        'limit':            300,
         'occurrenceStatus': 'PRESENT',
     }
     try:
@@ -115,26 +117,31 @@ def _consultar_gbif_especies(wkt):
 
 def _consultar_por_taxon(wkt):
     """
-    Consulta GBIF separada por grupo taxonómico.
+    Consulta GBIF separada por grupo taxonómico usando classKey/kingdomKey.
     Retorna dict {grupo: set_de_especies}.
     """
     if not wkt:
         return {k: set() for k in TAXONES}
-    resultado = {}
+
     params_base = {
         'geometry':         wkt,
         'country':          'CO',
         'hasCoordinate':    'true',
         'year':             '2010,2024',
-        'limit':            1000,
+        'limit':            300,
         'occurrenceStatus': 'PRESENT',
     }
+    resultado = {}
     for label, filtro in TAXONES.items():
         p = {**params_base, **filtro}
         try:
             r = requests.get(GBIF_API_URL, params=p, timeout=30)
             if r.status_code == 200:
-                spp = {o.get('species') for o in r.json().get('results', []) if o.get('species')}
+                spp = {
+                    o.get('species')
+                    for o in r.json().get('results', [])
+                    if o.get('species')
+                }
                 resultado[label] = spp
             else:
                 resultado[label] = set()
@@ -177,35 +184,35 @@ def calcular_metricas(
     ratio_b      = dens_zona / max(dens_impacto, 1e-9)
 
     # ── Métrica C ──
-    unicas_zona  = especies_zona - especies_impacto
-    union        = especies_zona | especies_impacto
-    complement   = len(unicas_zona) / max(len(union), 1)  # 0..1
+    unicas_zona = especies_zona - especies_impacto
+    union       = especies_zona | especies_impacto
+    complement  = len(unicas_zona) / max(len(union), 1)  # 0..1
 
     # ── Score combinado (B+C) para semáforo ──
-    # Promedio ponderado: 60% complementariedad, 40% ratio amenazadas
+    # Promedio ponderado: 60% complementariedad, 40% ratio amenazadas (cap 2×)
     score = 0.6 * complement + 0.4 * min(ratio_b, 2) / 2
 
     return {
         # Conteos
-        'riqueza_zona':          len(especies_zona),
-        'riqueza_impacto':       len(especies_impacto),
-        'amenazadas_zona':       sorted(amenazadas_zona),
-        'amenazadas_impacto':    sorted(amenazadas_impacto),
-        'n_amenazadas_zona':     len(amenazadas_zona),
-        'n_amenazadas_impacto':  len(amenazadas_impacto),
+        'riqueza_zona':         len(especies_zona),
+        'riqueza_impacto':      len(especies_impacto),
+        'amenazadas_zona':      sorted(amenazadas_zona),
+        'amenazadas_impacto':   sorted(amenazadas_impacto),
+        'n_amenazadas_zona':    len(amenazadas_zona),
+        'n_amenazadas_impacto': len(amenazadas_impacto),
         # Especies únicas (adicionalidad C)
-        'unicas_zona':           sorted(unicas_zona),
-        'n_unicas':              len(unicas_zona),
-        'complementariedad':     round(complement, 3),
+        'unicas_zona':          sorted(unicas_zona),
+        'n_unicas':             len(unicas_zona),
+        'complementariedad':    round(complement, 3),
         # Densidad amenazadas (adicionalidad B)
-        'dens_amenazadas_zona':  round(dens_zona,    5),
-        'dens_amenazadas_imp':   round(dens_impacto, 5),
-        'ratio_amenazadas':      round(ratio_b, 3),
+        'dens_amenazadas_zona': round(dens_zona,    5),
+        'dens_amenazadas_imp':  round(dens_impacto, 5),
+        'ratio_amenazadas':     round(ratio_b, 3),
         # Score final
-        'score_bc':              round(score, 3),
+        'score_bc':  round(score, 3),
         'valoracion': (
-            '🟢 Alta'   if score > 0.5 else
-            '🟡 Media'  if score > 0.2 else
+            '🟢 Alta'  if score > 0.5 else
+            '🟡 Media' if score > 0.2 else
             '🔴 Baja'
         ),
     }
@@ -222,16 +229,20 @@ def consultar_biodiversidad_zona(gdf_zona):
     """
     amenazadas = _cargar_amenazadas()
     wkt        = _bounds_wkt_from_gdf(gdf_zona)
-    especies   = _consultar_gbif_especies(wkt)
     por_taxon  = _consultar_por_taxon(wkt)
 
+    # Unión de todas las especies de todos los grupos
+    especies = set()
+    for spp_set in por_taxon.values():
+        especies |= spp_set
+
     return {
-        'wkt':                   wkt,
-        'especies':              especies,               # set completo
-        'riqueza_total':         len(especies),
-        'taxones':               {k: len(v) for k, v in por_taxon.items()},
-        'especies_amenazadas':   sorted(especies & amenazadas),
-        'registros_totales':     len(especies),          # aprox
+        'wkt':                 wkt,
+        'especies':            especies,
+        'riqueza_total':       len(especies),
+        'taxones':             {k: len(v) for k, v in por_taxon.items()},
+        'especies_amenazadas': sorted(especies & amenazadas),
+        'registros_totales':   len(especies),
     }
 
 
@@ -245,11 +256,12 @@ def consultar_biodiversidad_candidatas(cand_results, bd_impacto, progress_callba
     progress_callback(rango, i, total) : opcional
 
     Retorna dict {rango: {conservar: {...}, restaurar: {...}, total: {...}}}
-    donde cada sub-dict contiene las métricas B+C.
     """
-    amenazadas      = _cargar_amenazadas()
-    especies_imp    = bd_impacto.get('especies', set())
-    area_impacto_ha = 1.0   # Se actualizará si el contexto tiene el dato
+    amenazadas   = _cargar_amenazadas()
+    especies_imp = bd_impacto.get('especies', set())
+
+    # Área de impacto: suma de riqueza como proxy de ha (se usa solo para densidad)
+    area_impacto_ha = max(bd_impacto.get('riqueza_total', 1), 1)
 
     resultados = {}
     total      = len(cand_results)
@@ -258,9 +270,9 @@ def consultar_biodiversidad_candidatas(cand_results, bd_impacto, progress_callba
         if progress_callback:
             progress_callback(rango, i, total)
 
-        ha_cons = datos.get('ha_conservar', 1)
-        ha_rest = datos.get('ha_restaurar', 1)
-        ha_tot  = datos.get('total', 1)
+        ha_cons = max(datos.get('ha_conservar', 1), 1)
+        ha_rest = max(datos.get('ha_restaurar', 1), 1)
+        ha_tot  = max(datos.get('total',        1), 1)
 
         wkt_cons = _geojson_to_wkt(datos.get('geom_conservar'))
         wkt_rest = _geojson_to_wkt(datos.get('geom_restaurar'))
@@ -278,7 +290,7 @@ def consultar_biodiversidad_candidatas(cand_results, bd_impacto, progress_callba
                 spp_rest, especies_imp, ha_rest, area_impacto_ha, amenazadas
             ),
             'total': calcular_metricas(
-                spp_tot,  especies_imp, ha_tot,  area_impacto_ha, amenazadas
+                spp_tot, especies_imp, ha_tot, area_impacto_ha, amenazadas
             ),
         }
 
