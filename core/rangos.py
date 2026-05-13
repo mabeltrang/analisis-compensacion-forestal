@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
 import ee
-import streamlit as st
 from shapely.geometry import mapping
 from shapely.ops import transform
 from config import settings
 
 
 def construir_areas_candidatas(gdf, contexto):
+    """
+    Construye las áreas candidatas para los 5 rangos en GEE.
+    Retorna por rango:
+        ha_conservar   : hectáreas de cobertura Natural (a conservar)
+        ha_restaurar   : hectáreas de cobertura Transformada (a restaurar)
+        total          : suma de las anteriores
+        geom_conservar : GeoJSON Polygon del bbox de features Naturales → para GBIF
+        geom_restaurar : GeoJSON Polygon del bbox de features Transformadas → para GBIF
+        geom_total     : GeoJSON Polygon del bbox del área de búsqueda del rango
+    """
 
     def strip_z(geom):
         return transform(lambda x, y, z=None: (x, y), geom)
@@ -31,16 +40,6 @@ def construir_areas_candidatas(gdf, contexto):
     zh_col      = ee.FeatureCollection(settings.GEE_ASSETS['zh'])
     sinap       = ee.FeatureCollection(settings.GEE_ASSETS['sinap'])
 
-    # ── DEBUG: ver columnas reales del asset ──────────────────────────────────
-    sample = ecosistemas.limit(1).getInfo()
-    props  = sample['features'][0]['properties']
-    st.error("🔍 DEBUG — Columnas del asset (borra este bloque después)")
-    st.write(list(props.keys()))
-    st.write("Valores de ejemplo:")
-    st.write(props)
-    st.stop()
-    # ─────────────────────────────────────────────────────────────────────────
-
     geom_mun = municipios.filter(ee.Filter.eq('ADM2_NAME', mun_nombre)).geometry()
     geom_szh = zh_col.filter(ee.Filter.eq('nom_szh', szh_nombre)).geometry()
     geom_zh  = zh_col.filter(ee.Filter.eq('nom_zh',  zh_nombre)).geometry()
@@ -50,7 +49,7 @@ def construir_areas_candidatas(gdf, contexto):
         if es_otro_bioma:
             cands = cands.filter(ee.Filter.neq('BIOMA_IAvH', filtro_bioma))
         else:
-            cands = cands.filter(ee.Filter.eq('BIOMA_IAvH',  filtro_bioma))
+            cands = cands.filter(ee.Filter.eq('BIOMA_IAvH', filtro_bioma))
         for cob in settings.COBERTURAS_EXCLUIDAS:
             cands = cands.filter(ee.Filter.neq('COBERTURA', cob))
 
@@ -64,33 +63,63 @@ def construir_areas_candidatas(gdf, contexto):
 
         return cands.map(procesar).filter(ee.Filter.gt('area_ha_real', 0.01))
 
-    def _fc_bounds_geojson(fc):
+    def _fc_to_geojson_polygon(fc):
+        """
+        Retorna un dict GeoJSON Polygon (bbox) de la FC.
+        Devuelve None si la FC está vacía o falla.
+        Usa dissolve+bounds para obtener una geometría válida.
+        """
         try:
-            if fc.size().getInfo() == 0:
+            n = fc.size().getInfo()
+            if n == 0:
                 return None
-            return fc.geometry().bounds().getInfo()
+            # union de todas las geometrías → bounds
+            geom = fc.geometry().bounds().getInfo()
+            # getInfo() devuelve dict con 'type' y 'coordinates'
+            if geom and geom.get('type') in ('Polygon', 'MultiPolygon'):
+                return geom
+            # Si viene como Feature o FeatureCollection, extraer geometría
+            if geom and geom.get('type') == 'Feature':
+                return geom.get('geometry')
+            return geom
+        except Exception:
+            return None
+
+    def _geom_to_geojson_polygon(ee_geom_obj):
+        """Convierte un ee.Geometry a dict GeoJSON. Devuelve None si falla."""
+        try:
+            geom = ee_geom_obj.bounds().getInfo()
+            if geom and geom.get('type') in ('Polygon', 'MultiPolygon'):
+                return geom
+            if geom and geom.get('type') == 'Feature':
+                return geom.get('geometry')
+            return geom
         except Exception:
             return None
 
     def clasificar_y_resumir(fc, geom_busqueda):
+        # El asset ECCMC usa GRADO_TRAN con valores 'Natural' y 'Transformado'
         conservar_fc = fc.filter(ee.Filter.eq('GRADO_TRAN', 'Natural'))
         restaurar_fc = fc.filter(ee.Filter.eq('GRADO_TRAN', 'Transformado'))
 
-        n            = fc.size().getInfo()
+        n = fc.size().getInfo()
         ha_conservar = conservar_fc.aggregate_sum('area_ha_real').getInfo() if n > 0 else 0.0
         ha_restaurar = restaurar_fc.aggregate_sum('area_ha_real').getInfo() if n > 0 else 0.0
 
-        try:
-            geom_total = geom_busqueda.bounds().getInfo()
-        except Exception:
-            geom_total = None
+        # Si ha_conservar o ha_restaurar son None (GEE puede retornar None en suma vacía)
+        ha_conservar = float(ha_conservar) if ha_conservar is not None else 0.0
+        ha_restaurar = float(ha_restaurar) if ha_restaurar is not None else 0.0
+
+        geom_conservar = _fc_to_geojson_polygon(conservar_fc)
+        geom_restaurar = _fc_to_geojson_polygon(restaurar_fc)
+        geom_total     = _geom_to_geojson_polygon(geom_busqueda)
 
         return {
-            'ha_conservar':   float(ha_conservar),
-            'ha_restaurar':   float(ha_restaurar),
-            'total':          float(ha_conservar + ha_restaurar),
-            'geom_conservar': _fc_bounds_geojson(conservar_fc),
-            'geom_restaurar': _fc_bounds_geojson(restaurar_fc),
+            'ha_conservar':   ha_conservar,
+            'ha_restaurar':   ha_restaurar,
+            'total':          ha_conservar + ha_restaurar,
+            'geom_conservar': geom_conservar,
+            'geom_restaurar': geom_restaurar,
             'geom_total':     geom_total,
         }
 
