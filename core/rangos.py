@@ -56,6 +56,10 @@ def construir_areas_candidatas(gdf, contexto):
 
         sinap_geom = sinap.filterBounds(area_busqueda).geometry()
 
+        # TODO: agregar exclusión por REAA cuando esté disponible
+        # var reaa = ee.FeatureCollection('projects/ndvi-restauracion/assets/REAA_simplified');
+        # cands = cands.filter(ee.Filter.bounds(reaa).not())
+
         def procesar(f):
             geom_int   = f.geometry().intersection(area_busqueda, 1)
             geom_final = geom_int.difference(sinap_geom, 1)
@@ -138,6 +142,7 @@ def construir_areas_candidatas(gdf, contexto):
             # Para el mapa: geometría real de las features (polígonos reales)
             'geom_conservar_ee': _fc_union_geojson(conservar_fc),
             'geom_restaurar_ee': _fc_union_geojson(restaurar_fc),
+            'geom_runap_ee':     _geom_to_geojson(sinap.filterBounds(geom_busqueda).geometry()),
         }
 
     r1 = filtrar_candidatas(geom_mun, bioma_impacto)
@@ -145,6 +150,7 @@ def construir_areas_candidatas(gdf, contexto):
     r3 = filtrar_candidatas(geom_zh,  bioma_impacto)
     r4 = filtrar_candidatas(geom_mun, bioma_impacto, es_otro_bioma=True)
     r5 = filtrar_candidatas(geom_szh, bioma_impacto, es_otro_bioma=True)
+    r6 = filtrar_candidatas(geom_zh,  bioma_impacto, es_otro_bioma=True)
 
     return {
         'Rango 1': clasificar_y_resumir(r1, geom_mun),
@@ -152,4 +158,5 @@ def construir_areas_candidatas(gdf, contexto):
         'Rango 3': clasificar_y_resumir(r3, geom_zh),
         'Rango 4': clasificar_y_resumir(r4, geom_mun),
         'Rango 5': clasificar_y_resumir(r5, geom_szh),
+        'Rango 6': clasificar_y_resumir(r6, geom_zh),
     }

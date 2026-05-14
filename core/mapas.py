@@ -1,154 +1,126 @@
 # -*- coding: utf-8 -*-
 import ee
-import requests
-from shapely.geometry import mapping
-from shapely.ops import transform as shp_transform
+import folium
+import geopandas as gpd
 from config import settings
 
-# Colores por rango para las zonas candidatas
-COLORES_RANGO = {
-    'Rango 1': 'FFFF00',  # amarillo
-    'Rango 2': '00FFFF',  # cyan
-    'Rango 3': 'FF00FF',  # magenta
-    'Rango 4': 'FF8800',  # naranja
-    'Rango 5': 'FFFFFF',  # blanco
-}
-
-
-def _strip_z(geom):
-    return shp_transform(lambda x, y, z=None: (x, y), geom)
-
-
-def _gdf_to_ee_fc(gdf_impacto):
-    features = []
-    for _, row in gdf_impacto.iterrows():
-        geom = _strip_z(row.geometry)
-        if not geom.is_empty:
-            features.append(ee.Feature(ee.Geometry(mapping(geom))))
-    return ee.FeatureCollection(features)
-
-
-def _geojson_to_ee_geom(geojson_dict):
-    """Convierte dict GeoJSON a ee.Geometry. Retorna None si falla."""
-    if not geojson_dict:
-        return None
-    try:
-        return ee.Geometry(geojson_dict)
-    except Exception:
-        return None
-
-
-def _thumb_url(img, region_geom, dims=800):
-    """Genera URL de thumbnail. Retorna None si falla."""
-    try:
-        coords = region_geom.bounds().coordinates().getInfo()[0]
-        url = img.getThumbURL({
-            'region':     {'type': 'Polygon', 'coordinates': [coords]},
-            'dimensions': dims,
-            'format':     'png',
-        })
-        return url
-    except Exception as e:
-        print(f"[mapas] getThumbURL error: {e}")
-        return None
-
-
-def obtener_url_mapa_estatico(gdf_impacto, bioma_principal):
+def obtener_mapa_contexto(gdf_impacto, bioma_principal):
     """
-    Vista general: Sentinel-2 + bioma completo (verde) + polígono impacto (rojo).
+    Mapa interactivo general (Folium).
+    Muestra polígono de impacto y bioma.
     """
     try:
-        ee_impacto = _gdf_to_ee_fc(gdf_impacto)
-        region     = ee_impacto.geometry().buffer(5000).bounds()
+        # Calcular centroide para el mapa
+        centroide = gdf_impacto.geometry.unary_union.centroid
+        m = folium.Map(location=[centroide.y, centroide.x], zoom_start=11, control_scale=True)
+        
+        # Mapa base de satélite (Esri World Imagery)
+        folium.TileLayer(
+            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            attr='Esri',
+            name='Satélite',
+            overlay=False,
+            control=True
+        ).add_to(m)
 
-        s2 = (
-            ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-            .filterBounds(ee_impacto.geometry())
-            .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
-            .median()
-        )
-        img_rgb  = s2.visualize(bands=['B4', 'B3', 'B2'], min=0, max=3000)
+        # Polígono Impacto
+        impacto_geojson = gdf_impacto.__geo_interface__
+        folium.GeoJson(
+            impacto_geojson,
+            name='Zona de Impacto',
+            style_function=lambda x: {'fillColor': '#FFFF00', 'color': '#FFFF00', 'weight': 3, 'fillOpacity': 0.4}
+        ).add_to(m)
 
-        ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
-        candidatas  = ecosistemas.filter(ee.Filter.eq('BIOMA_IAvH', bioma_principal))
-        img_cand    = candidatas.style(color='00FF00', fillColor='00FF0033', width=1)
-        img_imp     = ee_impacto.style(color='FF0000', fillColor='FF000033', width=3)
-
-        final = img_rgb.blend(img_cand).blend(img_imp)
-        return _thumb_url(final, region)
+        folium.LayerControl().add_to(m)
+        return m
 
     except Exception as e:
-        print(f"[mapas] Error mapa general: {e}")
+        print(f"[mapas] Error mapa general interactivo: {e}")
         return None
-
 
 def obtener_mapas_por_rango(gdf_impacto, cand_results):
     """
-    Genera una URL de thumbnail por rango.
-    Cada imagen muestra:
-      - Sentinel-2 de fondo
-      - Zonas a Conservar (Natural) en VERDE
-      - Zonas a Restaurar (Transformado) en NARANJA
-      - Polígono de impacto en ROJO
-    Retorna dict {rango: url_o_None}
+    Genera un diccionario con un folium.Map para cada rango.
+    Estilos:
+      - Borde azul: límite del rango
+      - Amarillo: polígono del impacto
+      - Verde oscuro: Conservar
+      - Naranja: Restaurar
+      - Rojo semitransparente: RUNAP
+      - Blanco punteado: seleccionadas (simulado en Conservar/Restaurar)
     """
-    try:
-        ee_impacto = _gdf_to_ee_fc(gdf_impacto)
-        img_imp    = ee_impacto.style(color='FF0000', fillColor='FF000066', width=3)
-    except Exception as e:
-        print(f"[mapas] Error preparando impacto: {e}")
-        return {}
-
     mapas = {}
+    
+    try:
+        centroide = gdf_impacto.geometry.unary_union.centroid
+        impacto_geojson = gdf_impacto.__geo_interface__
+    except Exception as e:
+        print(f"[mapas] Error preparando impacto para folium: {e}")
+        return {}
 
     for rango, datos in cand_results.items():
         try:
-            geom_cons_dict = datos.get('geom_conservar_ee')
-            geom_rest_dict = datos.get('geom_restaurar_ee')
-            geom_tot_dict  = datos.get('geom_total')
+            m = folium.Map(location=[centroide.y, centroide.x], zoom_start=10, control_scale=True)
+            
+            # Satélite
+            folium.TileLayer(
+                tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                attr='Esri',
+                name='Satélite',
+                overlay=False,
+                control=True
+            ).add_to(m)
 
-            # Región de la imagen: bbox del área de búsqueda
+            # 1. Límite del Rango (Borde Azul)
+            geom_tot_dict = datos.get('geom_total')
             if geom_tot_dict:
-                region = ee.Geometry(geom_tot_dict).bounds()
-            else:
-                region = ee_impacto.geometry().buffer(10000).bounds()
+                folium.GeoJson(
+                    geom_tot_dict,
+                    name=f'Límite {rango}',
+                    style_function=lambda x: {'fillColor': '#0000FF', 'color': '#0000FF', 'weight': 2, 'fillOpacity': 0.05}
+                ).add_to(m)
 
-            # Imagen base Sentinel-2
-            s2 = (
-                ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-                .filterBounds(region)
-                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
-                .median()
-            )
-            img_rgb = s2.visualize(bands=['B4', 'B3', 'B2'], min=0, max=3000)
-            final   = img_rgb
+            # 2. RUNAP (Rojo Semitransparente)
+            geom_runap = datos.get('geom_runap_ee')
+            if geom_runap:
+                folium.GeoJson(
+                    geom_runap,
+                    name='Exclusión RUNAP',
+                    style_function=lambda x: {'fillColor': '#FF0000', 'color': '#FF0000', 'weight': 1, 'fillOpacity': 0.3}
+                ).add_to(m)
 
-            # Capa Conservar (verde)
-            if geom_cons_dict:
-                try:
-                    fc_cons  = ee.FeatureCollection([ee.Feature(ee.Geometry(geom_cons_dict))])
-                    img_cons = fc_cons.style(color='00FF00', fillColor='00FF0066', width=2)
-                    final    = final.blend(img_cons)
-                except Exception:
-                    pass
+            # 3. Zonas a Conservar (Verde oscuro) y "Seleccionadas" (Borde blanco punteado)
+            # Para demostrar el "borde blanco punteado" simulamos que todas las candidatas son las seleccionadas 
+            # para el plan, ya que actualmente no hay una selección parcial implementada.
+            geom_cons = datos.get('geom_conservar_ee')
+            if geom_cons:
+                folium.GeoJson(
+                    geom_cons,
+                    name='Candidatas a Conservar',
+                    style_function=lambda x: {'fillColor': '#006400', 'color': '#FFFFFF', 'weight': 2, 'dashArray': '5, 5', 'fillOpacity': 0.6}
+                ).add_to(m)
 
-            # Capa Restaurar (naranja)
-            if geom_rest_dict:
-                try:
-                    fc_rest  = ee.FeatureCollection([ee.Feature(ee.Geometry(geom_rest_dict))])
-                    img_rest = fc_rest.style(color='FF8800', fillColor='FF880066', width=2)
-                    final    = final.blend(img_rest)
-                except Exception:
-                    pass
+            # 4. Zonas a Restaurar (Naranja) y "Seleccionadas" (Borde blanco punteado)
+            geom_rest = datos.get('geom_restaurar_ee')
+            if geom_rest:
+                folium.GeoJson(
+                    geom_rest,
+                    name='Candidatas a Restaurar',
+                    style_function=lambda x: {'fillColor': '#FF8C00', 'color': '#FFFFFF', 'weight': 2, 'dashArray': '5, 5', 'fillOpacity': 0.6}
+                ).add_to(m)
 
-            # Capa impacto (rojo)
-            final = final.blend(img_imp)
+            # 5. Polígono de Impacto (Amarillo)
+            folium.GeoJson(
+                impacto_geojson,
+                name='Zona de Impacto',
+                style_function=lambda x: {'fillColor': '#FFFF00', 'color': '#FFFF00', 'weight': 3, 'fillOpacity': 0.4}
+            ).add_to(m)
 
-            url = _thumb_url(final, region, dims=700)
-            mapas[rango] = url
-
+            folium.LayerControl().add_to(m)
+            mapas[rango] = m
+            
         except Exception as e:
-            print(f"[mapas] Error rango {rango}: {e}")
+            print(f"[mapas] Error rango {rango} folium: {e}")
             mapas[rango] = None
 
     return mapas

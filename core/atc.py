@@ -9,8 +9,8 @@ def calcular_atc_por_rangos(analisis_inventario, contexto):
     areas_impacto = contexto['areas_cobertura']
     resultados_atc = {}
     
-    # Iterar por los 5 rangos (1 a 5)
-    for rango_id in range(1, 6):
+    # Iterar por los 6 rangos (1 a 6)
+    for rango_id in range(1, 7):
         factor_adicional = settings.FACTORES_RANGO.get(rango_id, 0.0)
         atc_total_rango = 0.0
         detalles_cobertura = []
