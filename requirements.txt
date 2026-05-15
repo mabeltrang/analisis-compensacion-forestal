@@ -3,14 +3,10 @@ pandas
 geopandas
 shapely
 fiona
-openpyxl
+contextily
 earthengine-api
+openpyxl
 python-docx
-requests
-pykml
-fastkml
-typing-extensions
-matplotlib
-scipy
 folium
 streamlit-folium
+geemap

@@ -1,0 +1,13 @@
+{
+  "Bosque denso": {"valor": 1.0, "tipo": "natural"},
+  "Bosque abierto": {"valor": 0.8, "tipo": "natural"},
+  "Bosque fragmentado": {"valor": 0.7, "tipo": "natural"},
+  "Vegetación secundaria alta": {"valor": 0.6, "tipo": "natural"},
+  "Vegetación secundaria baja": {"valor": 0.5, "tipo": "natural"},
+  "Pastos limpios": {"valor": 1.0, "tipo": "transformada"},
+  "Pastos arbolados": {"valor": 1.0, "tipo": "transformada"},
+  "Mosaico de pastos y cultivos": {"valor": 1.0, "tipo": "transformada"},
+  "Mosaico de cultivos": {"valor": 1.0, "tipo": "transformada"},
+  "Tejido urbano continuo": {"valor": 1.0, "tipo": "transformada"},
+  "Tejido urbano discontinuo": {"valor": 1.0, "tipo": "transformada"}
+}
