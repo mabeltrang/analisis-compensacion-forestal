@@ -1,111 +1,337 @@
 # -*- coding: utf-8 -*-
 """
-Cálculo del Área Total a Compensar (ATC) por rango — Manual 2026.
+App de Planes de Compensación Biótica - Unergy
+Manual 2026 (Resolución 0305/2026 MADS) - Versión 2
 
-LÓGICA v6 (definitiva):
-  - El área REAL viene de IDEAM (cruce KMZ × Shape_E_ECCMC).
-  - El FCAFU se calcula del inventario.
-  - HOMOLOGACIÓN: cada cobertura GEE se homologa con la cobertura más
-    parecida del inventario, prefiriendo el match MÁS LITERAL (sin
-    palabras extra que puedan confundir).
+VERSIÓN RÁPIDA: sin construcción de mapas R1-R6 pesados.
+Los mapas se generan aparte con el script de GEE Editor
+(script_compensacion_v6_adicionalidad.js) y se abren en QGIS/ArcMap.
+
+Esta app solo:
+  - Recibe KMZ + Excel
+  - Detecta contexto (BIOMA, ZH, SZH, Municipio)
+  - Calcula FCAFU = 1 + A + B + C por cobertura
+  - Calcula ATC para los 6 rangos
+  - Calcula adicionalidad por área
 """
+import streamlit as st
+import pandas as pd
+import io
+import os
+import tempfile
+
+# Módulo core/ (NO core.py legacy)
+from core import inputs, contexto, inventario, atc, utils
 from config import settings
-import unicodedata
 
 
-def _normalizar(s):
-    if not s:
-        return ""
-    s = str(s)
-    s = "".join(c for c in unicodedata.normalize('NFD', s)
-                if unicodedata.category(c) != 'Mn')
-    return s.lower().strip()
+# ═══════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN DE PÁGINA
+# ═══════════════════════════════════════════════════════════════════
+
+st.set_page_config(
+    page_title="Compensación Biótica - Unergy",
+    page_icon="🌿",
+    layout="wide"
+)
+
+st.title("🌿 App de Planes de Compensación Biótica")
+st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 2")
+st.caption("Solo adicionalidad por área (ha). Los mapas R1-R6 se generan con el script de GEE Editor.")
 
 
-def _score_homologacion(nombre_inv, nombre_gee):
-    """
-    Score 0-100:
-      100 = match exacto
-      90  = gee contiene a inv (ej: inv='Pastos limpios', gee='Pastos limpios')
-      80  = inv contiene a gee (ej: gee='Pastos', inv='Pastos limpios')
-      60  = primera palabra coincide
-      30  = comparten palabras significativas
-       0  = sin relación
-    """
-    a = _normalizar(nombre_inv)
-    b = _normalizar(nombre_gee)
-    if not a or not b:
-        return 0
-    if a == b:
-        return 100
-    # Si GEE da el nombre COMPLETO del inventario, es el ideal
-    if a in b:
-        return 90
-    # Si el INVENTARIO es una especialización del GEE
-    # (ej: gee="Pastos" -> inv="Pastos limpios") es bueno
-    # PERO solo si la PRIMERA palabra coincide
-    palabras_a = a.split()
-    palabras_b = b.split()
-    if palabras_a and palabras_b:
-        # Primera palabra debe coincidir para considerar homologación
-        if palabras_a[0] == palabras_b[0]:
-            if b in a:
-                # GEE simple, inventario más específico, primera palabra =
-                # Ej: gee="Pastos", inv="Pastos limpios" → SÍ homologa
-                return 80
-            # Comparten primera palabra (pastos = pastos)
-            return 60
-    # Palabras significativas en común (sin la primera palabra)
-    palabras_a_sig = set(w for w in palabras_a[1:] if len(w) > 3)
-    palabras_b_sig = set(w for w in palabras_b[1:] if len(w) > 3)
-    interseccion = palabras_a_sig & palabras_b_sig
-    if interseccion:
-        return 30
-    return 0
+# ═══════════════════════════════════════════════════════════════════
+# SIDEBAR — CARGA DE DATOS
+# ═══════════════════════════════════════════════════════════════════
+
+with st.sidebar:
+    st.header("1. Carga de Datos")
+
+    impacto_file = st.file_uploader(
+        "Polígono de Impacto (KMZ / KML / ZIP-SHP)",
+        type=["kmz", "kml", "zip"]
+    )
+    excel_file = st.file_uploader(
+        "Inventario Forestal (Excel)",
+        type=["xlsx", "xls"]
+    )
+
+    st.markdown("---")
+    st.info(
+        "**Columnas esperadas en el Excel:**\n"
+        "- Nombre científico\n"
+        "- DAP a (m) [se convierte a cm]\n"
+        "- Cobertura\n"
+        "- AB t (m2) [opcional]\n\n"
+        "La app auto-detecta la fila de encabezado y los nombres "
+        "alternativos de columnas."
+    )
+
+    st.markdown("---")
+    dap_min = st.number_input(
+        "DAP mínimo (cm)",
+        min_value=1.0,
+        max_value=30.0,
+        value=float(settings.DAP_MIN_DEFAULT),
+        step=0.5,
+        help="Árboles con DAP menor a este valor se excluyen del cálculo del FCAFU"
+    )
 
 
-def calcular_atc_por_rangos(analisis_inventario, contexto):
-    areas_gee = dict(contexto.get('areas_cobertura', {}) or {})
-    coberturas_inv = list(analisis_inventario.keys())
+# ═══════════════════════════════════════════════════════════════════
+# FLUJO PRINCIPAL
+# ═══════════════════════════════════════════════════════════════════
 
-    areas_por_cobertura_inv = {cob: 0.0 for cob in coberturas_inv}
+if impacto_file and excel_file:
 
-    # Para cada cobertura del IDEAM, encontrar el mejor match del inventario
-    for cob_gee, area_gee in areas_gee.items():
-        mejor_score = 0
-        mejor_cob_inv = None
-        for cob_inv in coberturas_inv:
-            score = _score_homologacion(cob_inv, cob_gee)
-            if score > mejor_score:
-                mejor_score = score
-                mejor_cob_inv = cob_inv
+    # ─── PASO 1: GEE ──────────────────────────────────────────────
+    with st.spinner("Conectando a Google Earth Engine..."):
+        success, msg = utils.init_gee_session()
+        if not success:
+            st.error(f"❌ {msg}")
+            st.stop()
+        st.success(f"✓ {msg}")
 
-        if mejor_cob_inv and mejor_score >= 30:
-            areas_por_cobertura_inv[mejor_cob_inv] += area_gee
-        elif coberturas_inv:
-            # Fallback: si no hay match razonable, primera del inv
-            areas_por_cobertura_inv[coberturas_inv[0]] += area_gee
+    # ─── PASO 2: KMZ → contexto geográfico ─────────────────────────
+    with st.spinner("Cargando polígono de impacto..."):
+        try:
+            gdf_impacto = inputs.cargar_poligono_impacto(
+                impacto_file, impacto_file.name
+            )
+            ok, msg = inputs.validar_geometria(gdf_impacto)
+            if not ok:
+                st.error(f"❌ {msg}")
+                st.stop()
 
-    resultados_atc = {}
-    for rango_id in range(1, 7):
-        factor_adicional = settings.FACTORES_RANGO.get(rango_id, 0.0)
-        atc_total_rango = 0.0
-        detalles_cobertura = []
-        for cob_inv, area_ha in areas_por_cobertura_inv.items():
-            f_data = analisis_inventario.get(cob_inv, {})
-            fcafu_base = f_data.get('FCAFU', 1.0)
-            atc_parcial = area_ha * (fcafu_base + factor_adicional)
-            atc_total_rango += atc_parcial
-            detalles_cobertura.append({
-                'cobertura': cob_inv,
-                'area_impacto_ha': round(area_ha, 4),
-                'fcafu_base': round(fcafu_base, 3),
-                'factor_rango': factor_adicional,
-                'atc_parcial': round(atc_parcial, 4)
-            })
-        resultados_atc[f"Rango {rango_id}"] = {
-            'atc_total': atc_total_rango,
-            'detalles': detalles_cobertura,
-            'factor_adicional': factor_adicional
-        }
-    return resultados_atc
+            gdf_proj = gdf_impacto.to_crs(epsg=3857)
+            area_impacto_ha = gdf_proj.geometry.area.sum() / 10000
+        except Exception as e:
+            st.error(f"❌ Error cargando el polígono: {e}")
+            st.stop()
+
+    with st.spinner("Cruzando con capas IDEAM, ZH y municipios..."):
+        try:
+            ctx = contexto.obtener_contexto_impacto(gdf_impacto)
+        except Exception as e:
+            st.error(f"❌ Error obteniendo contexto geográfico: {e}")
+            st.stop()
+
+    # ─── PASO 3: Procesar inventario forestal ──────────────────────
+    with st.spinner("Procesando inventario forestal (FCAFU = 1 + A + B + C)..."):
+        try:
+            with tempfile.NamedTemporaryFile(
+                delete=False, suffix=".xlsx"
+            ) as tmp:
+                tmp.write(excel_file.getbuffer())
+                excel_path = tmp.name
+
+            fcafu_por_cobertura = inventario.procesar_inventario(
+                excel_path, dap_min=dap_min
+            )
+            os.unlink(excel_path)
+        except Exception as e:
+            st.error(f"❌ Error procesando inventario: {e}")
+            st.stop()
+
+    # ─── PASO 4: ATC por rango ─────────────────────────────────────
+    with st.spinner("Calculando Área Total a Compensar por rango..."):
+        try:
+            atc_resultados = atc.calcular_atc_por_rangos(
+                fcafu_por_cobertura, ctx
+            )
+        except Exception as e:
+            st.error(f"❌ Error calculando ATC: {e}")
+            st.stop()
+
+    st.success("✅ Procesamiento completo")
+
+    # ═══════════════════════════════════════════════════════════════
+    # UI: BLOQUE 1 — CONTEXTO DEL PROYECTO
+    # ═══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.header("📍 Contexto del Proyecto")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.metric("Área de Impacto", f"{area_impacto_ha:.2f} ha")
+        st.write(f"**Municipio:** {ctx.get('municipio', 'n/d')}")
+        st.write(f"**Departamento:** {ctx.get('departamento', 'n/d')}")
+    with c2:
+        st.write(f"**BIOMA-IAvH:** {ctx.get('bioma_principal', 'n/d')}")
+        st.write(f"**ZH:** {ctx.get('zh', 'n/d')}")
+        st.write(f"**SZH:** {ctx.get('szh', 'n/d')}")
+
+    if ctx.get('areas_cobertura'):
+        st.subheader("Coberturas Impactadas (según IDEAM)")
+        df_cob = pd.DataFrame([
+            {"Cobertura": k, "Área (ha)": round(v, 4)}
+            for k, v in ctx['areas_cobertura'].items()
+        ])
+        st.dataframe(df_cob, use_container_width=True, hide_index=True)
+    else:
+        st.warning(
+            "⚠️ No se detectaron coberturas IDEAM en el polígono. "
+            "Verifica que el KMZ esté en Colombia y dentro de un BIOMA-IAvH."
+        )
+
+    # ═══════════════════════════════════════════════════════════════
+    # UI: BLOQUE 2 — FCAFU CALCULADO
+    # ═══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.header("🌳 FCAFU por Cobertura")
+    st.caption("Fórmula del Manual 2026: FCAFU = 1 + A + B + C")
+
+    if fcafu_por_cobertura:
+        df_fcafu = pd.DataFrame([
+            {
+                "Cobertura": cob,
+                "N (individuos)": d.get('N', 0),
+                "S (especies)": d.get('S', 0),
+                "A (cobertura)": round(d.get('A', 0) or 0, 3),
+                "B (amenaza)": round(d.get('B', 0) or 0, 3),
+                "C (mezcla)": round(d.get('C', 0) or 0, 3),
+                "FCAFU": round(d.get('FCAFU', 0) or 0, 3)
+            }
+            for cob, d in fcafu_por_cobertura.items()
+        ])
+        st.dataframe(df_fcafu, use_container_width=True, hide_index=True)
+
+        amenazadas_total = []
+        for cob, d in fcafu_por_cobertura.items():
+            for sp in d.get('amenazadas', []):
+                amenazadas_total.append({**sp, 'cobertura': cob})
+        if amenazadas_total:
+            with st.expander(
+                f"⚠️ Especies amenazadas detectadas ({len(amenazadas_total)})"
+            ):
+                st.dataframe(
+                    pd.DataFrame(amenazadas_total),
+                    use_container_width=True, hide_index=True
+                )
+    else:
+        st.warning(
+            "⚠️ El inventario no generó cálculos FCAFU. "
+            "Verifica que el Excel tenga las columnas: "
+            "**Nombre científico**, **DAP a (m)**, **Cobertura**."
+        )
+
+    # ═══════════════════════════════════════════════════════════════
+    # UI: BLOQUE 3 — ATC POR RANGO
+    # ═══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.header("📐 Área Total a Compensar (ATC) por Rango")
+    st.caption("Fórmula: ATC = Σ (área_cobertura × (FCAFU + factor_rango))")
+
+    if atc_resultados:
+        df_atc = pd.DataFrame([
+            {
+                "Rango": rango_id,
+                "Factor +": data['factor_adicional'],
+                "ATC total (ha)": round(data['atc_total'], 3),
+            }
+            for rango_id, data in atc_resultados.items()
+        ])
+        st.dataframe(df_atc, use_container_width=True, hide_index=True)
+
+        for rango_id, data in atc_resultados.items():
+            with st.expander(f"Ver detalle de {rango_id}"):
+                if data.get('detalles'):
+                    df_det = pd.DataFrame(data['detalles'])
+                    st.dataframe(df_det, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Sin detalles disponibles para este rango.")
+    else:
+        st.warning("⚠️ No se calcularon ATC. Revisa el inventario.")
+
+    # ═══════════════════════════════════════════════════════════════
+    # UI: BLOQUE 4 — ADICIONALIDAD POR ÁREA
+    # ═══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.header("🌱 Adicionalidad Esperada (solo área)")
+
+    st.markdown(
+        "**Conservar** (cerramiento): `ha × tasa_BAU × 15 × 0.85` → "
+        "*hectáreas que NO se pierden gracias al Plan*"
+    )
+    st.markdown(
+        "**Restaurar** (siembra activa): `ha × 0.75` → "
+        "*hectáreas que SE ganan gracias al Plan*"
+    )
+
+    TASA_BAU = 0.0062
+    HORIZONTE = settings.HORIZONTE_TEMPORAL
+    F_CONSERVAR = 0.85
+    F_RESTAURAR = 0.75
+
+    if atc_resultados:
+        df_adic = pd.DataFrame([
+            {
+                "Rango": rango_id,
+                "ATC (ha)": round(data['atc_total'], 2),
+                "Si todo Conservar (ha adic)": round(
+                    data['atc_total'] * TASA_BAU * HORIZONTE * F_CONSERVAR, 3
+                ),
+                "Si todo Restaurar (ha adic)": round(
+                    data['atc_total'] * F_RESTAURAR, 3
+                ),
+                "Mix 50/50 (ha adic)": round(
+                    0.5 * data['atc_total'] * TASA_BAU * HORIZONTE * F_CONSERVAR
+                    + 0.5 * data['atc_total'] * F_RESTAURAR, 3
+                )
+            }
+            for rango_id, data in atc_resultados.items()
+        ])
+        st.dataframe(df_adic, use_container_width=True, hide_index=True)
+
+    # ═══════════════════════════════════════════════════════════════
+    # UI: BLOQUE 5 — INSTRUCCIÓN PARA MAPAS (NUEVO)
+    # ═══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.header("🗺️ Mapas y Análisis Espacial")
+
+    st.info(
+        "**Los mapas de áreas candidatas (R1-R6) se generan aparte en "
+        "Google Earth Engine Editor**, no en esta app.\n\n"
+        "Para generar los mapas:\n"
+        "1. Abre `code.earthengine.google.com`\n"
+        "2. Pega el script `script_compensacion_v6_adicionalidad.js`\n"
+        "3. Reemplaza el asset del impacto por tu KMZ\n"
+        "4. Run → Pestaña Tasks → Run a las exportaciones\n"
+        "5. Las salidas llegan a tu Google Drive → carpeta `GEE_Compensacion`\n"
+        "6. Abre los shapefiles en QGIS o ArcMap para selección visual"
+    )
+
+    # ═══════════════════════════════════════════════════════════════
+    # UI: BLOQUE 6 — BIBLIOGRAFÍA
+    # ═══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.header("📚 Factores de Efectividad — Fuentes")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("**🌳 CONSERVAR (cerramiento) — Factor: 0.85**")
+        st.markdown(
+            "- Andam et al. (2008) PNAS — "
+            "[10.1073/pnas.0800437105]"
+            "(https://doi.org/10.1073/pnas.0800437105)"
+        )
+        st.markdown(
+            "- Pfaff et al. (2014) World Development — "
+            "[10.1016/j.worlddev.2013.01.011]"
+            "(https://doi.org/10.1016/j.worlddev.2013.01.011)"
+        )
+    with c2:
+        st.markdown("**🌱 RESTAURAR (siembra activa) — Factor: 0.75**")
+        st.markdown(
+            "- Crouzeilles et al. (2017) Science Advances — "
+            "[10.1126/sciadv.1701345]"
+            "(https://doi.org/10.1126/sciadv.1701345)"
+        )
+        st.markdown(
+            "- González-M. et al. (2018) Catálogo BST IAvH — "
+            "[Ver]"
+            "(http://repository.humboldt.org.co/handle/20.500.11761/35442)"
+        )
+
+else:
+    st.info("👈 Sube un polígono de impacto y un inventario forestal en el panel lateral.")
