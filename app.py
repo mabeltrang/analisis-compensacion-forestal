@@ -2,18 +2,26 @@
 """
 App de Planes de Compensación Biótica - Unergy
 Manual 2026 (Resolución 0305/2026 MADS) - Versión 2
-Con mapas folium integrados.
+
+VERSIÓN RÁPIDA: sin construcción de mapas R1-R6 pesados.
+Los mapas se generan aparte con el script de GEE Editor
+(script_compensacion_v6_adicionalidad.js) y se abren en QGIS/ArcMap.
+
+Esta app solo:
+  - Recibe KMZ + Excel
+  - Detecta contexto (BIOMA, ZH, SZH, Municipio)
+  - Calcula FCAFU = 1 + A + B + C por cobertura
+  - Calcula ATC para los 6 rangos
+  - Calcula adicionalidad por área
 """
 import streamlit as st
 import pandas as pd
 import io
 import os
 import tempfile
-import folium
-from streamlit_folium import st_folium
 
 # Módulo core/ (NO core.py legacy)
-from core import inputs, contexto, inventario, atc, rangos, mapas, utils
+from core import inputs, contexto, inventario, atc, utils
 from config import settings
 
 
@@ -29,7 +37,7 @@ st.set_page_config(
 
 st.title("🌿 App de Planes de Compensación Biótica")
 st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 2")
-st.caption("Solo adicionalidad por área (ha). La adicionalidad por biodiversidad queda para v2.")
+st.caption("Solo adicionalidad por área (ha). Los mapas R1-R6 se generan con el script de GEE Editor.")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -135,14 +143,6 @@ if impacto_file and excel_file:
             st.error(f"❌ Error calculando ATC: {e}")
             st.stop()
 
-    # ─── PASO 5: Áreas candidatas por rango (para mapas) ──────────
-    with st.spinner("Construyendo áreas candidatas en GEE para los mapas..."):
-        try:
-            cand_results = rangos.construir_areas_candidatas(gdf_impacto, ctx)
-        except Exception as e:
-            st.warning(f"⚠️ No se pudieron construir todas las áreas candidatas: {e}")
-            cand_results = {}
-
     st.success("✅ Procesamiento completo")
 
     # ═══════════════════════════════════════════════════════════════
@@ -161,18 +161,6 @@ if impacto_file and excel_file:
         st.write(f"**ZH:** {ctx.get('zh', 'n/d')}")
         st.write(f"**SZH:** {ctx.get('szh', 'n/d')}")
 
-    # Mapa general de contexto
-    st.subheader("🗺️ Mapa General")
-    try:
-        mapa_contexto = mapas.obtener_mapa_contexto(
-            gdf_impacto, ctx.get('bioma_principal')
-        )
-        if mapa_contexto:
-            st_folium(mapa_contexto, width=900, height=400, key="mapa_contexto")
-    except Exception as e:
-        st.warning(f"No se pudo generar el mapa de contexto: {e}")
-
-    # Coberturas impactadas según GEE
     if ctx.get('areas_cobertura'):
         st.subheader("Coberturas Impactadas (según IDEAM)")
         df_cob = pd.DataFrame([
@@ -208,7 +196,6 @@ if impacto_file and excel_file:
         ])
         st.dataframe(df_fcafu, use_container_width=True, hide_index=True)
 
-        # Especies amenazadas detectadas
         amenazadas_total = []
         for cob, d in fcafu_por_cobertura.items():
             for sp in d.get('amenazadas', []):
@@ -257,34 +244,7 @@ if impacto_file and excel_file:
         st.warning("⚠️ No se calcularon ATC. Revisa el inventario.")
 
     # ═══════════════════════════════════════════════════════════════
-    # UI: BLOQUE 4 — MAPAS POR RANGO
-    # ═══════════════════════════════════════════════════════════════
-    st.markdown("---")
-    st.header("🗺️ Mapas por Rango (Áreas Candidatas)")
-    st.caption(
-        "Verde: Conservar (Natural) | Naranja: Restaurar (Transformado) | "
-        "Rojo: RUNAP (excluido) | Amarillo: Impacto"
-    )
-
-    if cand_results:
-        try:
-            mapas_rangos = mapas.obtener_mapas_por_rango(gdf_impacto, cand_results)
-            tabs = st.tabs(list(mapas_rangos.keys()))
-            for tab, (rango_nombre, mapa_rango) in zip(tabs, mapas_rangos.items()):
-                with tab:
-                    cand = cand_results.get(rango_nombre, {})
-                    c1, c2, c3 = st.columns(3)
-                    c1.metric("Conservar (ha)", f"{cand.get('ha_conservar', 0):,.1f}")
-                    c2.metric("Restaurar (ha)", f"{cand.get('ha_restaurar', 0):,.1f}")
-                    c3.metric("Total (ha)", f"{cand.get('total', 0):,.1f}")
-                    st_folium(mapa_rango, width=900, height=500, key=f"mapa_{rango_nombre}")
-        except Exception as e:
-            st.warning(f"No se pudieron generar los mapas por rango: {e}")
-    else:
-        st.info("No hay datos de áreas candidatas disponibles para mostrar en el mapa.")
-
-    # ═══════════════════════════════════════════════════════════════
-    # UI: BLOQUE 5 — ADICIONALIDAD POR ÁREA
+    # UI: BLOQUE 4 — ADICIONALIDAD POR ÁREA
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.header("🌱 Adicionalidad Esperada (solo área)")
@@ -322,6 +282,24 @@ if impacto_file and excel_file:
             for rango_id, data in atc_resultados.items()
         ])
         st.dataframe(df_adic, use_container_width=True, hide_index=True)
+
+    # ═══════════════════════════════════════════════════════════════
+    # UI: BLOQUE 5 — INSTRUCCIÓN PARA MAPAS (NUEVO)
+    # ═══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.header("🗺️ Mapas y Análisis Espacial")
+
+    st.info(
+        "**Los mapas de áreas candidatas (R1-R6) se generan aparte en "
+        "Google Earth Engine Editor**, no en esta app.\n\n"
+        "Para generar los mapas:\n"
+        "1. Abre `code.earthengine.google.com`\n"
+        "2. Pega el script `script_compensacion_v6_adicionalidad.js`\n"
+        "3. Reemplaza el asset del impacto por tu KMZ\n"
+        "4. Run → Pestaña Tasks → Run a las exportaciones\n"
+        "5. Las salidas llegan a tu Google Drive → carpeta `GEE_Compensacion`\n"
+        "6. Abre los shapefiles en QGIS o ArcMap para selección visual"
+    )
 
     # ═══════════════════════════════════════════════════════════════
     # UI: BLOQUE 6 — BIBLIOGRAFÍA
