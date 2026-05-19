@@ -2,8 +2,7 @@
 """
 App de Planes de Compensación Biótica - Unergy
 Manual 2026 (Resolución 0305/2026 MADS) - Versión 2
-
-Esta versión utiliza el módulo core/ (no el archivo core.py legacy).
+Con mapas folium integrados.
 """
 import streamlit as st
 import pandas as pd
@@ -14,7 +13,7 @@ import folium
 from streamlit_folium import st_folium
 
 # Módulo core/ (NO core.py legacy)
-from core import inputs, contexto, inventario, atc, rangos, utils
+from core import inputs, contexto, inventario, atc, rangos, mapas, utils
 from config import settings
 
 
@@ -65,7 +64,7 @@ with st.sidebar:
         "DAP mínimo (cm)",
         min_value=1.0,
         max_value=30.0,
-        value=settings.DAP_MIN_DEFAULT,
+        value=float(settings.DAP_MIN_DEFAULT),
         step=0.5,
         help="Árboles con DAP menor a este valor se excluyen del cálculo del FCAFU"
     )
@@ -82,11 +81,6 @@ if impacto_file and excel_file:
         success, msg = utils.init_gee_session()
         if not success:
             st.error(f"❌ {msg}")
-            st.info(
-                "Para usar la app necesitas configurar las credenciales de GEE.\n"
-                "Sube el archivo `gee_service_account.json` a la carpeta `credentials/` "
-                "o configura los Secrets de Streamlit Cloud."
-            )
             st.stop()
         st.success(f"✓ {msg}")
 
@@ -101,7 +95,6 @@ if impacto_file and excel_file:
                 st.error(f"❌ {msg}")
                 st.stop()
 
-            # Calcular área de impacto
             gdf_proj = gdf_impacto.to_crs(epsg=3857)
             area_impacto_ha = gdf_proj.geometry.area.sum() / 10000
         except Exception as e:
@@ -118,7 +111,6 @@ if impacto_file and excel_file:
     # ─── PASO 3: Procesar inventario forestal ──────────────────────
     with st.spinner("Procesando inventario forestal (FCAFU = 1 + A + B + C)..."):
         try:
-            # Guardar el Excel temporal para que pandas pueda leerlo por path
             with tempfile.NamedTemporaryFile(
                 delete=False, suffix=".xlsx"
             ) as tmp:
@@ -143,6 +135,14 @@ if impacto_file and excel_file:
             st.error(f"❌ Error calculando ATC: {e}")
             st.stop()
 
+    # ─── PASO 5: Áreas candidatas por rango (para mapas) ──────────
+    with st.spinner("Construyendo áreas candidatas en GEE para los mapas..."):
+        try:
+            cand_results = rangos.construir_areas_candidatas(gdf_impacto, ctx)
+        except Exception as e:
+            st.warning(f"⚠️ No se pudieron construir todas las áreas candidatas: {e}")
+            cand_results = {}
+
     st.success("✅ Procesamiento completo")
 
     # ═══════════════════════════════════════════════════════════════
@@ -161,6 +161,17 @@ if impacto_file and excel_file:
         st.write(f"**ZH:** {ctx.get('zh', 'n/d')}")
         st.write(f"**SZH:** {ctx.get('szh', 'n/d')}")
 
+    # Mapa general de contexto
+    st.subheader("🗺️ Mapa General")
+    try:
+        mapa_contexto = mapas.obtener_mapa_contexto(
+            gdf_impacto, ctx.get('bioma_principal')
+        )
+        if mapa_contexto:
+            st_folium(mapa_contexto, width=900, height=400, key="mapa_contexto")
+    except Exception as e:
+        st.warning(f"No se pudo generar el mapa de contexto: {e}")
+
     # Coberturas impactadas según GEE
     if ctx.get('areas_cobertura'):
         st.subheader("Coberturas Impactadas (según IDEAM)")
@@ -169,6 +180,11 @@ if impacto_file and excel_file:
             for k, v in ctx['areas_cobertura'].items()
         ])
         st.dataframe(df_cob, use_container_width=True, hide_index=True)
+    else:
+        st.warning(
+            "⚠️ No se detectaron coberturas IDEAM en el polígono. "
+            "Verifica que el KMZ esté en Colombia y dentro de un BIOMA-IAvH."
+        )
 
     # ═══════════════════════════════════════════════════════════════
     # UI: BLOQUE 2 — FCAFU CALCULADO
@@ -177,34 +193,40 @@ if impacto_file and excel_file:
     st.header("🌳 FCAFU por Cobertura")
     st.caption("Fórmula del Manual 2026: FCAFU = 1 + A + B + C")
 
-    df_fcafu = pd.DataFrame([
-        {
-            "Cobertura": cob,
-            "N (individuos)": d['N'],
-            "S (especies)": d['S'],
-            "A (cobertura)": round(d['A'], 3),
-            "B (amenaza)": round(d['B'], 3),
-            "C (mezcla)": round(d['C'], 3),
-            "FCAFU": round(d['FCAFU'], 3)
-        }
-        for cob, d in fcafu_por_cobertura.items()
-    ])
-    st.dataframe(df_fcafu, use_container_width=True, hide_index=True)
+    if fcafu_por_cobertura:
+        df_fcafu = pd.DataFrame([
+            {
+                "Cobertura": cob,
+                "N (individuos)": d.get('N', 0),
+                "S (especies)": d.get('S', 0),
+                "A (cobertura)": round(d.get('A', 0) or 0, 3),
+                "B (amenaza)": round(d.get('B', 0) or 0, 3),
+                "C (mezcla)": round(d.get('C', 0) or 0, 3),
+                "FCAFU": round(d.get('FCAFU', 0) or 0, 3)
+            }
+            for cob, d in fcafu_por_cobertura.items()
+        ])
+        st.dataframe(df_fcafu, use_container_width=True, hide_index=True)
 
-    # Mostrar amenazadas detectadas (si las hay)
-    amenazadas_total = []
-    for cob, d in fcafu_por_cobertura.items():
-        for sp in d.get('amenazadas', []):
-            amenazadas_total.append({**sp, 'cobertura': cob})
-
-    if amenazadas_total:
-        with st.expander(
-            f"⚠️ Especies amenazadas detectadas ({len(amenazadas_total)})"
-        ):
-            st.dataframe(
-                pd.DataFrame(amenazadas_total),
-                use_container_width=True, hide_index=True
-            )
+        # Especies amenazadas detectadas
+        amenazadas_total = []
+        for cob, d in fcafu_por_cobertura.items():
+            for sp in d.get('amenazadas', []):
+                amenazadas_total.append({**sp, 'cobertura': cob})
+        if amenazadas_total:
+            with st.expander(
+                f"⚠️ Especies amenazadas detectadas ({len(amenazadas_total)})"
+            ):
+                st.dataframe(
+                    pd.DataFrame(amenazadas_total),
+                    use_container_width=True, hide_index=True
+                )
+    else:
+        st.warning(
+            "⚠️ El inventario no generó cálculos FCAFU. "
+            "Verifica que el Excel tenga las columnas: "
+            "**Nombre científico**, **DAP a (m)**, **Cobertura**."
+        )
 
     # ═══════════════════════════════════════════════════════════════
     # UI: BLOQUE 3 — ATC POR RANGO
@@ -213,24 +235,56 @@ if impacto_file and excel_file:
     st.header("📐 Área Total a Compensar (ATC) por Rango")
     st.caption("Fórmula: ATC = Σ (área_cobertura × (FCAFU + factor_rango))")
 
-    df_atc = pd.DataFrame([
-        {
-            "Rango": rango_id,
-            "Factor +": data['factor_adicional'],
-            "ATC total (ha)": round(data['atc_total'], 3),
-        }
-        for rango_id, data in atc_resultados.items()
-    ])
-    st.dataframe(df_atc, use_container_width=True, hide_index=True)
+    if atc_resultados:
+        df_atc = pd.DataFrame([
+            {
+                "Rango": rango_id,
+                "Factor +": data['factor_adicional'],
+                "ATC total (ha)": round(data['atc_total'], 3),
+            }
+            for rango_id, data in atc_resultados.items()
+        ])
+        st.dataframe(df_atc, use_container_width=True, hide_index=True)
 
-    # Detalle por rango en expanders
-    for rango_id, data in atc_resultados.items():
-        with st.expander(f"Ver detalle de {rango_id}"):
-            df_det = pd.DataFrame(data['detalles'])
-            st.dataframe(df_det, use_container_width=True, hide_index=True)
+        for rango_id, data in atc_resultados.items():
+            with st.expander(f"Ver detalle de {rango_id}"):
+                if data.get('detalles'):
+                    df_det = pd.DataFrame(data['detalles'])
+                    st.dataframe(df_det, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Sin detalles disponibles para este rango.")
+    else:
+        st.warning("⚠️ No se calcularon ATC. Revisa el inventario.")
 
     # ═══════════════════════════════════════════════════════════════
-    # UI: BLOQUE 4 — ADICIONALIDAD POR ÁREA
+    # UI: BLOQUE 4 — MAPAS POR RANGO
+    # ═══════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.header("🗺️ Mapas por Rango (Áreas Candidatas)")
+    st.caption(
+        "Verde: Conservar (Natural) | Naranja: Restaurar (Transformado) | "
+        "Rojo: RUNAP (excluido) | Amarillo: Impacto"
+    )
+
+    if cand_results:
+        try:
+            mapas_rangos = mapas.obtener_mapas_por_rango(gdf_impacto, cand_results)
+            tabs = st.tabs(list(mapas_rangos.keys()))
+            for tab, (rango_nombre, mapa_rango) in zip(tabs, mapas_rangos.items()):
+                with tab:
+                    cand = cand_results.get(rango_nombre, {})
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Conservar (ha)", f"{cand.get('ha_conservar', 0):,.1f}")
+                    c2.metric("Restaurar (ha)", f"{cand.get('ha_restaurar', 0):,.1f}")
+                    c3.metric("Total (ha)", f"{cand.get('total', 0):,.1f}")
+                    st_folium(mapa_rango, width=900, height=500, key=f"mapa_{rango_nombre}")
+        except Exception as e:
+            st.warning(f"No se pudieron generar los mapas por rango: {e}")
+    else:
+        st.info("No hay datos de áreas candidatas disponibles para mostrar en el mapa.")
+
+    # ═══════════════════════════════════════════════════════════════
+    # UI: BLOQUE 5 — ADICIONALIDAD POR ÁREA
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.header("🌱 Adicionalidad Esperada (solo área)")
@@ -244,33 +298,33 @@ if impacto_file and excel_file:
         "*hectáreas que SE ganan gracias al Plan*"
     )
 
-    # Parámetros (provisionales — refinables)
-    TASA_BAU = 0.0062  # 0.62% anual provisional Hansen
+    TASA_BAU = 0.0062
     HORIZONTE = settings.HORIZONTE_TEMPORAL
     F_CONSERVAR = 0.85
     F_RESTAURAR = 0.75
 
-    df_adic = pd.DataFrame([
-        {
-            "Rango": rango_id,
-            "ATC (ha)": round(data['atc_total'], 2),
-            "Si todo Conservar (ha adic)": round(
-                data['atc_total'] * TASA_BAU * HORIZONTE * F_CONSERVAR, 3
-            ),
-            "Si todo Restaurar (ha adic)": round(
-                data['atc_total'] * F_RESTAURAR, 3
-            ),
-            "Mix 50/50 (ha adic)": round(
-                0.5 * data['atc_total'] * TASA_BAU * HORIZONTE * F_CONSERVAR
-                + 0.5 * data['atc_total'] * F_RESTAURAR, 3
-            )
-        }
-        for rango_id, data in atc_resultados.items()
-    ])
-    st.dataframe(df_adic, use_container_width=True, hide_index=True)
+    if atc_resultados:
+        df_adic = pd.DataFrame([
+            {
+                "Rango": rango_id,
+                "ATC (ha)": round(data['atc_total'], 2),
+                "Si todo Conservar (ha adic)": round(
+                    data['atc_total'] * TASA_BAU * HORIZONTE * F_CONSERVAR, 3
+                ),
+                "Si todo Restaurar (ha adic)": round(
+                    data['atc_total'] * F_RESTAURAR, 3
+                ),
+                "Mix 50/50 (ha adic)": round(
+                    0.5 * data['atc_total'] * TASA_BAU * HORIZONTE * F_CONSERVAR
+                    + 0.5 * data['atc_total'] * F_RESTAURAR, 3
+                )
+            }
+            for rango_id, data in atc_resultados.items()
+        ])
+        st.dataframe(df_adic, use_container_width=True, hide_index=True)
 
     # ═══════════════════════════════════════════════════════════════
-    # UI: BLOQUE 5 — BIBLIOGRAFÍA
+    # UI: BLOQUE 6 — BIBLIOGRAFÍA
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.header("📚 Factores de Efectividad — Fuentes")
@@ -303,11 +357,3 @@ if impacto_file and excel_file:
 
 else:
     st.info("👈 Sube un polígono de impacto y un inventario forestal en el panel lateral.")
-    st.markdown("---")
-    st.markdown(
-        "Esta aplicación calcula automáticamente:\n\n"
-        "1. **FCAFU** por cobertura impactada (criterios A, B, C del Manual 2026)\n"
-        "2. **Área Total a Compensar (ATC)** para los 6 rangos jerárquicos\n"
-        "3. **Adicionalidad esperada** según escenario (Conservar / Restaurar / Mix)\n\n"
-        "Toda la lógica geoespacial se procesa en Google Earth Engine."
-    )
