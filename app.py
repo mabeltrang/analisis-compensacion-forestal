@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 """
 App de Planes de Compensación Biótica - Unergy
-Manual 2026 (Resolución 0305/2026 MADS) - Versión 2
+Manual 2026 (Resolución 0305/2026 MADS) - Versión 3
 
-VERSIÓN RÁPIDA: sin construcción de mapas R1-R6 pesados.
-Los mapas se generan aparte con el script de GEE Editor
-(script_compensacion_v6_adicionalidad.js) y se abren en QGIS/ArcMap.
+NUEVO en esta versión:
+  - El KMZ debe contener carpetas 'Proyecto' (con Minigranja) y 'Coberturas vegetales'.
+  - Lee áreas reales por cobertura desde el KMZ (no usa IDEAM genérico).
+  - El ATC se calcula con FCAFU específico por cobertura: ATC = Σ (área × FCAFU).
 
-Esta app solo:
-  - Recibe KMZ + Excel
-  - Detecta contexto (BIOMA, ZH, SZH, Municipio)
-  - Calcula FCAFU = 1 + A + B + C por cobertura
-  - Calcula ATC para los 6 rangos
-  - Calcula adicionalidad por área
+Estructura esperada del KMZ:
+  📁 Proyecto
+      ├─ Polígono "Minigranja" (área de impacto)
+  📁 Coberturas vegetales
+      ├─ Polígono "2.3.1. Pastos limpios"
+      ├─ Polígono "2.4.4. Mosaico de pastos con espacios naturales"
+      └─ ...
+  📁 Árboles  (se ignora, el inventario viene del Excel)
 """
 import streamlit as st
 import pandas as pd
-import io
 import os
 import tempfile
 
-# Módulo core/ (NO core.py legacy)
 from core import inputs, contexto, inventario, atc, utils
 from config import settings
 
@@ -36,8 +37,8 @@ st.set_page_config(
 )
 
 st.title("🌿 App de Planes de Compensación Biótica")
-st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 2")
-st.caption("Solo adicionalidad por área (ha). Los mapas R1-R6 se generan con el script de GEE Editor.")
+st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 3")
+st.caption("Lee áreas de coberturas directamente del KMZ. Mapas R1-R6 → script GEE Editor.")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -48,8 +49,8 @@ with st.sidebar:
     st.header("1. Carga de Datos")
 
     impacto_file = st.file_uploader(
-        "Polígono de Impacto (KMZ / KML / ZIP-SHP)",
-        type=["kmz", "kml", "zip"]
+        "KMZ del Proyecto (con folders Proyecto/Coberturas)",
+        type=["kmz", "kml"]
     )
     excel_file = st.file_uploader(
         "Inventario Forestal (Excel)",
@@ -58,13 +59,12 @@ with st.sidebar:
 
     st.markdown("---")
     st.info(
-        "**Columnas esperadas en el Excel:**\n"
-        "- Nombre científico\n"
-        "- DAP a (m) [se convierte a cm]\n"
-        "- Cobertura\n"
-        "- AB t (m2) [opcional]\n\n"
-        "La app auto-detecta la fila de encabezado y los nombres "
-        "alternativos de columnas."
+        "**Estructura esperada del KMZ:**\n"
+        "- 📁 Proyecto → con polígono 'Minigranja'\n"
+        "- 📁 Coberturas vegetales → polígonos por tipo\n"
+        "- 📁 Árboles (opcional, se ignora)\n\n"
+        "**Columnas del Excel:**\n"
+        "- Nombre científico, DAP a (m), Cobertura, AB t (m2)"
     )
 
     st.markdown("---")
@@ -74,7 +74,6 @@ with st.sidebar:
         max_value=30.0,
         value=float(settings.DAP_MIN_DEFAULT),
         step=0.5,
-        help="Árboles con DAP menor a este valor se excluyen del cálculo del FCAFU"
     )
 
 
@@ -92,8 +91,8 @@ if impacto_file and excel_file:
             st.stop()
         st.success(f"✓ {msg}")
 
-    # ─── PASO 2: KMZ → contexto geográfico ─────────────────────────
-    with st.spinner("Cargando polígono de impacto..."):
+    # ─── PASO 2: KMZ → polígono impacto + coberturas ────────────
+    with st.spinner("Leyendo polígono de impacto del KMZ..."):
         try:
             gdf_impacto = inputs.cargar_poligono_impacto(
                 impacto_file, impacto_file.name
@@ -102,29 +101,47 @@ if impacto_file and excel_file:
             if not ok:
                 st.error(f"❌ {msg}")
                 st.stop()
-
             gdf_proj = gdf_impacto.to_crs(epsg=3857)
             area_impacto_ha = gdf_proj.geometry.area.sum() / 10000
         except Exception as e:
-            st.error(f"❌ Error cargando el polígono: {e}")
+            st.error(f"❌ Error leyendo el polígono: {e}")
             st.stop()
 
-    with st.spinner("Cruzando con capas IDEAM, ZH y municipios..."):
+    with st.spinner("Leyendo coberturas del KMZ..."):
+        try:
+            coberturas_kmz = inputs.extraer_coberturas_de_kmz(
+                impacto_file, impacto_file.name
+            )
+        except Exception as e:
+            st.warning(f"⚠️ No se pudieron leer coberturas del KMZ: {e}")
+            coberturas_kmz = {}
+
+    with st.spinner("Obteniendo contexto geográfico (BIOMA, ZH, SZH)..."):
         try:
             ctx = contexto.obtener_contexto_impacto(gdf_impacto)
         except Exception as e:
-            st.error(f"❌ Error obteniendo contexto geográfico: {e}")
+            st.error(f"❌ Error contexto: {e}")
             st.stop()
 
-    # ─── PASO 3: Procesar inventario forestal ──────────────────────
-    with st.spinner("Procesando inventario forestal (FCAFU = 1 + A + B + C)..."):
+    # Si encontramos coberturas en el KMZ, REEMPLAZAR las de IDEAM
+    if coberturas_kmz:
+        ctx['areas_cobertura'] = coberturas_kmz
+        fuente_coberturas = "KMZ del proyecto (áreas reales)"
+    else:
+        fuente_coberturas = "IDEAM 1:100K (genérico)"
+        st.warning(
+            "⚠️ No se encontró el folder 'Coberturas vegetales' en el KMZ. "
+            "Se usarán las áreas de IDEAM 1:100K (menos preciso)."
+        )
+
+    # ─── PASO 3: Inventario forestal ────────────────────────────
+    with st.spinner("Procesando inventario (FCAFU = 1 + A + B + C)..."):
         try:
             with tempfile.NamedTemporaryFile(
                 delete=False, suffix=".xlsx"
             ) as tmp:
                 tmp.write(excel_file.getbuffer())
                 excel_path = tmp.name
-
             fcafu_por_cobertura = inventario.procesar_inventario(
                 excel_path, dap_min=dap_min
             )
@@ -133,8 +150,8 @@ if impacto_file and excel_file:
             st.error(f"❌ Error procesando inventario: {e}")
             st.stop()
 
-    # ─── PASO 4: ATC por rango ─────────────────────────────────────
-    with st.spinner("Calculando Área Total a Compensar por rango..."):
+    # ─── PASO 4: ATC por rango ──────────────────────────────────
+    with st.spinner("Calculando ATC por rango..."):
         try:
             atc_resultados = atc.calcular_atc_por_rangos(
                 fcafu_por_cobertura, ctx
@@ -146,7 +163,7 @@ if impacto_file and excel_file:
     st.success("✅ Procesamiento completo")
 
     # ═══════════════════════════════════════════════════════════════
-    # UI: BLOQUE 1 — CONTEXTO DEL PROYECTO
+    # UI: BLOQUE 1 — CONTEXTO
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.header("📍 Contexto del Proyecto")
@@ -161,21 +178,20 @@ if impacto_file and excel_file:
         st.write(f"**ZH:** {ctx.get('zh', 'n/d')}")
         st.write(f"**SZH:** {ctx.get('szh', 'n/d')}")
 
+    st.subheader(f"Coberturas Impactadas ({fuente_coberturas})")
     if ctx.get('areas_cobertura'):
-        st.subheader("Coberturas Impactadas (según IDEAM)")
         df_cob = pd.DataFrame([
             {"Cobertura": k, "Área (ha)": round(v, 4)}
             for k, v in ctx['areas_cobertura'].items()
         ])
+        total_cob = sum(ctx['areas_cobertura'].values())
+        df_cob.loc[len(df_cob)] = ["TOTAL", round(total_cob, 4)]
         st.dataframe(df_cob, use_container_width=True, hide_index=True)
     else:
-        st.warning(
-            "⚠️ No se detectaron coberturas IDEAM en el polígono. "
-            "Verifica que el KMZ esté en Colombia y dentro de un BIOMA-IAvH."
-        )
+        st.warning("⚠️ No se detectaron coberturas.")
 
     # ═══════════════════════════════════════════════════════════════
-    # UI: BLOQUE 2 — FCAFU CALCULADO
+    # UI: BLOQUE 2 — FCAFU
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.header("🌳 FCAFU por Cobertura")
@@ -202,18 +218,11 @@ if impacto_file and excel_file:
                 amenazadas_total.append({**sp, 'cobertura': cob})
         if amenazadas_total:
             with st.expander(
-                f"⚠️ Especies amenazadas detectadas ({len(amenazadas_total)})"
+                f"⚠️ Especies amenazadas ({len(amenazadas_total)})"
             ):
-                st.dataframe(
-                    pd.DataFrame(amenazadas_total),
-                    use_container_width=True, hide_index=True
-                )
+                st.dataframe(pd.DataFrame(amenazadas_total), hide_index=True)
     else:
-        st.warning(
-            "⚠️ El inventario no generó cálculos FCAFU. "
-            "Verifica que el Excel tenga las columnas: "
-            "**Nombre científico**, **DAP a (m)**, **Cobertura**."
-        )
+        st.warning("⚠️ Inventario sin FCAFU. Revisa columnas del Excel.")
 
     # ═══════════════════════════════════════════════════════════════
     # UI: BLOQUE 3 — ATC POR RANGO
@@ -238,24 +247,16 @@ if impacto_file and excel_file:
                 if data.get('detalles'):
                     df_det = pd.DataFrame(data['detalles'])
                     st.dataframe(df_det, use_container_width=True, hide_index=True)
-                else:
-                    st.info("Sin detalles disponibles para este rango.")
-    else:
-        st.warning("⚠️ No se calcularon ATC. Revisa el inventario.")
 
     # ═══════════════════════════════════════════════════════════════
-    # UI: BLOQUE 4 — ADICIONALIDAD POR ÁREA
+    # UI: BLOQUE 4 — ADICIONALIDAD
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.header("🌱 Adicionalidad Esperada (solo área)")
 
     st.markdown(
-        "**Conservar** (cerramiento): `ha × tasa_BAU × 15 × 0.85` → "
-        "*hectáreas que NO se pierden gracias al Plan*"
-    )
-    st.markdown(
-        "**Restaurar** (siembra activa): `ha × 0.75` → "
-        "*hectáreas que SE ganan gracias al Plan*"
+        "**Conservar** (cerramiento): `ha × tasa_BAU × 15 × 0.85` → ha que NO se pierden\n\n"
+        "**Restaurar** (siembra): `ha × 0.75` → ha que SE ganan"
     )
 
     TASA_BAU = 0.0062
@@ -268,10 +269,10 @@ if impacto_file and excel_file:
             {
                 "Rango": rango_id,
                 "ATC (ha)": round(data['atc_total'], 2),
-                "Si todo Conservar (ha adic)": round(
+                "Conservar (ha adic)": round(
                     data['atc_total'] * TASA_BAU * HORIZONTE * F_CONSERVAR, 3
                 ),
-                "Si todo Restaurar (ha adic)": round(
+                "Restaurar (ha adic)": round(
                     data['atc_total'] * F_RESTAURAR, 3
                 ),
                 "Mix 50/50 (ha adic)": round(
@@ -284,21 +285,17 @@ if impacto_file and excel_file:
         st.dataframe(df_adic, use_container_width=True, hide_index=True)
 
     # ═══════════════════════════════════════════════════════════════
-    # UI: BLOQUE 5 — INSTRUCCIÓN PARA MAPAS (NUEVO)
+    # UI: BLOQUE 5 — INSTRUCCIÓN MAPAS
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.header("🗺️ Mapas y Análisis Espacial")
-
     st.info(
-        "**Los mapas de áreas candidatas (R1-R6) se generan aparte en "
-        "Google Earth Engine Editor**, no en esta app.\n\n"
-        "Para generar los mapas:\n"
-        "1. Abre `code.earthengine.google.com`\n"
-        "2. Pega el script `script_compensacion_v6_adicionalidad.js`\n"
-        "3. Reemplaza el asset del impacto por tu KMZ\n"
-        "4. Run → Pestaña Tasks → Run a las exportaciones\n"
-        "5. Las salidas llegan a tu Google Drive → carpeta `GEE_Compensacion`\n"
-        "6. Abre los shapefiles en QGIS o ArcMap para selección visual"
+        "**Mapas de áreas candidatas (R1-R6) en Google Earth Engine.**\n\n"
+        "1. `code.earthengine.google.com`\n"
+        "2. Pegar `script_compensacion_v6_adicionalidad.js`\n"
+        "3. Reemplazar el asset del impacto\n"
+        "4. Run → Tasks → Run exportaciones\n"
+        "5. Shapefiles a Drive → abrir en QGIS/ArcMap"
     )
 
     # ═══════════════════════════════════════════════════════════════
@@ -309,29 +306,34 @@ if impacto_file and excel_file:
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("**🌳 CONSERVAR (cerramiento) — Factor: 0.85**")
+        st.markdown("**🌳 CONSERVAR — Factor: 0.85**")
         st.markdown(
             "- Andam et al. (2008) PNAS — "
-            "[10.1073/pnas.0800437105]"
-            "(https://doi.org/10.1073/pnas.0800437105)"
+            "[10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105)"
         )
         st.markdown(
-            "- Pfaff et al. (2014) World Development — "
-            "[10.1016/j.worlddev.2013.01.011]"
-            "(https://doi.org/10.1016/j.worlddev.2013.01.011)"
+            "- Pfaff et al. (2014) World Dev — "
+            "[10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)"
         )
     with c2:
-        st.markdown("**🌱 RESTAURAR (siembra activa) — Factor: 0.75**")
+        st.markdown("**🌱 RESTAURAR — Factor: 0.75**")
         st.markdown(
-            "- Crouzeilles et al. (2017) Science Advances — "
-            "[10.1126/sciadv.1701345]"
-            "(https://doi.org/10.1126/sciadv.1701345)"
+            "- Crouzeilles et al. (2017) Sci Adv — "
+            "[10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345)"
         )
         st.markdown(
-            "- González-M. et al. (2018) Catálogo BST IAvH — "
-            "[Ver]"
-            "(http://repository.humboldt.org.co/handle/20.500.11761/35442)"
+            "- González-M. et al. (2018) BST IAvH — "
+            "[Ver](http://repository.humboldt.org.co/handle/20.500.11761/35442)"
         )
 
 else:
-    st.info("👈 Sube un polígono de impacto y un inventario forestal en el panel lateral.")
+    st.info("👈 Sube un KMZ y el inventario forestal en el panel lateral.")
+    st.markdown("---")
+    st.markdown(
+        "### Esta app calcula:\n\n"
+        "1. **FCAFU** por cobertura (1 + A + B + C del Manual)\n"
+        "2. **ATC** por rango usando áreas REALES del KMZ\n"
+        "3. **Adicionalidad** por escenario (Conservar / Restaurar / Mix)\n\n"
+        "El KMZ debe contener los folders **Proyecto** (impacto) y "
+        "**Coberturas vegetales** (polígonos por tipo)."
+    )
