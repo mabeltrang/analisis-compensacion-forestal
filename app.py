@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 """
 App de Planes de Compensación Biótica - Unergy
-Manual 2026 (Resolución 0305/2026 MADS) - Versión 4
+Manual 2026 (Resolución 0305/2026 MADS) - Versión 5
 
 NUEVO en esta versión:
-  - Tasa BAU de pérdida de bosque calculada dinámicamente con Hansen GFC
-    sobre el municipio del KMZ (no más valor fijo).
+  - Adicionalidad mostrada por horizonte: anual, 3 años, 5 años, 15 años.
+  - Tasa BAU calculada dinámicamente con Hansen GFC por municipio.
   - Lee áreas reales por cobertura del KMZ.
-  - ATC = Σ (área × FCAFU) por cobertura.
 """
 import streamlit as st
 import pandas as pd
@@ -25,8 +24,8 @@ st.set_page_config(
 )
 
 st.title("🌿 App de Planes de Compensación Biótica")
-st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 4")
-st.caption("Tasa BAU calculada con Hansen GFC por municipio. Mapas R1-R6 → script GEE Editor.")
+st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 5")
+st.caption("Tasa BAU calculada con Hansen GFC por municipio. Adicionalidad por horizonte.")
 
 
 with st.sidebar:
@@ -224,36 +223,90 @@ if impacto_file and excel_file:
                     df_det = pd.DataFrame(data['detalles'])
                     st.dataframe(df_det, use_container_width=True, hide_index=True)
 
-    # ─── ADICIONALIDAD (CON TASA BAU DINÁMICA) ───
+    # ════════════════════════════════════════════════════════════════
+    # ADICIONALIDAD POR HORIZONTE (NUEVO)
+    # ════════════════════════════════════════════════════════════════
     st.markdown("---")
-    st.header("🌱 Adicionalidad Esperada (solo área)")
-    st.markdown(
-        f"**Tasa BAU usada:** {tasa_bau*100:.3f}% anual (de Hansen sobre {ctx.get('municipio', 'municipio')})\n\n"
-        "**Conservar** (cerramiento): `ha × tasa_BAU × 15 × 0.85` → ha que NO se pierden\n\n"
-        "**Restaurar** (siembra): `ha × 0.75` → ha que SE ganan"
-    )
-    HORIZONTE = settings.HORIZONTE_TEMPORAL
+    st.header("🌱 Adicionalidad Esperada")
+
     F_CONSERVAR = 0.85
     F_RESTAURAR = 0.75
+    HORIZONTES = [3, 5, 15]  # años a mostrar
+
+    st.markdown(
+        f"**Tasa BAU usada:** `{tasa_bau*100:.3f}%` anual "
+        f"(Hansen sobre {ctx.get('municipio', 'municipio')})"
+    )
+
+    # ─── CONSERVAR ─────────────────────────────────────────────────
+    st.subheader("🌳 Escenario CONSERVAR (cerramiento)")
+    st.caption(
+        "Hectáreas que NO se pierden por proteger el área. "
+        "Fórmula: `ATC × tasa_BAU × años × 0.85`"
+    )
     if atc_resultados:
-        df_adic = pd.DataFrame([
-            {
+        filas = []
+        for rango_id, data in atc_resultados.items():
+            atc_total = data['atc_total']
+            por_anio = atc_total * tasa_bau * F_CONSERVAR
+            filas.append({
                 "Rango": rango_id,
-                "ATC (ha)": round(data['atc_total'], 2),
-                "Conservar (ha adic)": round(
-                    data['atc_total'] * tasa_bau * HORIZONTE * F_CONSERVAR, 3
-                ),
-                "Restaurar (ha adic)": round(
-                    data['atc_total'] * F_RESTAURAR, 3
-                ),
-                "Mix 50/50 (ha adic)": round(
-                    0.5 * data['atc_total'] * tasa_bau * HORIZONTE * F_CONSERVAR
-                    + 0.5 * data['atc_total'] * F_RESTAURAR, 3
-                )
-            }
-            for rango_id, data in atc_resultados.items()
-        ])
-        st.dataframe(df_adic, use_container_width=True, hide_index=True)
+                "ATC (ha)": round(atc_total, 2),
+                "Adic/año (ha)": round(por_anio, 4),
+                "A 3 años (ha)": round(por_anio * 3, 3),
+                "A 5 años (ha)": round(por_anio * 5, 3),
+                "A 15 años (ha)": round(por_anio * 15, 3),
+            })
+        df_cons = pd.DataFrame(filas)
+        st.dataframe(df_cons, use_container_width=True, hide_index=True)
+
+    # ─── RESTAURAR ─────────────────────────────────────────────────
+    st.subheader("🌱 Escenario RESTAURAR (siembra)")
+    st.caption(
+        "Hectáreas que SE ganan por siembra activa. "
+        "Fórmula: `ATC × 0.75` (independiente del horizonte temporal)"
+    )
+    if atc_resultados:
+        filas_r = []
+        for rango_id, data in atc_resultados.items():
+            atc_total = data['atc_total']
+            filas_r.append({
+                "Rango": rango_id,
+                "ATC (ha)": round(atc_total, 2),
+                "Restaurar (ha)": round(atc_total * F_RESTAURAR, 3),
+            })
+        df_rest = pd.DataFrame(filas_r)
+        st.dataframe(df_rest, use_container_width=True, hide_index=True)
+
+    # ─── MIX 50/50 ─────────────────────────────────────────────────
+    st.subheader("⚖️ Escenario MIX 50/50 (mitad cada uno)")
+    st.caption(
+        "Hectáreas adicionales si se reparte 50% Conservar + 50% Restaurar."
+    )
+    if atc_resultados:
+        filas_m = []
+        for rango_id, data in atc_resultados.items():
+            atc_total = data['atc_total']
+            mitad_atc = atc_total * 0.5
+            restaurar_aporte = mitad_atc * F_RESTAURAR
+            por_anio_cons = mitad_atc * tasa_bau * F_CONSERVAR
+            filas_m.append({
+                "Rango": rango_id,
+                "ATC (ha)": round(atc_total, 2),
+                "Adic Mix a 3 años": round(restaurar_aporte + por_anio_cons * 3, 3),
+                "Adic Mix a 5 años": round(restaurar_aporte + por_anio_cons * 5, 3),
+                "Adic Mix a 15 años": round(restaurar_aporte + por_anio_cons * 15, 3),
+            })
+        df_mix = pd.DataFrame(filas_m)
+        st.dataframe(df_mix, use_container_width=True, hide_index=True)
+
+    st.info(
+        "**¿Qué horizonte usar?** Depende del mecanismo jurídico de Unergy:\n\n"
+        "- **Compra/Usufructo del predio (30 años)** → usar la columna de 15+ años\n"
+        "- **Acuerdo de conservación a 15 años** → usar la columna de 15 años\n"
+        "- **Acuerdo a 3-5 años** → usar las columnas correspondientes\n\n"
+        "**Restaurar no depende del horizonte** porque mide hectáreas físicamente sembradas."
+    )
 
     # ─── MAPAS ───
     st.markdown("---")
@@ -306,7 +359,8 @@ else:
         "1. **FCAFU** por cobertura (1 + A + B + C del Manual)\n"
         "2. **ATC** por rango usando áreas REALES del KMZ\n"
         "3. **Tasa BAU** dinámica del municipio (Hansen Global Forest Change)\n"
-        "4. **Adicionalidad** por escenario (Conservar / Restaurar / Mix)\n\n"
+        "4. **Adicionalidad** por escenario (Conservar / Restaurar / Mix) "
+        "y por horizonte temporal (anual, 3, 5, 15 años)\n\n"
         "El KMZ debe contener los folders **Proyecto** (impacto) y "
         "**Coberturas vegetales** (polígonos por tipo)."
     )
