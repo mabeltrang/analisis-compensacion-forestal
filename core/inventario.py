@@ -4,13 +4,19 @@ import os
 from . import utils
 from config import settings
 
+
 def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
     """
-    Procesa el inventario forestal estndar de Unergy.
+    Procesa el inventario forestal estándar de Unergy.
     Calcula N, S, SN, A, B, C y FCAFU por cobertura.
+
+    Robusto contra:
+      - Encabezados en fila distinta a la primera
+      - Nombres de columna con/sin tildes
+      - Celdas vacías (NaN) en columnas de texto
+      - DAP con strings vacíos o no-numéricos
     """
-    # Leer el excel - Intentar detectar la fila de encabezado
-    # Primero leemos sin encabezado para buscar la fila que contiene 'ID' o 'Cobertura'
+    # Detectar fila de encabezado
     df_raw = pd.read_excel(excel_path, header=None)
     header_row = 0
     for i, row in df_raw.iterrows():
@@ -18,16 +24,17 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
         if any('cobertura' in s for s in row_str) or any('nombre cientifico' in s for s in row_str):
             header_row = i
             break
-            
+
     df = pd.read_excel(excel_path, header=header_row)
-    
-    # Normalizar nombres de columnas (quitar tildes, espacios y a minsculas)
+
+    # Normalizar nombres de columnas
     def normalize(s):
         import unicodedata
-        return "".join(c for c in unicodedata.normalize('NFD', str(s)) if unicodedata.category(c) != 'Mn').lower().strip()
-    
+        return "".join(c for c in unicodedata.normalize('NFD', str(s))
+                       if unicodedata.category(c) != 'Mn').lower().strip()
+
     df.columns = [normalize(c) for c in df.columns]
-    
+
     # Mapeo de columnas esperadas
     col_map = {
         'nombre cientifico': ['nombre cientifico', 'nombre cientifico', 'sp', 'especie'],
@@ -35,7 +42,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
         'cobertura': ['cobertura', 'cobertura_id', 'tipo_cobertura'],
         'ab_total': ['ab t (m2)', 'ab t en metros cuadrados', 'area basal total']
     }
-    
+
     final_cols = {}
     for key, options in col_map.items():
         found = False
@@ -45,61 +52,103 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
                 final_cols[key] = norm_opt
                 found = True
                 break
-        if not found and key != 'ab_total': # AB total puede ser opcional
-            raise ValueError(f"No se encontr una columna equivalente a: {key} (Opciones buscadas: {options})")
+        if not found and key != 'ab_total':
+            raise ValueError(
+                f"No se encontró una columna equivalente a: {key} "
+                f"(Opciones buscadas: {options})"
+            )
 
-    # Limpieza de datos usando los nombres encontrados
-    df['Nombre cientifico'] = df[final_cols['nombre cientifico']].str.strip().str.capitalize()
-    df['Cobertura'] = df[final_cols['cobertura']].str.strip()
-    
-    # Convertir DAP a cm
-    df['DAP_cm'] = df[final_cols['dap_m']] * 100
-    
-    # Filtrar por DAP mnimo
-    df_filtrado = df[df['DAP_cm'] >= dap_min].copy()
-    
+    # ────────────────────────────────────────────────────────────────
+    # LIMPIEZA ROBUSTA: convertir a string ANTES de .str.strip()
+    # Convierte NaN, números, todo a string. Si era NaN queda como ''.
+    # ────────────────────────────────────────────────────────────────
+    df['Nombre cientifico'] = (
+        df[final_cols['nombre cientifico']]
+        .fillna('')
+        .astype(str)
+        .str.strip()
+        .str.capitalize()
+    )
+    df['Cobertura'] = (
+        df[final_cols['cobertura']]
+        .fillna('')
+        .astype(str)
+        .str.strip()
+    )
+
+    # DAP a cm — convertir a numérico de forma segura
+    df['DAP_cm'] = pd.to_numeric(df[final_cols['dap_m']], errors='coerce') * 100
+
+    # Filtrar filas válidas: DAP >= mínimo Y con datos en cobertura/especie
+    df_filtrado = df[
+        (df['DAP_cm'] >= dap_min) &
+        (df['Cobertura'] != '') &
+        (df['Nombre cientifico'] != '')
+    ].copy()
+
+    if df_filtrado.empty:
+        return {}
+
     # Cargar tablas de referencia
     coberturas_a = pd.read_csv(os.path.join(settings.CONFIG_DIR, "coberturas_a.csv"))
-    especies_amenazadas = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
+    especies_amenazadas = pd.read_csv(
+        os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv")
+    )
     tabla_c = pd.read_csv(os.path.join(settings.CONFIG_DIR, "tabla_c.csv"))
-    
+
     # Mapear valor de amenaza
     amenaza_map = especies_amenazadas.set_index('nombre_cientifico')['categoria'].to_dict()
-    df_filtrado['categoria_amenaza'] = df_filtrado['Nombre cientifico'].map(amenaza_map).fillna('LC')
-    df_filtrado['valor_amenaza'] = df_filtrado['categoria_amenaza'].map(settings.AMENAZA_VALORES).fillna(0.0)
-    
+    df_filtrado['categoria_amenaza'] = (
+        df_filtrado['Nombre cientifico']
+        .map(amenaza_map)
+        .fillna('LC')
+    )
+    df_filtrado['valor_amenaza'] = (
+        df_filtrado['categoria_amenaza']
+        .map(settings.AMENAZA_VALORES)
+        .fillna(0.0)
+    )
+
     resultados = {}
-    
+
     # Agrupar por cobertura
     for cob, group in df_filtrado.groupby('Cobertura'):
         n = len(group)
         s = group['Nombre cientifico'].nunique()
         sn = s / n if n > 0 else 0
-        
-        # Criterio A
+
+        # Criterio A — desde CSV de coberturas
         val_a = coberturas_a[coberturas_a['cobertura'] == cob]['valor_a'].values
-        a = val_a[0] if len(val_a) > 0 else None
-        
-        if a is None:
-            # Si no se encuentra la cobertura, se marca para mapeo manual
-            a = 0.0 # Valor por defecto o error manejado en UI
-            
-        # Criterio B
-        b = group['valor_amenaza'].sum() / n if n > 0 else 0
-        
-        # Criterio C
+        a = float(val_a[0]) if len(val_a) > 0 else 0.0
+
+        # Criterio B — proporción ponderada de amenaza
+        b = float(group['valor_amenaza'].sum() / n) if n > 0 else 0.0
+
+        # Criterio C — buscar intervalo en tabla_c
         c_row = tabla_c[(tabla_c['sn_min'] <= sn) & (tabla_c['sn_max'] > sn)]
-        if sn == 1.0: # Caso borde
+        if sn == 1.0:
             c = 1.0
         else:
-            c = c_row['valor_c'].values[0] if not c_row.empty else 0.1
-            
+            c = float(c_row['valor_c'].values[0]) if not c_row.empty else 0.1
+
         # FCAFU = 1 + A + B + C
         fcafu = 1 + a + b + c
-        
-        # Especies amenazadas detectadas
-        amenazadas = group[group['categoria_amenaza'] != 'LC'][['Nombre cientifico', 'categoria_amenaza']].drop_duplicates().to_dict('records')
-        
+
+        # Especies amenazadas detectadas (no LC)
+        amenazadas = (
+            group[group['categoria_amenaza'] != 'LC']
+            [['Nombre cientifico', 'categoria_amenaza']]
+            .drop_duplicates()
+            .to_dict('records')
+        )
+
+        # Área basal total (opcional)
+        area_basal = 0.0
+        if 'ab_total' in final_cols:
+            area_basal = float(
+                pd.to_numeric(group[final_cols['ab_total']], errors='coerce').sum()
+            )
+
         resultados[cob] = {
             'N': n,
             'S': s,
@@ -109,7 +158,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
             'C': c,
             'FCAFU': fcafu,
             'amenazadas': amenazadas,
-            'area_basal_total': group[final_cols['ab_total']].sum() if 'ab_total' in final_cols else 0
+            'area_basal_total': area_basal
         }
-        
+
     return resultados
