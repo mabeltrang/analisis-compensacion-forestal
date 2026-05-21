@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 App de Planes de Compensación Biótica - Unergy
-Manual 2026 (Resolución 0305/2026 MADS) - Versión 5
+Manual 2026 (Resolución 0305/2026 MADS) - Versión 6
 
 NUEVO en esta versión:
-  - Adicionalidad mostrada por horizonte: anual, 3 años, 5 años, 15 años.
-  - Tasa BAU calculada dinámicamente con Hansen GFC por municipio.
-  - Lee áreas reales por cobertura del KMZ.
+  - Adicionalidad con fórmulas científicamente correctas:
+      Conservar: acumulada exponencial (Hansen + Andam 2008 / Pfaff 2014)
+      Restaurar: curva Chapman-Richards (Poorter 2016 + Crouzeilles 2017)
+  - Restaurar muestra proyección por horizonte (no factor fijo).
+  - Comparación Conservar vs Restaurar por ha compensada con ratio.
+  - Nota metodológica expandible con citas y DOIs.
 """
 import streamlit as st
 import pandas as pd
@@ -14,6 +17,12 @@ import os
 import tempfile
 
 from core import inputs, contexto, inventario, atc, utils
+from core.atc import (
+    adicionalidad_conservar,
+    adicionalidad_conservar_anual,
+    adicionalidad_restaurar,
+    tabla_adicionalidad,
+)
 from config import settings
 
 
@@ -24,8 +33,8 @@ st.set_page_config(
 )
 
 st.title("🌿 App de Planes de Compensación Biótica")
-st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 5")
-st.caption("Tasa BAU calculada con Hansen GFC por municipio. Adicionalidad por horizonte.")
+st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 6")
+st.caption("Tasa BAU calculada con Hansen GFC por municipio. Adicionalidad con curvas científicas.")
 
 
 with st.sidebar:
@@ -129,7 +138,7 @@ if impacto_file and excel_file:
 
     st.success("✅ Procesamiento completo")
 
-    # ─── CONTEXTO ───
+    # ─── CONTEXTO ───────────────────────────────────────────────────────────
     st.markdown("---")
     st.header("📍 Contexto del Proyecto")
     c1, c2 = st.columns(2)
@@ -142,7 +151,7 @@ if impacto_file and excel_file:
         st.write(f"**ZH:** {ctx.get('zh', 'n/d')}")
         st.write(f"**SZH:** {ctx.get('szh', 'n/d')}")
 
-    # ─── TASA BAU DINÁMICA ───
+    # ─── TASA BAU ───────────────────────────────────────────────────────────
     tasa_bau = ctx.get('tasa_bau', 0.005)
     fuente_bau = ctx.get('tasa_bau_fuente', 'No disponible')
     st.markdown("---")
@@ -158,7 +167,7 @@ if impacto_file and excel_file:
         st.caption(f"**Fuente:** {fuente_bau}")
         st.caption("Dataset: Hansen GFC v1.12 (Universidad de Maryland)")
 
-    # ─── COBERTURAS ───
+    # ─── COBERTURAS ─────────────────────────────────────────────────────────
     st.subheader(f"Coberturas Impactadas ({fuente_coberturas})")
     if ctx.get('areas_cobertura'):
         df_cob = pd.DataFrame([
@@ -171,7 +180,7 @@ if impacto_file and excel_file:
     else:
         st.warning("⚠️ No se detectaron coberturas.")
 
-    # ─── FCAFU ───
+    # ─── FCAFU ──────────────────────────────────────────────────────────────
     st.markdown("---")
     st.header("🌳 FCAFU por Cobertura")
     st.caption("Fórmula del Manual 2026: FCAFU = 1 + A + B + C")
@@ -203,7 +212,7 @@ if impacto_file and excel_file:
             "**DAP a (m)** y **Cobertura** llenas para cada árbol."
         )
 
-    # ─── ATC ───
+    # ─── ATC ────────────────────────────────────────────────────────────────
     st.markdown("---")
     st.header("📐 Área Total a Compensar (ATC) por Rango")
     st.caption("Fórmula: ATC = Σ (área_cobertura × (FCAFU + factor_rango))")
@@ -223,109 +232,180 @@ if impacto_file and excel_file:
                     df_det = pd.DataFrame(data['detalles'])
                     st.dataframe(df_det, use_container_width=True, hide_index=True)
 
-    # ════════════════════════════════════════════════════════════════
-    # ADICIONALIDAD POR HORIZONTE (NUEVO)
-    # ════════════════════════════════════════════════════════════════
+    # ════════════════════════════════════════════════════════════════════════
+    # ADICIONALIDAD POR HORIZONTE
+    # ════════════════════════════════════════════════════════════════════════
     st.markdown("---")
     st.header("🌱 Adicionalidad Esperada")
 
-    F_CONSERVAR = 0.85
-    F_RESTAURAR = 0.75
-    HORIZONTES = [3, 5, 15]  # años a mostrar
+    TASA_BAU    = tasa_bau
+    K_RESTAURAR = 0.076   # Chapman-Richards bs-T, Poorter 2016
+    F_CONSERVAR = 0.85    # Andam 2008 / Pfaff 2014
+    F_RESTAURAR = 0.75    # Crouzeilles 2017 / González-M 2018
+    HORIZONTES  = [3, 5, 10, 15]
 
     st.markdown(
-        f"**Tasa BAU usada:** `{tasa_bau*100:.3f}%` anual "
-        f"(Hansen sobre {ctx.get('municipio', 'municipio')})"
+        f"**Tasa BAU usada:** `{TASA_BAU*100:.3f}%` anual "
+        f"(Hansen GFC sobre {ctx.get('municipio', 'municipio')})"
     )
 
-    # ─── CONSERVAR ─────────────────────────────────────────────────
-    st.subheader("🌳 Escenario CONSERVAR (cerramiento)")
-    st.caption(
-        "Hectáreas que NO se pierden por proteger el área. "
-        "Fórmula: `ATC × tasa_BAU × años × 0.85`"
-    )
+    # ─── NOTA METODOLÓGICA ──────────────────────────────────────────────────
+    with st.expander("📖 Metodología y fuentes de las fórmulas"):
+        st.markdown("""
+**CONSERVAR — fórmula acumulada exponencial**
+
+```
+ha_adicional(n) = ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85
+```
+
+- `[1 - (1 - tasa_BAU)ⁿ]` — probabilidad acumulada de deforestación en *n* años.
+  Modelo de eventos independientes anuales. La tasa BAU se calcula con
+  **Hansen et al. (2013)** sobre el municipio del impacto.
+  DOI: [10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
+
+- `0.85` — fracción de la deforestación evitada que es realmente adicional.
+  El 15% restante no se hubiera deforestado de todas formas (sesgo de selección).
+  **Andam et al. (2008)** DOI: [10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105) |
+  **Pfaff et al. (2014)** DOI: [10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)
+
+> *Nota: esta fórmula combina el modelo estocástico de Hansen con el factor de
+efectividad de Andam/Pfaff. Es una construcción metodológica defendible, no
+una ecuación de una sola fuente.*
+
+---
+
+**RESTAURAR — curva de Chapman-Richards (Poorter 2016)**
+
+```
+ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
+```
+
+- `[1 - e^(-k×n)]` — modelo de recuperación de biomasa en bosques tropicales
+  secundarios. Curva asintótica: crece rápido al inicio y se estabiliza.
+  k = 0.076 para bosques secos tropicales neotropicales.
+  **Poorter et al. (2016)** Nature 530: 211-214.
+  DOI: [10.1038/nature16469](https://doi.org/10.1038/nature16469)
+
+- `0.75` — fracción de restauraciones activas que logran establecimiento exitoso.
+  Para Bosque Seco Tropical colombiano.
+  **Crouzeilles et al. (2017)** DOI: [10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345) |
+  **González-M. et al. (2018)** IAvH BST Colombia.
+""")
+
     if atc_resultados:
-        filas = []
+
+        # ─── CONSERVAR ──────────────────────────────────────────────────────
+        st.subheader("🌳 Escenario CONSERVAR (cerramiento)")
+        st.caption(
+            "Hectáreas que NO se pierden. "
+            "Fórmula: `ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85`"
+        )
+        filas_c = []
         for rango_id, data in atc_resultados.items():
             atc_total = data['atc_total']
-            por_anio = atc_total * tasa_bau * F_CONSERVAR
-            filas.append({
+            fila = {
                 "Rango": rango_id,
                 "ATC (ha)": round(atc_total, 2),
-                "Adic/año (ha)": round(por_anio, 4),
-                "A 3 años (ha)": round(por_anio * 3, 3),
-                "A 5 años (ha)": round(por_anio * 5, 3),
-                "A 15 años (ha)": round(por_anio * 15, 3),
-            })
-        df_cons = pd.DataFrame(filas)
-        st.dataframe(df_cons, use_container_width=True, hide_index=True)
+                "Adic/año (ha)": round(
+                    adicionalidad_conservar_anual(atc_total, TASA_BAU, F_CONSERVAR), 4
+                ),
+            }
+            for n in HORIZONTES:
+                fila[f"A {n} años (ha)"] = round(
+                    adicionalidad_conservar(atc_total, n, TASA_BAU, F_CONSERVAR), 4
+                )
+            filas_c.append(fila)
+        st.dataframe(pd.DataFrame(filas_c), use_container_width=True, hide_index=True)
 
-    # ─── RESTAURAR ─────────────────────────────────────────────────
-    st.subheader("🌱 Escenario RESTAURAR (siembra)")
-    st.caption(
-        "Hectáreas que SE ganan por siembra activa. "
-        "Fórmula: `ATC × 0.75` (independiente del horizonte temporal)"
-    )
-    if atc_resultados:
+        # ─── RESTAURAR ──────────────────────────────────────────────────────
+        st.subheader("🌱 Escenario RESTAURAR (siembra activa)")
+        st.caption(
+            "Hectáreas que SE ganan. "
+            "Fórmula: `ha × [1 - e^(-0.076×n)] × 0.75` — curva Chapman-Richards"
+        )
         filas_r = []
         for rango_id, data in atc_resultados.items():
             atc_total = data['atc_total']
-            filas_r.append({
+            fila = {
                 "Rango": rango_id,
                 "ATC (ha)": round(atc_total, 2),
-                "Restaurar (ha)": round(atc_total * F_RESTAURAR, 3),
-            })
-        df_rest = pd.DataFrame(filas_r)
-        st.dataframe(df_rest, use_container_width=True, hide_index=True)
+            }
+            for n in HORIZONTES:
+                fila[f"A {n} años (ha)"] = round(
+                    adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR), 4
+                )
+            filas_r.append(fila)
+        st.dataframe(pd.DataFrame(filas_r), use_container_width=True, hide_index=True)
+        st.caption(
+            "💡 La ganancia no es lineal: crece rápido los primeros años "
+            "y se estabiliza conforme el ecosistema madura."
+        )
 
-    # ─── MIX 50/50 ─────────────────────────────────────────────────
-    st.subheader("⚖️ Escenario MIX 50/50 (mitad cada uno)")
-    st.caption(
-        "Hectáreas adicionales si se reparte 50% Conservar + 50% Restaurar."
-    )
-    if atc_resultados:
+        # ─── COMPARACIÓN ────────────────────────────────────────────────────
+        st.subheader("⚖️ Comparación Conservar vs Restaurar")
+        st.caption("Por ha compensada — independiente del rango")
+        filas_comp = []
+        for n in HORIZONTES:
+            cons_por_ha = adicionalidad_conservar(1.0, n, TASA_BAU, F_CONSERVAR)
+            rest_por_ha = adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
+            filas_comp.append({
+                "Horizonte": f"{n} años",
+                "Conservar (ha/ha)": round(cons_por_ha, 4),
+                "Restaurar (ha/ha)": round(rest_por_ha, 4),
+                "Ratio Rest/Cons": round(rest_por_ha / cons_por_ha, 1)
+                    if cons_por_ha > 0 else "—"
+            })
+        st.dataframe(
+            pd.DataFrame(filas_comp), use_container_width=True, hide_index=True
+        )
+        st.caption(
+            "**Ratio:** cuántas veces más adicionalidad genera Restaurar vs Conservar "
+            "por ha compensada. Restaurar siempre gana en número, pero Conservar "
+            "protege bosque que ya existe con menor riesgo de falla."
+        )
+
+        # ─── MIX 50/50 ──────────────────────────────────────────────────────
+        st.subheader("⚖️ Escenario MIX 50/50")
+        st.caption("50% Conservar + 50% Restaurar del ATC total")
         filas_m = []
         for rango_id, data in atc_resultados.items():
             atc_total = data['atc_total']
-            mitad_atc = atc_total * 0.5
-            restaurar_aporte = mitad_atc * F_RESTAURAR
-            por_anio_cons = mitad_atc * tasa_bau * F_CONSERVAR
-            filas_m.append({
-                "Rango": rango_id,
-                "ATC (ha)": round(atc_total, 2),
-                "Adic Mix a 3 años": round(restaurar_aporte + por_anio_cons * 3, 3),
-                "Adic Mix a 5 años": round(restaurar_aporte + por_anio_cons * 5, 3),
-                "Adic Mix a 15 años": round(restaurar_aporte + por_anio_cons * 15, 3),
-            })
-        df_mix = pd.DataFrame(filas_m)
-        st.dataframe(df_mix, use_container_width=True, hide_index=True)
+            mitad = atc_total * 0.5
+            fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
+            for n in HORIZONTES:
+                cons = adicionalidad_conservar(mitad, n, TASA_BAU, F_CONSERVAR)
+                rest = adicionalidad_restaurar(mitad, n, K_RESTAURAR, F_RESTAURAR)
+                fila[f"Mix {n} años (ha)"] = round(cons + rest, 4)
+            filas_m.append(fila)
+        st.dataframe(pd.DataFrame(filas_m), use_container_width=True, hide_index=True)
 
-    st.info(
-        "**¿Qué horizonte usar?** Depende del mecanismo jurídico de Unergy:\n\n"
-        "- **Compra/Usufructo del predio (30 años)** → usar la columna de 15+ años\n"
-        "- **Acuerdo de conservación a 15 años** → usar la columna de 15 años\n"
-        "- **Acuerdo a 3-5 años** → usar las columnas correspondientes\n\n"
-        "**Restaurar no depende del horizonte** porque mide hectáreas físicamente sembradas."
-    )
+        st.info(
+            "**¿Qué horizonte usar?**\n\n"
+            "- Compra/Usufructo del predio (≥30 años) → columna de 15 años\n"
+            "- Acuerdo de conservación a 15 años → columna de 15 años\n"
+            "- Acuerdo a 3–5 años → columna correspondiente\n\n"
+            "**Restaurar** genera más adicionalidad numérica. **Conservar** "
+            "protege bosque existente con menor riesgo de falla."
+        )
 
-    # ─── MAPAS ───
+    # ─── MAPAS ──────────────────────────────────────────────────────────────
     st.markdown("---")
     st.header("🗺️ Mapas y Análisis Espacial")
     st.info(
         "**Mapas de áreas candidatas (R1-R6) en Google Earth Engine.**\n\n"
         "1. `code.earthengine.google.com`\n"
-        "2. Pegar `script_compensacion_v6_adicionalidad.js`\n"
+        "2. Pegar el script del rango correspondiente\n"
         "3. Reemplazar el asset del impacto\n"
         "4. Run → Tasks → Run exportaciones\n"
         "5. Shapefiles a Drive → abrir en QGIS/ArcMap"
     )
 
-    # ─── BIBLIOGRAFÍA ───
+    # ─── BIBLIOGRAFÍA ───────────────────────────────────────────────────────
     st.markdown("---")
-    st.header("📚 Factores de Efectividad — Fuentes")
+    st.header("📚 Fuentes y Factores de Efectividad")
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("**🌳 CONSERVAR — Factor: 0.85**")
+        st.markdown("**🌳 CONSERVAR — Factor efectividad: 0.85**")
         st.markdown(
             "- Andam et al. (2008) PNAS — "
             "[10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105)"
@@ -335,18 +415,21 @@ if impacto_file and excel_file:
             "[10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)"
         )
     with c2:
-        st.markdown("**🌱 RESTAURAR — Factor: 0.75**")
+        st.markdown("**🌱 RESTAURAR — Factor efectividad: 0.75 | k = 0.076**")
+        st.markdown(
+            "- Poorter et al. (2016) Nature — "
+            "[10.1038/nature16469](https://doi.org/10.1038/nature16469)"
+        )
         st.markdown(
             "- Crouzeilles et al. (2017) Sci Adv — "
             "[10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345)"
         )
         st.markdown(
-            "- González-M. et al. (2018) BST IAvH — "
+            "- González-M. et al. (2018) IAvH BST — "
             "[Ver](http://repository.humboldt.org.co/handle/20.500.11761/35442)"
         )
-    st.markdown("---")
     st.caption(
-        "**Tasa BAU**: Hansen et al. (2013) High-Resolution Global Maps of "
+        "**Tasa BAU**: Hansen et al. (2013). High-Resolution Global Maps of "
         "21st-Century Forest Cover Change. Science 342: 850-853. "
         "[10.1126/science.1244693](https://doi.org/10.1126/science.1244693)"
     )
@@ -359,8 +442,9 @@ else:
         "1. **FCAFU** por cobertura (1 + A + B + C del Manual)\n"
         "2. **ATC** por rango usando áreas REALES del KMZ\n"
         "3. **Tasa BAU** dinámica del municipio (Hansen Global Forest Change)\n"
-        "4. **Adicionalidad** por escenario (Conservar / Restaurar / Mix) "
-        "y por horizonte temporal (anual, 3, 5, 15 años)\n\n"
+        "4. **Adicionalidad** por escenario y horizonte temporal:\n"
+        "   - Conservar: curva exponencial acumulada (Andam 2008 / Pfaff 2014)\n"
+        "   - Restaurar: curva Chapman-Richards (Poorter 2016 / Crouzeilles 2017)\n\n"
         "El KMZ debe contener los folders **Proyecto** (impacto) y "
         "**Coberturas vegetales** (polígonos por tipo)."
     )
