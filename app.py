@@ -15,6 +15,7 @@ import streamlit as st
 import pandas as pd
 import os
 import tempfile
+import io
 
 from core import inputs, contexto, inventario, atc, utils
 from core.atc import (
@@ -387,6 +388,141 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
             "**Restaurar** genera más adicionalidad numérica. **Conservar** "
             "protege bosque existente con menor riesgo de falla."
         )
+
+    # ─── DESCARGA EXCEL ─────────────────────────────────────────────────────
+    st.markdown("---")
+    st.header("📥 Descargar Resultados")
+
+    def _build_excel(ctx, fcafu_por_cobertura, atc_resultados,
+                     TASA_BAU, F_CONSERVAR, F_RESTAURAR, K_RESTAURAR,
+                     HORIZONTES, area_impacto_ha):
+        buf = io.BytesIO()
+        with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+
+            # Hoja 1 – Resumen del proyecto
+            resumen = pd.DataFrame({
+                "Variable": [
+                    "Municipio", "Departamento", "BIOMA-IAvH",
+                    "Zona Hidrográfica", "Subzona Hidrográfica",
+                    "Área de impacto (ha)", "Tasa BAU anual (%)"
+                ],
+                "Valor": [
+                    ctx.get("municipio", "n/d"),
+                    ctx.get("departamento", "n/d"),
+                    ctx.get("bioma_principal", "n/d"),
+                    ctx.get("zh", "n/d"),
+                    ctx.get("szh", "n/d"),
+                    round(area_impacto_ha, 4),
+                    round(TASA_BAU * 100, 4),
+                ]
+            })
+            resumen.to_excel(writer, sheet_name="Resumen", index=False)
+
+            # Hoja 2 – FCAFU por cobertura
+            fcafu_rows = []
+            for cob, d in fcafu_por_cobertura.items():
+                fcafu_rows.append({
+                    "Cobertura": cob,
+                    "Individuos (N)": d["N"],
+                    "Especies (S)": d["S"],
+                    "S/N": round(d["SN"], 4),
+                    "A (Ecosistema)": d["A"],
+                    "B (Amenaza)": round(d["B"], 4),
+                    "C (Composición)": d["C"],
+                    "FCAFU": round(d["FCAFU"], 4),
+                    "Área Basal total (m²)": round(d.get("area_basal_total", 0), 4),
+                })
+            pd.DataFrame(fcafu_rows).to_excel(writer, sheet_name="FCAFU", index=False)
+
+            # Hoja 3 – ATC por rango
+            atc_rows = []
+            for rango_id, data in atc_resultados.items():
+                atc_rows.append({
+                    "Rango": rango_id,
+                    "Factor Adicional": data.get("factor_adicional", ""),
+                    "ATC total (ha)": round(data["atc_total"], 4),
+                })
+            pd.DataFrame(atc_rows).to_excel(writer, sheet_name="ATC_por_Rango", index=False)
+
+            # Hoja 4 – Adicionalidad Conservar
+            cons_rows = []
+            for rango_id, data in atc_resultados.items():
+                atc_total = data["atc_total"]
+                fila = {
+                    "Rango": rango_id,
+                    "ATC (ha)": round(atc_total, 4),
+                    "Adic/año (ha)": round(
+                        adicionalidad_conservar_anual(atc_total, TASA_BAU, F_CONSERVAR), 6
+                    ),
+                }
+                for n in HORIZONTES:
+                    fila[f"A {n} años (ha)"] = round(
+                        adicionalidad_conservar(atc_total, n, TASA_BAU, F_CONSERVAR), 6
+                    )
+                cons_rows.append(fila)
+            pd.DataFrame(cons_rows).to_excel(writer, sheet_name="Adicionalidad_Conservar", index=False)
+
+            # Hoja 5 – Adicionalidad Restaurar
+            rest_rows = []
+            for rango_id, data in atc_resultados.items():
+                atc_total = data["atc_total"]
+                fila = {
+                    "Rango": rango_id,
+                    "ATC (ha)": round(atc_total, 4),
+                }
+                for n in HORIZONTES:
+                    fila[f"A {n} años (ha)"] = round(
+                        adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR), 6
+                    )
+                rest_rows.append(fila)
+            pd.DataFrame(rest_rows).to_excel(writer, sheet_name="Adicionalidad_Restaurar", index=False)
+
+            # Hoja 6 – Comparación por ha compensada
+            comp_rows = []
+            for n in HORIZONTES:
+                cons_ha = adicionalidad_conservar(1.0, n, TASA_BAU, F_CONSERVAR)
+                rest_ha = adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
+                comp_rows.append({
+                    "Horizonte (años)": n,
+                    "Conservar (ha/ha)": round(cons_ha, 6),
+                    "Restaurar (ha/ha)": round(rest_ha, 6),
+                    "Ratio Rest/Cons": round(rest_ha / cons_ha, 2) if cons_ha > 0 else None,
+                })
+            pd.DataFrame(comp_rows).to_excel(writer, sheet_name="Comparacion_por_ha", index=False)
+
+            # Hoja 7 – Especies amenazadas
+            sp_rows = []
+            for cob, d in fcafu_por_cobertura.items():
+                for sp in d.get("amenazadas", []):
+                    sp_rows.append({
+                        "Cobertura": cob,
+                        "Nombre científico": sp.get("Nombre cientifico", ""),
+                        "Categoría": sp.get("categoria_amenaza", ""),
+                    })
+            if sp_rows:
+                pd.DataFrame(sp_rows).to_excel(
+                    writer, sheet_name="Especies_Amenazadas", index=False
+                )
+
+        buf.seek(0)
+        return buf.getvalue()
+
+    if atc_resultados and fcafu_por_cobertura:
+        nombre_mun = ctx.get("municipio", "proyecto").replace(" ", "_")
+        excel_bytes = _build_excel(
+            ctx, fcafu_por_cobertura, atc_resultados,
+            TASA_BAU, F_CONSERVAR, F_RESTAURAR, K_RESTAURAR,
+            HORIZONTES, area_impacto_ha
+        )
+        st.download_button(
+            label="⬇️ Descargar Excel de resultados",
+            data=excel_bytes,
+            file_name=f"compensacion_{nombre_mun}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        st.caption("Incluye: Resumen, FCAFU, ATC por rango, Adicionalidad Conservar/Restaurar, Comparación por ha, Especies amenazadas.")
+    else:
+        st.warning("⚠️ No hay resultados calculados aún. Carga el KMZ y el inventario primero.")
 
     # ─── MAPAS ──────────────────────────────────────────────────────────────
     st.markdown("---")
