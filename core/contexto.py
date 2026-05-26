@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Módulo de contexto geográfico.
-
 Cruza el polígono de impacto con assets de GEE para obtener:
   - Municipio, Departamento
   - BIOMA-IAvH
@@ -10,25 +9,20 @@ Cruza el polígono de impacto con assets de GEE para obtener:
   - Tasa BAU de pérdida de bosque (Hansen) — por municipio
 """
 import ee
-import json
-from shapely.geometry import shape, mapping
+import time
+from shapely.geometry import mapping
 from shapely.ops import transform
 from config import settings
 
-
-# Hansen Global Forest Change v1.12 (datos 2000-2024)
-HANSEN_DATASET = 'UMD/hansen/global_forest_change_2024_v1_12'
-HANSEN_ANIOS_OBSERVACION = 24  # 2001-2024 (loss del año 2001 hasta 2024)
-TREECOVER_UMBRAL = 30  # % canopy para considerar "bosque" (estándar internacional)
+HANSEN_DATASET          = 'UMD/hansen/global_forest_change_2025_v1_13'  # v1.13 actualizado
+HANSEN_ANIOS_OBSERVACION = 25   # 2001-2025
+TREECOVER_UMBRAL         = 30
 
 
 def obtener_contexto_impacto(gdf):
     """
     Obtiene contexto geográfico completo del polígono de impacto.
-
-    Retorna dict con:
-        municipio, departamento, zh, szh, bioma_principal,
-        areas_cobertura, tasa_bau (anual), tasa_bau_fuente
+    Usa el mínimo de llamadas .getInfo() posible para evitar Too Many Requests.
     """
     # ─── Preparar geometría ────────────────────────────────────────
     if gdf.crs is None:
@@ -36,145 +30,132 @@ def obtener_contexto_impacto(gdf):
     else:
         gdf = gdf.to_crs("EPSG:4326")
 
-    # Quitar coordenadas Z (rompen GEE)
     def strip_z(geom):
         return transform(lambda x, y, z=None: (x, y), geom)
     gdf['geometry'] = gdf['geometry'].apply(strip_z)
 
-    # Convertir a ee.FeatureCollection
     features = []
     for _, row in gdf.iterrows():
         geom = row.geometry
         if geom.is_empty:
             continue
         features.append(ee.Feature(ee.Geometry(mapping(geom))))
-    fc = ee.FeatureCollection(features)
+    fc      = ee.FeatureCollection(features)
     ee_geom = fc.geometry()
 
-    # ─── 1. Cruzar con Municipios ──────────────────────────────────
-    municipios = ee.FeatureCollection(settings.GEE_ASSETS['municipios'])
-    mun_intersect = municipios.filterBounds(ee_geom)
-    mun_first = mun_intersect.first()
-    mun_data = mun_first.toDictionary().select(['ADM2_NAME', 'ADM1_NAME']).getInfo()
-    municipio_geom = mun_first.geometry()  # geometría del municipio para BAU
-
-    # ─── 2. Cruzar con ZH ──────────────────────────────────────────
-    zh_col = ee.FeatureCollection(settings.GEE_ASSETS['zh'])
-    zh_intersect = zh_col.filterBounds(ee_geom)
-    zh_data = zh_intersect.first().toDictionary().select(['nom_zh', 'nom_szh']).getInfo()
-
-    # ─── 3. Cruzar con Ecosistemas (BIOMA-IAvH) ────────────────────
+    # ─── Assets ───────────────────────────────────────────────────
+    municipios  = ee.FeatureCollection(settings.GEE_ASSETS['municipios'])
+    zh_col      = ee.FeatureCollection(settings.GEE_ASSETS['zh'])
     ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
+
+    mun_first = municipios.filterBounds(ee_geom).first()
+    zh_first  = zh_col.filterBounds(ee_geom).first()
+
+    # ─── LLAMADA 1 — todo el contexto geográfico en un solo getInfo ─
+    # Municipio + ZH + BIOMA en una sola petición
     eco_impacto = ecosistemas.filterBounds(ee_geom).map(
         lambda f: f.setGeometry(f.geometry().intersection(ee_geom, 1))
+                   .set('area_ha', f.geometry().intersection(ee_geom, 1).area().divide(10000))
     )
-    bioma_data = eco_impacto.reduceColumns(
-        ee.Reducer.frequencyHistogram(), ['BIOMA_IAvH']
-    ).getInfo()
-    biomas_hist = bioma_data['histogram']
-    bioma_principal = max(biomas_hist, key=biomas_hist.get) if biomas_hist else "Desconocido"
 
-    # ─── 4. Áreas por cobertura ────────────────────────────────────
-    eco_info = eco_impacto.map(lambda f: f.set('area_ha', f.area().divide(10000)))
-    stats = eco_info.reduceColumns(
-        ee.Reducer.sum().group(1, 'COBERTURA'),
-        ['area_ha', 'COBERTURA']
-    ).getInfo()
+    ctx_dict = ee.Dictionary({
+        'municipio':  mun_first.get('ADM2_NAME'),
+        'depto':      mun_first.get('ADM1_NAME'),
+        'nom_zh':     zh_first.get('nom_zh'),
+        'nom_szh':    zh_first.get('nom_szh'),
+        'biomas':     eco_impacto.reduceColumns(
+                          ee.Reducer.frequencyHistogram(), ['BIOMA_IAvH']
+                      ).get('histogram'),
+        'coberturas': eco_impacto.reduceColumns(
+                          ee.Reducer.sum().group(1, 'COBERTURA'),
+                          ['area_ha', 'COBERTURA']
+                      ).get('groups'),
+        'mun_geom_id': mun_first.id()   # para recuperar la geometría del municipio
+    })
+
+    # Pausa corta antes de la primera petición
+    time.sleep(1)
+    ctx_info = ctx_dict.getInfo()
+
+    # ─── Parsear resultados de la llamada 1 ────────────────────────
+    municipio  = ctx_info.get('municipio', 'Desconocido')
+    departamento = ctx_info.get('depto', 'Desconocido')
+    nom_zh     = ctx_info.get('nom_zh', 'Desconocido')
+    nom_szh    = ctx_info.get('nom_szh', 'Desconocido')
+
+    biomas_hist     = ctx_info.get('biomas') or {}
+    bioma_principal = max(biomas_hist, key=biomas_hist.get) if biomas_hist else 'Desconocido'
+
     areas_cobertura = {}
-    for group in stats['groups']:
+    for group in (ctx_info.get('coberturas') or []):
         areas_cobertura[group['COBERTURA']] = group['sum']
 
-    # ─── 5. TASA BAU — Pérdida anual de bosque (Hansen) ────────────
-    tasa_bau, fuente_bau = _calcular_tasa_bau(
-        municipio_geom,
-        mun_data.get('ADM2_NAME', 'Desconocido')
-    )
+    # ─── LLAMADA 2 — geometría del municipio para Hansen ──────────
+    time.sleep(1)
+    municipio_geom = municipios.filter(
+        ee.Filter.eq('ADM2_NAME', municipio)
+    ).first().geometry()
+
+    # ─── LLAMADA 3 — Hansen BAU (2 reducers consolidados) ─────────
+    time.sleep(1)
+    tasa_bau, fuente_bau = _calcular_tasa_bau(municipio_geom, municipio)
 
     return {
-        'municipio': mun_data.get('ADM2_NAME'),
-        'departamento': mun_data.get('ADM1_NAME'),
-        'zh': zh_data.get('nom_zh'),
-        'szh': zh_data.get('nom_szh'),
-        'ah': zh_data.get('nom_ah'),
+        'municipio':       municipio,
+        'departamento':    departamento,
+        'zh':              nom_zh,
+        'szh':             nom_szh,
         'bioma_principal': bioma_principal,
         'areas_cobertura': areas_cobertura,
-        'tasa_bau': tasa_bau,
-        'tasa_bau_fuente': fuente_bau
+        'tasa_bau':        tasa_bau,
+        'tasa_bau_fuente': fuente_bau,
     }
 
 
 def _calcular_tasa_bau(geom_municipio, nombre_municipio):
     """
-    Calcula la tasa anual de pérdida de bosque (BAU) sobre el municipio
-    usando Hansen Global Forest Change.
-
-    Lógica:
-      1. Bosque año 2000 (umbral 30% canopy)
-      2. Pérdida acumulada 2001-2024
-      3. Tasa anual = pérdida_total / (bosque_2000 × años_observación)
-
-    Si el municipio tiene poco bosque (<1000 ha), usa tasa departamental
-    estimada fallback de 0.5%.
-
-    Retorna: (tasa_anual_decimal, fuente_str)
-        Ej: (0.0062, "Hansen 2001-2024 sobre municipio Bosconia: 5230 ha bosque, 78 ha perdidas")
+    Calcula tasa BAU con Hansen GFC.
+    Consolida los dos reduceRegion en una sola llamada getInfo.
     """
     try:
-        hansen = ee.Image(HANSEN_DATASET)
-        treecover = hansen.select('treecover2000')
-        loss = hansen.select('loss')
-
-        # Bosque inicial (binario: 1 si >umbral, 0 si no)
+        hansen      = ee.Image(HANSEN_DATASET)
+        treecover   = hansen.select('treecover2000')
+        loss        = hansen.select('loss')
         bosque_2000 = treecover.gt(TREECOVER_UMBRAL)
+        perdida     = loss.And(bosque_2000)
+        area_px_ha  = ee.Image.pixelArea().divide(10000)
 
-        # Pérdida solo sobre lo que era bosque
-        perdida_bosque = loss.And(bosque_2000)
+        # Consolidar los dos reducers en una sola imagen multibanda → 1 getInfo
+        combined = bosque_2000.multiply(area_px_ha).rename('bosque') \
+            .addBands(perdida.multiply(area_px_ha).rename('perdida'))
 
-        # Áreas en ha
-        area_pixel_ha = ee.Image.pixelArea().divide(10000)
-
-        bosque_ha_img = bosque_2000.multiply(area_pixel_ha)
-        perdida_ha_img = perdida_bosque.multiply(area_pixel_ha)
-
-        # Reducir sobre el municipio
-        bosque_total = bosque_ha_img.reduceRegion(
+        resultado = combined.reduceRegion(
             reducer=ee.Reducer.sum(),
             geometry=geom_municipio,
             scale=30,
             maxPixels=1e10,
             bestEffort=True
-        ).get('treecover2000').getInfo()
+        ).getInfo()
 
-        perdida_total = perdida_ha_img.reduceRegion(
-            reducer=ee.Reducer.sum(),
-            geometry=geom_municipio,
-            scale=30,
-            maxPixels=1e10,
-            bestEffort=True
-        ).get('loss').getInfo()
+        bosque_total  = float(resultado.get('bosque') or 0)
+        perdida_total = float(resultado.get('perdida') or 0)
 
-        bosque_total = float(bosque_total or 0)
-        perdida_total = float(perdida_total or 0)
-
-        # Si bosque inicial muy bajo, no es confiable
         if bosque_total < 1000:
             return (
-                0.005,  # fallback 0.5%
+                0.005,
                 f"Municipio con poco bosque ({bosque_total:.0f} ha en 2000). "
-                f"Usando tasa departamental estimada 0.5%."
+                f"Usando tasa estimada 0.5%."
             )
 
-        # Tasa anual promedio
-        tasa = perdida_total / (bosque_total * HANSEN_ANIOS_OBSERVACION)
+        tasa   = perdida_total / (bosque_total * HANSEN_ANIOS_OBSERVACION)
         fuente = (
-            f"Hansen GFC 2001-2024 sobre {nombre_municipio}: "
+            f"Hansen GFC 2001-2025 sobre {nombre_municipio}: "
             f"{bosque_total:,.0f} ha bosque inicial, "
             f"{perdida_total:,.0f} ha perdidas en {HANSEN_ANIOS_OBSERVACION} años."
         )
         return (tasa, fuente)
 
     except Exception as e:
-        # Si falla, usar fallback
         return (
             0.005,
             f"Error calculando Hansen ({str(e)[:80]}). Usando 0.5% fallback."
