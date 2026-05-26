@@ -14,8 +14,8 @@ from shapely.geometry import mapping
 from shapely.ops import transform
 from config import settings
 
-HANSEN_DATASET          = 'UMD/hansen/global_forest_change_2025_v1_13'  # v1.13 actualizado
-HANSEN_ANIOS_OBSERVACION = 25   # 2001-2025
+HANSEN_DATASET           = 'UMD/hansen/global_forest_change_2025_v1_13'
+HANSEN_ANIOS_OBSERVACION = 25
 TREECOVER_UMBRAL         = 30
 
 
@@ -51,13 +51,18 @@ def obtener_contexto_impacto(gdf):
     mun_first = municipios.filterBounds(ee_geom).first()
     zh_first  = zh_col.filterBounds(ee_geom).first()
 
-    # ─── LLAMADA 1 — todo el contexto geográfico en un solo getInfo ─
-    # Municipio + ZH + BIOMA en una sola petición
+    # ─── Ecosistemas recortados al área de impacto ─────────────────
     eco_impacto = ecosistemas.filterBounds(ee_geom).map(
-        lambda f: f.setGeometry(f.geometry().intersection(ee_geom, 1))
-                   .set('area_ha', f.geometry().intersection(ee_geom, 1).area().divide(10000))
+        lambda f: f.setGeometry(
+            f.geometry().intersection(ee_geom, 1)
+        ).set(
+            'area_ha',
+            f.geometry().intersection(ee_geom, 1).area().divide(10000)
+        )
     )
 
+    # ─── LLAMADA 1 — contexto geográfico completo en un solo getInfo
+    # Municipio + Depto + ZH + SZH + Bioma + Coberturas
     ctx_dict = ee.Dictionary({
         'municipio':  mun_first.get('ADM2_NAME'),
         'depto':      mun_first.get('ADM1_NAME'),
@@ -70,21 +75,22 @@ def obtener_contexto_impacto(gdf):
                           ee.Reducer.sum().group(1, 'COBERTURA'),
                           ['area_ha', 'COBERTURA']
                       ).get('groups'),
-        'mun_geom_id': mun_first.id()   # para recuperar la geometría del municipio
     })
 
-    # Pausa corta antes de la primera petición
     time.sleep(1)
     ctx_info = ctx_dict.getInfo()
 
-    # ─── Parsear resultados de la llamada 1 ────────────────────────
-    municipio  = ctx_info.get('municipio', 'Desconocido')
+    # ─── Parsear resultados ────────────────────────────────────────
+    municipio    = ctx_info.get('municipio', 'Desconocido')
     departamento = ctx_info.get('depto', 'Desconocido')
-    nom_zh     = ctx_info.get('nom_zh', 'Desconocido')
-    nom_szh    = ctx_info.get('nom_szh', 'Desconocido')
+    nom_zh       = ctx_info.get('nom_zh', 'Desconocido')
+    nom_szh      = ctx_info.get('nom_szh', 'Desconocido')
 
     biomas_hist     = ctx_info.get('biomas') or {}
-    bioma_principal = max(biomas_hist, key=biomas_hist.get) if biomas_hist else 'Desconocido'
+    bioma_principal = (
+        max(biomas_hist, key=biomas_hist.get)
+        if biomas_hist else 'Desconocido'
+    )
 
     areas_cobertura = {}
     for group in (ctx_info.get('coberturas') or []):
@@ -96,7 +102,7 @@ def obtener_contexto_impacto(gdf):
         ee.Filter.eq('ADM2_NAME', municipio)
     ).first().geometry()
 
-    # ─── LLAMADA 3 — Hansen BAU (2 reducers consolidados) ─────────
+    # ─── LLAMADA 3 — Hansen BAU ────────────────────────────────────
     time.sleep(1)
     tasa_bau, fuente_bau = _calcular_tasa_bau(municipio_geom, municipio)
 
@@ -125,9 +131,11 @@ def _calcular_tasa_bau(geom_municipio, nombre_municipio):
         perdida     = loss.And(bosque_2000)
         area_px_ha  = ee.Image.pixelArea().divide(10000)
 
-        # Consolidar los dos reducers en una sola imagen multibanda → 1 getInfo
-        combined = bosque_2000.multiply(area_px_ha).rename('bosque') \
+        # Dos reducers en una sola imagen multibanda → 1 getInfo
+        combined = (
+            bosque_2000.multiply(area_px_ha).rename('bosque')
             .addBands(perdida.multiply(area_px_ha).rename('perdida'))
+        )
 
         resultado = combined.reduceRegion(
             reducer=ee.Reducer.sum(),
@@ -137,7 +145,7 @@ def _calcular_tasa_bau(geom_municipio, nombre_municipio):
             bestEffort=True
         ).getInfo()
 
-        bosque_total  = float(resultado.get('bosque') or 0)
+        bosque_total  = float(resultado.get('bosque')  or 0)
         perdida_total = float(resultado.get('perdida') or 0)
 
         if bosque_total < 1000:
