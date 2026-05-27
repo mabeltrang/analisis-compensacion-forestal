@@ -83,7 +83,8 @@ if impacto_file and excel_file:
             if not ok:
                 st.error(f"❌ {msg}")
                 st.stop()
-            gdf_proj = gdf_impacto.to_crs(epsg=3857)
+            # FIX: usar EPSG:3116 (MAGNA-SIRGAS) en lugar de 3857 (Mercator)
+            gdf_proj = gdf_impacto.to_crs(epsg=3116)
             area_impacto_ha = gdf_proj.geometry.area.sum() / 10000
         except Exception as e:
             st.error(f"❌ Error leyendo el polígono: {e}")
