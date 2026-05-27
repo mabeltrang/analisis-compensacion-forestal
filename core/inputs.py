@@ -147,7 +147,8 @@ def extraer_coberturas_de_kmz(file_obj, filename):
                 break
         if folder_coberturas is None:
             return {}
-        transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+        # FIX: usar EPSG:3116 (MAGNA-SIRGAS) en lugar de 3857 (Mercator)
+        transformer = Transformer.from_crs("EPSG:4326", "EPSG:3116", always_xy=True)
         for pm in folder_coberturas.findall('kml:Placemark', ns):
             pm_name = pm.find('kml:name', ns)
             if pm_name is None or not pm_name.text:
