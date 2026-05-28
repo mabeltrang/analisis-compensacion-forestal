@@ -6,7 +6,7 @@ Cruza el polígono de impacto con assets de GEE para obtener:
   - BIOMA-IAvH
   - Zona Hidrográfica (ZH), Subzona (SZH)
   - Áreas por cobertura (IDEAM)
-  - Tasa BAU de pérdida de bosque (Hansen) — por municipio
+  - Tasa BAU de pérdida de bosque (Hansen) — por municipio, SZH y ZH
 """
 import ee
 import time
@@ -102,26 +102,65 @@ def obtener_contexto_impacto(gdf):
         ee.Filter.eq('ADM2_NAME', municipio)
     ).first().geometry()
 
-    # ─── LLAMADA 3 — Hansen BAU ────────────────────────────────────
+    # ─── LLAMADA 3 — geometría de la SZH para Hansen ──────────────
+    # Usa first() porque cada SZH es un solo feature en el asset de ZH
     time.sleep(1)
-    tasa_bau, fuente_bau = _calcular_tasa_bau(municipio_geom, municipio)
+    szh_geom = zh_col.filter(
+        ee.Filter.eq('nom_szh', nom_szh)
+    ).first().geometry()
+
+    # ─── LLAMADA 4 — geometría de la ZH para Hansen ───────────────
+    # Una ZH puede tener múltiples features (varias SZH) → dissolve
+    time.sleep(1)
+    zh_geom = zh_col.filter(
+        ee.Filter.eq('nom_zh', nom_zh)
+    ).geometry().dissolve(1)
+
+    # ─── LLAMADA 5 — Hansen BAU por municipio ─────────────────────
+    time.sleep(1)
+    tasa_bau_mun, fuente_bau_mun = _calcular_tasa_bau(
+        municipio_geom, municipio
+    )
+
+    # ─── LLAMADA 6 — Hansen BAU por SZH ───────────────────────────
+    time.sleep(1)
+    tasa_bau_szh, fuente_bau_szh = _calcular_tasa_bau(
+        szh_geom, f"SZH {nom_szh}"
+    )
+
+    # ─── LLAMADA 7 — Hansen BAU por ZH ────────────────────────────
+    time.sleep(1)
+    tasa_bau_zh, fuente_bau_zh = _calcular_tasa_bau(
+        zh_geom, f"ZH {nom_zh}"
+    )
 
     return {
-        'municipio':       municipio,
-        'departamento':    departamento,
-        'zh':              nom_zh,
-        'szh':             nom_szh,
-        'bioma_principal': bioma_principal,
-        'areas_cobertura': areas_cobertura,
-        'tasa_bau':        tasa_bau,
-        'tasa_bau_fuente': fuente_bau,
+        'municipio':            municipio,
+        'departamento':         departamento,
+        'zh':                   nom_zh,
+        'szh':                  nom_szh,
+        'bioma_principal':      bioma_principal,
+        'areas_cobertura':      areas_cobertura,
+        # Tasa BAU por municipio (R1, R4)
+        'tasa_bau':             tasa_bau_mun,
+        'tasa_bau_fuente':      fuente_bau_mun,
+        # Tasa BAU por SZH (R2, R5)
+        'tasa_bau_szh':         tasa_bau_szh,
+        'tasa_bau_szh_fuente':  fuente_bau_szh,
+        # Tasa BAU por ZH (R3, R6)
+        'tasa_bau_zh':          tasa_bau_zh,
+        'tasa_bau_zh_fuente':   fuente_bau_zh,
     }
 
 
-def _calcular_tasa_bau(geom_municipio, nombre_municipio):
+def _calcular_tasa_bau(geom, nombre):
     """
-    Calcula tasa BAU con Hansen GFC.
+    Calcula tasa BAU con Hansen GFC sobre cualquier geometría de GEE.
     Consolida los dos reduceRegion en una sola llamada getInfo.
+
+    Args:
+        geom:   ee.Geometry — puede ser municipio, SZH o ZH
+        nombre: str — nombre descriptivo para el mensaje de fuente/error
     """
     try:
         hansen      = ee.Image(HANSEN_DATASET)
@@ -139,7 +178,7 @@ def _calcular_tasa_bau(geom_municipio, nombre_municipio):
 
         resultado = combined.reduceRegion(
             reducer=ee.Reducer.sum(),
-            geometry=geom_municipio,
+            geometry=geom,
             scale=30,
             maxPixels=1e10,
             bestEffort=True
@@ -151,13 +190,13 @@ def _calcular_tasa_bau(geom_municipio, nombre_municipio):
         if bosque_total < 1000:
             return (
                 0.005,
-                f"Municipio con poco bosque ({bosque_total:.0f} ha en 2000). "
+                f"{nombre}: bosque insuficiente ({bosque_total:.0f} ha en 2000). "
                 f"Usando tasa estimada 0.5%."
             )
 
         tasa   = perdida_total / (bosque_total * HANSEN_ANIOS_OBSERVACION)
         fuente = (
-            f"Hansen GFC 2001-2025 sobre {nombre_municipio}: "
+            f"Hansen GFC 2001-2025 sobre {nombre}: "
             f"{bosque_total:,.0f} ha bosque inicial, "
             f"{perdida_total:,.0f} ha perdidas en {HANSEN_ANIOS_OBSERVACION} años."
         )
@@ -166,5 +205,6 @@ def _calcular_tasa_bau(geom_municipio, nombre_municipio):
     except Exception as e:
         return (
             0.005,
-            f"Error calculando Hansen ({str(e)[:80]}). Usando 0.5% fallback."
+            f"Error calculando Hansen para {nombre} ({str(e)[:80]}). "
+            f"Usando 0.5% fallback."
         )
