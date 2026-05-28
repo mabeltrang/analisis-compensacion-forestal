@@ -7,7 +7,8 @@ NUEVO en esta versión:
   - Adicionalidad con fórmulas científicamente correctas:
       Conservar: acumulada exponencial (Hansen + Andam 2008 / Pfaff 2014)
       Restaurar: curva Chapman-Richards (Poorter 2016 + Crouzeilles 2017)
-  - Restaurar muestra proyección por horizonte (no factor fijo).
+  - Tasa BAU calculada por municipio, SZH y ZH en paralelo.
+  - Cada nivel jerárquico (R1-R6) usa la tasa de su unidad espacial.
   - Comparación Conservar vs Restaurar por ha compensada con ratio.
   - Nota metodológica expandible con citas y DOIs.
 """
@@ -35,7 +36,7 @@ st.set_page_config(
 
 st.title("🌿 App de Planes de Compensación Biótica")
 st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 6")
-st.caption("Tasa BAU calculada con Hansen GFC por municipio. Adicionalidad con curvas científicas.")
+st.caption("Tasa BAU calculada con Hansen GFC por municipio, SZH y ZH. Adicionalidad con curvas científicas.")
 
 
 with st.sidebar:
@@ -99,7 +100,7 @@ if impacto_file and excel_file:
             st.warning(f"⚠️ No se pudieron leer coberturas del KMZ: {e}")
             coberturas_kmz = {}
 
-    with st.spinner("Obteniendo contexto geográfico + tasa BAU (Hansen)..."):
+    with st.spinner("Obteniendo contexto geográfico + tasas BAU (Hansen) por municipio, SZH y ZH..."):
         try:
             ctx = contexto.obtener_contexto_impacto(gdf_impacto)
         except Exception as e:
@@ -153,21 +154,46 @@ if impacto_file and excel_file:
         st.write(f"**ZH:** {ctx.get('zh', 'n/d')}")
         st.write(f"**SZH:** {ctx.get('szh', 'n/d')}")
 
-    # ─── TASA BAU ───────────────────────────────────────────────────────────
-    tasa_bau = ctx.get('tasa_bau', 0.005)
-    fuente_bau = ctx.get('tasa_bau_fuente', 'No disponible')
+    # ─── TASAS BAU ──────────────────────────────────────────────────────────
+    tasa_bau     = ctx.get('tasa_bau', 0.005)
+    tasa_bau_szh = ctx.get('tasa_bau_szh', tasa_bau)
+    tasa_bau_zh  = ctx.get('tasa_bau_zh',  tasa_bau)
+    fuente_bau     = ctx.get('tasa_bau_fuente',     'No disponible')
+    fuente_bau_szh = ctx.get('tasa_bau_szh_fuente', 'No disponible')
+    fuente_bau_zh  = ctx.get('tasa_bau_zh_fuente',  'No disponible')
+
     st.markdown("---")
     st.subheader("🌲 Tasa de Pérdida de Bosque (BAU)")
-    c1, c2 = st.columns([1, 2])
-    with c1:
+    st.caption(
+        "Calculada con Hansen GFC 2001-2025 sobre cada unidad espacial. "
+        "Cada nivel jerárquico de búsqueda usa la tasa de su unidad: "
+        "Municipio (R1/R4) · SZH (R2/R5) · ZH (R3/R6)."
+    )
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
         st.metric(
-            "Tasa anual",
+            f"Municipio ({ctx.get('municipio', 'n/d')})",
             f"{tasa_bau*100:.3f} %",
-            help="Pérdida promedio anual sobre el bosque del municipio"
+            help="Usada para R1 y R4 (mismo/otro BIOMA ∩ Municipio)"
         )
-    with c2:
-        st.caption(f"**Fuente:** {fuente_bau}")
-        st.caption("Dataset: Hansen GFC v1.12 (Universidad de Maryland)")
+        st.caption(fuente_bau)
+    with col2:
+        st.metric(
+            f"SZH ({ctx.get('szh', 'n/d')})",
+            f"{tasa_bau_szh*100:.3f} %",
+            help="Usada para R2 y R5 (mismo/otro BIOMA ∩ SZH)"
+        )
+        st.caption(fuente_bau_szh)
+    with col3:
+        st.metric(
+            f"ZH ({ctx.get('zh', 'n/d')})",
+            f"{tasa_bau_zh*100:.3f} %",
+            help="Usada para R3 y R6 (mismo/otro BIOMA ∩ ZH)"
+        )
+        st.caption(fuente_bau_zh)
+
+    st.caption("Dataset: Hansen GFC v1.12 (Universidad de Maryland)")
 
     # ─── COBERTURAS ─────────────────────────────────────────────────────────
     st.subheader(f"Coberturas Impactadas ({fuente_coberturas})")
@@ -240,15 +266,30 @@ if impacto_file and excel_file:
     st.markdown("---")
     st.header("🌱 Adicionalidad Esperada")
 
-    TASA_BAU    = tasa_bau
+    # Mapa nivel jerárquico → tasa BAU aplicable para CONSERVAR
+    # R1/R4 = Municipio · R2/R5 = SZH · R3/R6 = ZH
+    TASA_POR_NIVEL = {
+        "Rango 1": tasa_bau,
+        "Rango 2": tasa_bau_szh,
+        "Rango 3": tasa_bau_zh,
+        "Rango 4": tasa_bau,
+        "Rango 5": tasa_bau_szh,
+        "Rango 6": tasa_bau_zh,
+    }
+
     K_RESTAURAR = 0.076   # Chapman-Richards bs-T, Poorter 2016
     F_CONSERVAR = 0.85    # Andam 2008 / Pfaff 2014
     F_RESTAURAR = 0.75    # Crouzeilles 2017 / González-M 2018
     HORIZONTES  = [3, 5, 10, 15]
 
+    # TASA_BAU como alias del municipio para el Excel y comparación
+    TASA_BAU = tasa_bau
+
     st.markdown(
-        f"**Tasa BAU usada:** `{TASA_BAU*100:.3f}%` anual "
-        f"(Hansen GFC sobre {ctx.get('municipio', 'municipio')})"
+        f"**Tasas BAU (Hansen GFC):** "
+        f"Municipio `{tasa_bau*100:.3f}%` · "
+        f"SZH `{tasa_bau_szh*100:.3f}%` · "
+        f"ZH `{tasa_bau_zh*100:.3f}%` anual"
     )
 
     # ─── NOTA METODOLÓGICA ──────────────────────────────────────────────────
@@ -262,7 +303,8 @@ ha_adicional(n) = ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85
 
 - `[1 - (1 - tasa_BAU)ⁿ]` — probabilidad acumulada de deforestación en *n* años.
   Modelo de eventos independientes anuales. La tasa BAU se calcula con
-  **Hansen et al. (2013)** sobre el municipio del impacto.
+  **Hansen et al. (2013)** sobre la unidad espacial del nivel jerárquico:
+  municipio (R1/R4), SZH (R2/R5) o ZH (R3/R6).
   DOI: [10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
 
 - `0.85` — fracción de la deforestación evitada que es realmente adicional.
@@ -300,21 +342,24 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
         st.subheader("🌳 Escenario CONSERVAR (cerramiento)")
         st.caption(
             "Hectáreas que NO se pierden. "
-            "Fórmula: `ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85`"
+            "Fórmula: `ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85` — "
+            "tasa BAU según unidad espacial del nivel jerárquico."
         )
         filas_c = []
         for rango_id, data in atc_resultados.items():
-            atc_total = data['atc_total']
+            atc_total  = data['atc_total']
+            tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
             fila = {
-                "Rango": rango_id,
-                "ATC (ha)": round(atc_total, 2),
+                "Rango":         rango_id,
+                "ATC (ha)":      round(atc_total, 2),
+                "Tasa BAU":      f"{tasa_rango*100:.3f}%",
                 "Adic/año (ha)": round(
-                    adicionalidad_conservar_anual(atc_total, TASA_BAU, F_CONSERVAR), 4
+                    adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 4
                 ),
             }
             for n in HORIZONTES:
                 fila[f"A {n} años (ha)"] = round(
-                    adicionalidad_conservar(atc_total, n, TASA_BAU, F_CONSERVAR), 4
+                    adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR), 4
                 )
             filas_c.append(fila)
         st.dataframe(pd.DataFrame(filas_c), use_container_width=True, hide_index=True)
@@ -329,7 +374,7 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
         for rango_id, data in atc_resultados.items():
             atc_total = data['atc_total']
             fila = {
-                "Rango": rango_id,
+                "Rango":    rango_id,
                 "ATC (ha)": round(atc_total, 2),
             }
             for n in HORIZONTES:
@@ -345,17 +390,21 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
 
         # ─── COMPARACIÓN ────────────────────────────────────────────────────
         st.subheader("⚖️ Comparación Conservar vs Restaurar")
-        st.caption("Por ha compensada — independiente del rango")
+        st.caption(
+            f"Por ha compensada — referencia: tasa BAU del municipio "
+            f"(`{tasa_bau*100:.3f}%`)"
+        )
         filas_comp = []
         for n in HORIZONTES:
-            cons_por_ha = adicionalidad_conservar(1.0, n, TASA_BAU, F_CONSERVAR)
+            # Comparación ilustrativa: municipio como referencia fija
+            cons_por_ha = adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR)
             rest_por_ha = adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
             filas_comp.append({
-                "Horizonte": f"{n} años",
-                "Conservar (ha/ha)": round(cons_por_ha, 4),
-                "Restaurar (ha/ha)": round(rest_por_ha, 4),
-                "Ratio Rest/Cons": round(rest_por_ha / cons_por_ha, 1)
-                    if cons_por_ha > 0 else "—"
+                "Horizonte":                   f"{n} años",
+                "Conservar (ha/ha)":           round(cons_por_ha, 4),
+                "Restaurar (ha/ha)":           round(rest_por_ha, 4),
+                "Ratio Rest/Cons":             round(rest_por_ha / cons_por_ha, 1)
+                                               if cons_por_ha > 0 else "—"
             })
         st.dataframe(
             pd.DataFrame(filas_comp), use_container_width=True, hide_index=True
@@ -368,14 +417,15 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
 
         # ─── MIX 50/50 ──────────────────────────────────────────────────────
         st.subheader("⚖️ Escenario MIX 50/50")
-        st.caption("50% Conservar + 50% Restaurar del ATC total")
+        st.caption("50% Conservar + 50% Restaurar del ATC total — tasa BAU por nivel")
         filas_m = []
         for rango_id, data in atc_resultados.items():
-            atc_total = data['atc_total']
-            mitad = atc_total * 0.5
+            atc_total  = data['atc_total']
+            mitad      = atc_total * 0.5
+            tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
             fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
             for n in HORIZONTES:
-                cons = adicionalidad_conservar(mitad, n, TASA_BAU, F_CONSERVAR)
+                cons = adicionalidad_conservar(mitad, n, tasa_rango, F_CONSERVAR)
                 rest = adicionalidad_restaurar(mitad, n, K_RESTAURAR, F_RESTAURAR)
                 fila[f"Mix {n} años (ha)"] = round(cons + rest, 4)
             filas_m.append(fila)
@@ -387,7 +437,8 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
             "- Acuerdo de conservación a 15 años → columna de 15 años\n"
             "- Acuerdo a 3–5 años → columna correspondiente\n\n"
             "**Restaurar** genera más adicionalidad numérica. **Conservar** "
-            "protege bosque existente con menor riesgo de falla."
+            "protege bosque existente con menor riesgo de falla. La mezcla óptima "
+            "depende del presupuesto y del mecanismo jurídico."
         )
 
     # ─── DESCARGA EXCEL ─────────────────────────────────────────────────────
@@ -395,7 +446,8 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
     st.header("📥 Descargar Resultados")
 
     def _build_excel(ctx, fcafu_por_cobertura, atc_resultados,
-                     TASA_BAU, F_CONSERVAR, F_RESTAURAR, K_RESTAURAR,
+                     TASA_BAU, tasa_bau_szh, tasa_bau_zh,
+                     TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR, K_RESTAURAR,
                      HORIZONTES, area_impacto_ha):
         buf = io.BytesIO()
         with pd.ExcelWriter(buf, engine="openpyxl") as writer:
@@ -405,7 +457,8 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
                 "Variable": [
                     "Municipio", "Departamento", "BIOMA-IAvH",
                     "Zona Hidrográfica", "Subzona Hidrográfica",
-                    "Área de impacto (ha)", "Tasa BAU anual (%)"
+                    "Área de impacto (ha)",
+                    "Tasa BAU Municipio (%)", "Tasa BAU SZH (%)", "Tasa BAU ZH (%)"
                 ],
                 "Valor": [
                     ctx.get("municipio", "n/d"),
@@ -415,6 +468,8 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
                     ctx.get("szh", "n/d"),
                     round(area_impacto_ha, 4),
                     round(TASA_BAU * 100, 4),
+                    round(tasa_bau_szh * 100, 4),
+                    round(tasa_bau_zh * 100, 4),
                 ]
             })
             resumen.to_excel(writer, sheet_name="Resumen", index=False)
@@ -445,20 +500,22 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
                 })
             pd.DataFrame(atc_rows).to_excel(writer, sheet_name="ATC_por_Rango", index=False)
 
-            # Hoja 4 – Adicionalidad Conservar
+            # Hoja 4 – Adicionalidad Conservar (tasa por nivel)
             cons_rows = []
             for rango_id, data in atc_resultados.items():
-                atc_total = data["atc_total"]
+                atc_total  = data["atc_total"]
+                tasa_rango = TASA_POR_NIVEL.get(rango_id, TASA_BAU)
                 fila = {
                     "Rango": rango_id,
                     "ATC (ha)": round(atc_total, 4),
+                    "Tasa BAU usada (%)": round(tasa_rango * 100, 4),
                     "Adic/año (ha)": round(
-                        adicionalidad_conservar_anual(atc_total, TASA_BAU, F_CONSERVAR), 6
+                        adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 6
                     ),
                 }
                 for n in HORIZONTES:
                     fila[f"A {n} años (ha)"] = round(
-                        adicionalidad_conservar(atc_total, n, TASA_BAU, F_CONSERVAR), 6
+                        adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR), 6
                     )
                 cons_rows.append(fila)
             pd.DataFrame(cons_rows).to_excel(writer, sheet_name="Adicionalidad_Conservar", index=False)
@@ -478,7 +535,7 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
                 rest_rows.append(fila)
             pd.DataFrame(rest_rows).to_excel(writer, sheet_name="Adicionalidad_Restaurar", index=False)
 
-            # Hoja 6 – Comparación por ha compensada
+            # Hoja 6 – Comparación por ha compensada (referencia: municipio)
             comp_rows = []
             for n in HORIZONTES:
                 cons_ha = adicionalidad_conservar(1.0, n, TASA_BAU, F_CONSERVAR)
@@ -512,7 +569,8 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
         nombre_mun = ctx.get("municipio", "proyecto").replace(" ", "_")
         excel_bytes = _build_excel(
             ctx, fcafu_por_cobertura, atc_resultados,
-            TASA_BAU, F_CONSERVAR, F_RESTAURAR, K_RESTAURAR,
+            TASA_BAU, tasa_bau_szh, tasa_bau_zh,
+            TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR, K_RESTAURAR,
             HORIZONTES, area_impacto_ha
         )
         st.download_button(
@@ -568,7 +626,8 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
     st.caption(
         "**Tasa BAU**: Hansen et al. (2013). High-Resolution Global Maps of "
         "21st-Century Forest Cover Change. Science 342: 850-853. "
-        "[10.1126/science.1244693](https://doi.org/10.1126/science.1244693)"
+        "[10.1126/science.1244693](https://doi.org/10.1126/science.1244693) — "
+        "calculada sobre municipio (R1/R4), SZH (R2/R5) y ZH (R3/R6)."
     )
 
 else:
@@ -578,7 +637,7 @@ else:
         "### Esta app calcula:\n\n"
         "1. **FCAFU** por cobertura (1 + A + B + C del Manual)\n"
         "2. **ATC** por rango usando áreas REALES del KMZ\n"
-        "3. **Tasa BAU** dinámica del municipio (Hansen Global Forest Change)\n"
+        "3. **Tasa BAU** dinámica por municipio, SZH y ZH (Hansen Global Forest Change)\n"
         "4. **Adicionalidad** por escenario y horizonte temporal:\n"
         "   - Conservar: curva exponencial acumulada (Andam 2008 / Pfaff 2014)\n"
         "   - Restaurar: curva Chapman-Richards (Poorter 2016 / Crouzeilles 2017)\n\n"
