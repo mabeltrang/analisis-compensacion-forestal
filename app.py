@@ -63,6 +63,7 @@ with st.sidebar:
         "DAP mínimo (cm)",
         min_value=1.0, max_value=30.0,
         value=float(settings.DAP_MIN_DEFAULT), step=0.5,
+        help="Criterio real: CAP ≥ 31 cm → DAP = 31/π ≈ 9.87 cm. No usar 10.0 exacto.",
     )
 
 
