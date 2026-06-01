@@ -45,7 +45,7 @@ AMENAZA_VALORES = {
 }
 
 # Configuración Inventario
-DAP_MIN_DEFAULT = 10.0  # cm
+DAP_MIN_DEFAULT = 9.86  # cm
 HORIZONTE_TEMPORAL = 15  # aos
 
 # Coberturas excluidas para áreas candidatas
