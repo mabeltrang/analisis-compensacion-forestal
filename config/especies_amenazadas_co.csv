@@ -1,10 +1,29 @@
-nombre_cientifico,categoria,grupo_taxonomico,fuente
-Cariniana pyriformis,EN,Flora,Res. 0126/2024
-Anacardium excelsum,VU,Flora,Res. 0126/2024
-Aotus brumbacki,VU,Mamifero,Res. 0126/2024
-Tremarctos ornatus,VU,Mamifero,Res. 0126/2024
-Cedrela odorata,EN,Flora,Res. 0126/2024
-Podocarpus guatemalensis,VU,Flora,Res. 0126/2024
-Magnolia georgii,CR,Flora,Res. 0126/2024
-Astronium graveolens,VU,Flora,Res. 0126/2024
-Handroanthus chrysanthus,VU,Flora,Res. 0126/2024
+nombre_cientifico,categoria,grupo_taxonomico,fuente,match_genero
+Cariniana pyriformis,EN,Flora,Res. 0126/2024,0
+Anacardium excelsum,VU,Flora,Res. 0126/2024,0
+Cedrela odorata,EN,Flora,Res. 0126/2024,0
+Cedrela montana,EN,Flora,Res. 0126/2024,0
+Swietenia macrophylla,CR,Flora,"Libro Rojo maderables SINCHI
+Astronium graveolens,VU,Flora,Res. 0126/2024,0
+Handroanthus ochraceus,VU,Flora,Res. 0126/2024,0
+Handroanthus chrysanthus,VU,Flora,Res. 0126/2024,0
+Handroanthus billbergii,VU,Flora,Res. 0126/2024,0
+Podocarpus guatemalensis,VU,Flora,Res. 0126/2024,0
+Magnolia georgii,CR,Flora,Res. 0126/2024,0
+Magnolia hernandezii,EN,Flora,Res. 0126/2024,0
+Juglans neotropica,EN,Flora,"Res. 0126/2024
+Aniba perutilis,EN,Flora,Res. 0126/2024,0
+Quercus humboldtii,VU,Flora,Res. 0126/2024,0
+Retrophyllum rospigliosii,VU,Flora,Res. 0126/2024,0
+Humiriastrum procerum,CR,Flora,Res. 0126/2024,0
+Guaiacum officinale,CR,Flora,Res. 0126/2024,0
+Pachira quinata,VU,Flora,Res. 0126/2024,0
+Tabebuia rosea,VU,Flora,Res. 0126/2024,0
+Lecythis ampla,VU,Flora,Res. 0126/2024,0
+Dipterix panamensis,EN,Flora,Res. 0126/2024,0
+Prioria copaifera,VU,Flora,Res. 0126/2024,0
+Caryodaphnopsis cogolloi,CR,Flora,Res. 0126/2024,0
+Ceroxylon quindiuense,CR,Flora,Res. 0126/2024,0
+Triplaris cumingiana,VU,Flora,Res. 0126/2024,0
+Aotus brumbacki,VU,Mamifero,Res. 0126/2024,0
+Tremarctos ornatus,VU,Mamifero,Res. 0126/2024,0
