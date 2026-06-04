@@ -65,6 +65,17 @@ with st.sidebar:
         value=float(settings.DAP_MIN_DEFAULT), step=0.5,
         help="Criterio real: CAP ≥ 31 cm → DAP = 31/π ≈ 9.87 cm. No usar 10.0 exacto.",
     )
+    car_proyecto = st.selectbox(
+        "CAR competente del proyecto",
+        options=[
+            "", "CORPOCESAR", "CORPOGUAJIRA", "CRA", "CORPOBOYACA",
+            "CDMB", "CAS", "CORPAMAG", "CORANTIOQUIA", "CORPOURABA",
+            "CORTOLIMA", "CARDER", "CVC", "CRC", "CORPOCALDAS",
+            "CAR", "CORPONOR",
+        ],
+        index=0,
+        help="Se usa para cruzar el inventario contra vedas regionales vigentes.",
+    )
 
 
 if impacto_file and excel_file:
@@ -124,7 +135,7 @@ if impacto_file and excel_file:
                 tmp.write(excel_file.getbuffer())
                 excel_path = tmp.name
             fcafu_por_cobertura = inventario.procesar_inventario(
-                excel_path, dap_min=dap_min
+                excel_path, dap_min=dap_min, car=car_proyecto
             )
             os.unlink(excel_path)
         except Exception as e:
@@ -213,6 +224,59 @@ if impacto_file and excel_file:
     st.markdown("---")
     st.header("🌳 FCAFU por Cobertura")
     st.caption("Fórmula del Manual 2026: FCAFU = 1 + A + B + C")
+
+    # ── Alertas de veda ─────────────────────────────────────────────────────
+    todas_vedas = []
+    for cob, d in fcafu_por_cobertura.items():
+        for v in d.get('vedas_detectadas', []):
+            todas_vedas.append({**v, 'cobertura': cob})
+
+    if todas_vedas:
+        n_nac = sum(v['n_individuos'] for v in todas_vedas if 'nacional' in v['nivel'])
+        n_reg = sum(v['n_individuos'] for v in todas_vedas
+                    if v['nivel'] == 'regional')
+        st.error(
+            f"🚫 **Especies en veda detectadas en el inventario** — "
+            f"{n_nac} ind. en veda nacional · {n_reg} ind. en veda regional. "
+            f"Ver detalle abajo."
+        )
+        with st.expander(
+            f"📋 Detalle de especies en veda ({len(todas_vedas)} registros)",
+            expanded=True
+        ):
+            df_vedas = pd.DataFrame(todas_vedas)[
+                ['cobertura', 'nombre_cientifico', 'n_individuos', 'nivel', 'norma', 'alerta']
+            ]
+            df_vedas.columns = [
+                'Cobertura', 'Nombre científico', 'N ind.',
+                'Nivel veda', 'Norma', 'Alerta'
+            ]
+            st.dataframe(df_vedas, use_container_width=True, hide_index=True)
+
+            # Obligaciones por nivel de veda
+            if any('nacional' in v['nivel'] for v in todas_vedas):
+                st.warning(
+                    "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
+                    "1. Censo al 100% de individuos fustales (DAP ≥ 10 cm) de especies vedadas.\n"
+                    "2. Medidas de manejo in situ: rescate y reubicación de individuos.\n"
+                    "3. Medidas ex situ: propagación en vivero y siembra en área de compensación.\n"
+                    "4. Insumos cartográficos (shapefile) con localización de cada individuo vedado.\n"
+                    "No se requiere trámite de levantamiento de veda — se gestiona en el "
+                    "mismo expediente del permiso (Parágrafo Transitorio Art. 125 Decreto 2106/2019)."
+                )
+            if any(v['nivel'] == 'regional' for v in todas_vedas):
+                car_disp = car_proyecto or "la CAR competente"
+                st.warning(
+                    f"**Obligaciones — veda regional {car_disp}:**\n"
+                    "Antes del aprovechamiento se requiere:\n"
+                    "1. Solicitud formal ante el GIT Forestal de la CAR.\n"
+                    "2. Concepto técnico favorable de la CAR.\n"
+                    "3. Justificación de interés público o riesgo (según art. de excepción "
+                    "de la resolución de veda).\n"
+                    "4. Medidas de compensación y reposición que determine la CAR "
+                    "(CORPOCESAR: relación 1:5 para Res. 0035/2026)."
+                )
+
     if fcafu_por_cobertura:
         df_fcafu = pd.DataFrame([
             {
