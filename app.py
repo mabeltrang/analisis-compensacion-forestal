@@ -291,13 +291,56 @@ if impacto_file and excel_file:
             for cob, d in fcafu_por_cobertura.items()
         ])
         st.dataframe(df_fcafu, use_container_width=True, hide_index=True)
+        # ── Desglose criterio B (amenaza) por especie ──────────────────────────
         amenazadas_total = []
         for cob, d in fcafu_por_cobertura.items():
             for sp in d.get('amenazadas', []):
-                amenazadas_total.append({**sp, 'cobertura': cob})
+                amenazadas_total.append({**sp, 'cobertura': cob,
+                                         'N_cobertura': d.get('N', 0),
+                                         'B_cobertura': round(d.get('B', 0), 4)})
         if amenazadas_total:
-            with st.expander(f"⚠️ Especies amenazadas ({len(amenazadas_total)})"):
-                st.dataframe(pd.DataFrame(amenazadas_total), hide_index=True)
+            n_amenazadas = sum(sp['n_individuos'] for sp in amenazadas_total)
+            with st.expander(
+                f"🔍 Desglose criterio B — amenaza ({n_amenazadas} individuos, "
+                f"{len({sp['nombre_cientifico'] for sp in amenazadas_total})} spp.)",
+                expanded=True
+            ):
+                st.markdown(
+                    "**Fórmula (Manual 2026, criterio B):**\n"
+                    r"$$B = \frac{\sum_{i=1}^{N} v_i}{N}$$"
+                    "\n\nDonde **vᵢ** es el valor de amenaza del individuo *i* "
+                    "según Res. 0126/2024: `CR=1.0 · EN=0.66 · VU=0.33 · NT=0.1 · LC=0`"
+                )
+                for cob, d in fcafu_por_cobertura.items():
+                    spp_cob = d.get('amenazadas', [])
+                    if not spp_cob:
+                        continue
+                    N = d.get('N', 0)
+                    B = round(d.get('B', 0), 4)
+                    st.markdown(f"**{cob}** — N={N} ind. · B={B}")
+                    rows_b = []
+                    suma_check = 0.0
+                    for sp in spp_cob:
+                        n_sp = sp.get('n_individuos', 1)
+                        v = sp.get('valor_amenaza', 0.0)
+                        aporte = sp.get('aporte_b', round(v * n_sp / N, 4) if N else 0)
+                        suma_check += aporte
+                        rows_b.append({
+                            'Nombre científico': sp.get('nombre_cientifico', sp.get('Nombre cientifico', '')),
+                            'Categoría': sp.get('categoria_amenaza', sp.get('categoria_amenaza', '')),
+                            'vᵢ': v,
+                            'N ind.': n_sp,
+                            'vᵢ × Nᵢ': round(v * n_sp, 4),
+                            'Aporte a B (vᵢ×Nᵢ/N_total)': aporte,
+                        })
+                    df_b = pd.DataFrame(rows_b)
+                    st.dataframe(df_b, use_container_width=True, hide_index=True)
+                    st.caption(
+                        f"B = {' + '.join(str(r['Aporte a B (vᵢ×Nᵢ/N_total)']) for r in rows_b)}"
+                        f" = **{round(suma_check, 4)}** "
+                        f"(N_total cobertura = {N})"
+                    )
+                    st.markdown("---")
     else:
         st.warning(
             "⚠️ El inventario no generó cálculos FCAFU. "
