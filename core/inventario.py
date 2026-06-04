@@ -97,13 +97,44 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     )
     tabla_c = pd.read_csv(os.path.join(settings.CONFIG_DIR, "tabla_c.csv"))
 
-    # Mapear valor de amenaza
-    amenaza_map = especies_amenazadas.set_index('nombre_cientifico')['categoria'].to_dict()
-    df_filtrado['categoria_amenaza'] = (
-        df_filtrado['Nombre cientifico']
-        .map(amenaza_map)
-        .fillna('LC')
-    )
+    # Mapear valor de amenaza — con fallback por género
+    # 1. Mapa exacto normalizado
+    def _norm(s):
+        import unicodedata as _ud
+        s = str(s)
+        s = ''.join(c for c in _ud.normalize('NFD', s)
+                    if _ud.category(c) != 'Mn')
+        return s.lower().strip()
+
+    amenaza_exact = {
+        _norm(r['nombre_cientifico']): r['categoria']
+        for _, r in especies_amenazadas.iterrows()
+    }
+
+    # 2. Mapa por género → categoría más alta encontrada en ese género
+    #    solo para filas con match_genero == 1 o donde haya ≥ 1 sp. del género
+    from collections import defaultdict
+    CAT_ORDER = {'CR': 4, 'EN': 3, 'VU': 2, 'NT': 1, 'LC': 0}
+    amenaza_genero = defaultdict(lambda: 'LC')
+    for _, r in especies_amenazadas.iterrows():
+        genero = _norm(r['nombre_cientifico']).split()[0]
+        cat_nueva = r['categoria']
+        cat_actual = amenaza_genero[genero]
+        if CAT_ORDER.get(cat_nueva, 0) > CAT_ORDER.get(cat_actual, 0):
+            amenaza_genero[genero] = cat_nueva
+
+    def _lookup_amenaza(nombre_sci):
+        n = _norm(nombre_sci)
+        # Exacto primero
+        if n in amenaza_exact:
+            return amenaza_exact[n]
+        # Fallback género (funciona para "Juglans sp", "Juglans cf. neotropica", etc.)
+        genero = n.split()[0] if n else ''
+        if genero and genero in amenaza_genero and amenaza_genero[genero] != 'LC':
+            return amenaza_genero[genero]
+        return 'LC'
+
+    df_filtrado['categoria_amenaza'] = df_filtrado['Nombre cientifico'].apply(_lookup_amenaza)
     df_filtrado['valor_amenaza'] = (
         df_filtrado['categoria_amenaza']
         .map(settings.AMENAZA_VALORES)
