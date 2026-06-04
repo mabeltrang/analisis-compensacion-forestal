@@ -166,13 +166,22 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
         # FCAFU = 1 + A + B + C
         fcafu = 1 + a + b + c
 
-        # Especies amenazadas detectadas (no LC)
-        amenazadas = (
-            group[group['categoria_amenaza'] != 'LC']
-            [['Nombre cientifico', 'categoria_amenaza']]
-            .drop_duplicates()
-            .to_dict('records')
-        )
+        # Especies amenazadas — desglose completo para fórmula B
+        # B = Σ(valor_amenaza_i) / N  para todos los individuos de la cobertura
+        amenazadas_group = group[group['categoria_amenaza'] != 'LC'].copy()
+        amenazadas = []
+        for sp_sci, sp_grp in amenazadas_group.groupby('Nombre cientifico'):
+            n_sp = len(sp_grp)
+            cat_sp = sp_grp['categoria_amenaza'].iloc[0]
+            val_sp = float(sp_grp['valor_amenaza'].iloc[0])
+            aporte_b = round(val_sp * n_sp / n, 4) if n > 0 else 0.0
+            amenazadas.append({
+                'nombre_cientifico': sp_sci,
+                'categoria_amenaza': cat_sp,
+                'n_individuos': n_sp,
+                'valor_amenaza': val_sp,
+                'aporte_b': aporte_b,
+            })
 
         # ── CRUCE CON VEDAS ─────────────────────────────────────────────────
         # Por cada especie única en esta cobertura, consulta veda
