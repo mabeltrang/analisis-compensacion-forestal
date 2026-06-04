@@ -3,9 +3,10 @@ import numpy as np
 import os
 from . import utils
 from config import settings
+from config.vedas import consultar_veda
 
 
-def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
+def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str = ""):
     """
     Procesa el inventario forestal estándar de Unergy.
     Calcula N, S, SN, A, B, C y FCAFU por cobertura.
@@ -142,6 +143,37 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
             .to_dict('records')
         )
 
+        # ── CRUCE CON VEDAS ─────────────────────────────────────────────────
+        # Por cada especie única en esta cobertura, consulta veda
+        vedas_detectadas = []
+        n_ind_veda_nacional = 0
+        n_ind_veda_regional = 0
+        n_ind_veda_ambas = 0
+
+        for sp_sci, sp_group in group.groupby('Nombre cientifico'):
+            n_sp = len(sp_group)
+            info_v = consultar_veda(sp_sci, car=car)
+            if info_v['nivel'] != 'sin_veda':
+                vedas_detectadas.append({
+                    'nombre_cientifico': sp_sci,
+                    'n_individuos': n_sp,
+                    'nivel': info_v['nivel'],
+                    'norma': (
+                        info_v['veda_nacional_info']['norma']
+                        if info_v['en_veda_nacional']
+                        else info_v['veda_regional_info']['norma']
+                    ),
+                    'alerta': info_v['alerta'],
+                })
+                if info_v['nivel'] == 'nacional+regional':
+                    n_ind_veda_ambas += n_sp
+                elif info_v['nivel'] == 'nacional':
+                    n_ind_veda_nacional += n_sp
+                elif info_v['nivel'] == 'regional':
+                    n_ind_veda_regional += n_sp
+
+        hay_veda = len(vedas_detectadas) > 0
+
         # Área basal total (opcional)
         area_basal = 0.0
         if 'ab_total' in final_cols:
@@ -158,7 +190,14 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT):
             'C': c,
             'FCAFU': fcafu,
             'amenazadas': amenazadas,
-            'area_basal_total': area_basal
+            'area_basal_total': area_basal,
+            # ── Veda ────────────────────────────────────────────────────────
+            'hay_veda': hay_veda,
+            'vedas_detectadas': vedas_detectadas,
+            'n_ind_veda_nacional': n_ind_veda_nacional,
+            'n_ind_veda_regional': n_ind_veda_regional,
+            'n_ind_veda_ambas': n_ind_veda_ambas,
+            'car': car,
         }
 
     return resultados
