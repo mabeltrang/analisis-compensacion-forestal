@@ -1,8 +1,12 @@
 {
+  "_comentario": "Valores según Tabla 4, Manual 2026 (Res. 0305/2026 MADS). Solo CR/EN/VU reconocidas por Res. 0126/2024. NT no aplica en el Manual.",
   "CR": 1.0,
-  "EN": 0.75,
-  "VU": 0.5,
-  "NT": 0.25,
+  "EN": 0.6,
+  "VU": 0.4,
   "LC": 0.0,
-  "NE": 0.0
+  "NE": 0.0,
+  "_cites_equivalencias": "Equiparación interna Unergy (no normativa): Apéndice I ≈ EN (0.6), Apéndice II ≈ VU (0.4)",
+  "CITES_I": 0.6,
+  "CITES_II": 0.4,
+  "CITES_III": 0.0
 }
