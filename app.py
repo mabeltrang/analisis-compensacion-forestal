@@ -32,17 +32,21 @@ st.set_page_config(
 
 PURPLE      = "#7B4CC9"
 PURPLE_DARK = "#2D1B4E"
-PURPLE_LIGHT= "#EDE7F9"
+PURPLE_LIGHT= "#D9CEEF"
 PURPLE_MID  = "#9B6FE8"
 WHITE       = "#FFFFFF"
-GRAY_TEXT   = "#5A5A72"
+GRAY_TEXT   = "#3A3A52"
 
 st.markdown(f"""
 <style>
-  /* Fondo general */
-  .stApp {{ background-color: #F8F5FF; }}
+  /* ── Fondo general: blanco puro para máximo contraste ── */
+  .stApp {{ background-color: #FFFFFF; }}
 
-  /* Header corporativo */
+  /* ── Texto base: siempre oscuro ── */
+  .stApp, .stApp p, .stApp li, .stApp span,
+  .stApp label, .stApp div {{ color: #1A1A2E; }}
+
+  /* ── Header corporativo ── */
   .unergy-header {{
     background: {PURPLE_DARK};
     padding: 18px 32px 14px 32px;
@@ -53,118 +57,181 @@ st.markdown(f"""
     gap: 18px;
   }}
   .unergy-header h1 {{
-    color: {WHITE};
+    color: #FFFFFF !important;
     font-size: 1.55rem;
     font-weight: 700;
     margin: 0;
-    letter-spacing: -0.3px;
   }}
   .unergy-header p {{
-    color: #C5B3F0;
+    color: #C5B3F0 !important;
     font-size: 0.82rem;
     margin: 2px 0 0 0;
   }}
-  .unergy-logo {{
-    font-size: 2.4rem;
-    line-height: 1;
-  }}
+  .unergy-logo {{ font-size: 2.4rem; line-height: 1; }}
 
-  /* Tabs */
+  /* ── Tabs ── */
   .stTabs [data-baseweb="tab-list"] {{
     gap: 4px;
     background: {PURPLE_LIGHT};
     border-radius: 10px;
     padding: 4px;
+    border: 1px solid #B8A9E0;
   }}
   .stTabs [data-baseweb="tab"] {{
     border-radius: 8px;
-    color: {PURPLE_DARK};
-    font-weight: 600;
+    color: {PURPLE_DARK} !important;
+    font-weight: 700;
     font-size: 0.85rem;
     padding: 6px 16px;
   }}
   .stTabs [aria-selected="true"] {{
     background: {PURPLE} !important;
-    color: white !important;
+    color: #FFFFFF !important;
+  }}
+  /* Texto del tab activo */
+  .stTabs [aria-selected="true"] p,
+  .stTabs [aria-selected="true"] span {{
+    color: #FFFFFF !important;
   }}
 
-  /* Cards métricas */
+  /* ── Cards métricas ── */
   .metric-card {{
-    background: {WHITE};
-    border: 1.5px solid {PURPLE_LIGHT};
-    border-left: 4px solid {PURPLE};
+    background: #FFFFFF;
+    border: 2px solid {PURPLE_LIGHT};
+    border-left: 5px solid {PURPLE};
     border-radius: 10px;
     padding: 14px 18px;
     margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(123,76,201,0.08);
   }}
   .metric-card .label {{
-    font-size: 0.75rem;
-    color: {GRAY_TEXT};
-    font-weight: 600;
+    font-size: 0.72rem;
+    color: #5A5A72 !important;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.6px;
     margin-bottom: 4px;
   }}
   .metric-card .value {{
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: {PURPLE_DARK};
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: {PURPLE_DARK} !important;
   }}
   .metric-card .sub {{
-    font-size: 0.78rem;
-    color: {GRAY_TEXT};
-    margin-top: 2px;
+    font-size: 0.76rem;
+    color: #5A5A72 !important;
+    margin-top: 3px;
   }}
 
-  /* Sección header */
+  /* ── Sección header ── */
   .section-header {{
-    background: linear-gradient(90deg, {PURPLE_LIGHT} 0%, {WHITE} 100%);
-    border-left: 4px solid {PURPLE};
+    background: {PURPLE_LIGHT};
+    border-left: 5px solid {PURPLE};
     border-radius: 0 8px 8px 0;
-    padding: 8px 16px;
-    margin: 18px 0 12px 0;
+    padding: 9px 16px;
+    margin: 20px 0 12px 0;
   }}
   .section-header h3 {{
-    color: {PURPLE_DARK};
+    color: {PURPLE_DARK} !important;
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
   }}
 
-  /* Badge categoría amenaza */
-  .badge-CR  {{ background:#FDECEA; color:#C0392B; border:1px solid #E74C3C;
-                border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
-  .badge-EN  {{ background:#FEF3CD; color:#9B5E0A; border:1px solid #F39C12;
-                border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
-  .badge-VU  {{ background:#EAF4FB; color:#1A6A9A; border:1px solid #2E86C1;
-                border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
-  .badge-CITES {{ background:{PURPLE_LIGHT}; color:{PURPLE_DARK}; border:1px solid {PURPLE_MID};
-                  border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
-  .badge-LC  {{ background:#F0F0F0; color:#555; border:1px solid #CCC;
-                border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
+  /* ── Expanders: borde visible + texto oscuro ── */
+  [data-testid="stExpander"] {{
+    border: 1.5px solid #B8A9E0 !important;
+    border-radius: 8px !important;
+    background: #FAFAFA !important;
+  }}
+  [data-testid="stExpander"] summary {{
+    color: {PURPLE_DARK} !important;
+    font-weight: 700 !important;
+    background: #F0EBF9 !important;
+    border-radius: 6px !important;
+    padding: 10px 14px !important;
+  }}
+  [data-testid="stExpander"] summary:hover {{
+    background: {PURPLE_LIGHT} !important;
+  }}
+  [data-testid="stExpander"] p,
+  [data-testid="stExpander"] li,
+  [data-testid="stExpander"] span,
+  [data-testid="stExpander"] div {{
+    color: #1A1A2E !important;
+  }}
 
-  /* Tabla diferencia CITES */
-  .diff-pos {{ color: #27AE60; font-weight:700; }}
-  .diff-zero{{ color: #999; }}
+  /* ── Dataframes / tablas ── */
+  [data-testid="stDataFrame"] {{
+    border: 1.5px solid #B8A9E0;
+    border-radius: 8px;
+    overflow: hidden;
+  }}
 
-  /* Sidebar */
-  [data-testid="stSidebar"] {{ background: {PURPLE_DARK}; }}
-  [data-testid="stSidebar"] * {{ color: {WHITE} !important; }}
-  [data-testid="stSidebar"] .stSelectbox label,
-  [data-testid="stSidebar"] .stFileUploader label,
-  [data-testid="stSidebar"] .stNumberInput label {{ color: #C5B3F0 !important; }}
+  /* ── Alerts / warnings / info con texto legible ── */
+  [data-testid="stAlert"] {{
+    border-left: 4px solid {PURPLE} !important;
+  }}
+  [data-testid="stAlert"] p,
+  [data-testid="stAlert"] div,
+  [data-testid="stAlert"] span {{
+    color: #1A1A2E !important;
+  }}
+  div[data-baseweb="notification"] p {{ color: #1A1A2E !important; }}
 
-  /* Botón descarga */
+  /* ── st.info / st.warning / st.error textos ── */
+  .stAlert > div > div {{ color: #1A1A2E !important; }}
+
+  /* ── Captions ── */
+  [data-testid="stCaptionContainer"] p {{ color: #4A4A62 !important; font-size: 0.8rem; }}
+
+  /* ── Sidebar oscuro con texto blanco garantizado ── */
+  [data-testid="stSidebar"] {{
+    background: {PURPLE_DARK} !important;
+    border-right: 3px solid {PURPLE};
+  }}
+  [data-testid="stSidebar"] *,
+  [data-testid="stSidebar"] p,
+  [data-testid="stSidebar"] span,
+  [data-testid="stSidebar"] label,
+  [data-testid="stSidebar"] div {{
+    color: #FFFFFF !important;
+  }}
+  [data-testid="stSidebar"] h3 {{ color: #C5B3F0 !important; }}
+  [data-testid="stSidebar"] .stSelectbox > div > div {{
+    background: rgba(255,255,255,0.12) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    color: #FFFFFF !important;
+  }}
+  [data-testid="stSidebar"] .stFileUploader {{
+    background: rgba(255,255,255,0.08) !important;
+    border: 1.5px dashed rgba(255,255,255,0.4) !important;
+    border-radius: 8px !important;
+    padding: 8px !important;
+  }}
+  [data-testid="stSidebar"] hr {{ border-color: rgba(255,255,255,0.2) !important; }}
+
+  /* ── Botón descarga ── */
   .stDownloadButton > button {{
     background: {PURPLE} !important;
-    color: white !important;
+    color: #FFFFFF !important;
     border-radius: 8px !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     border: none !important;
+    padding: 10px 24px !important;
+    font-size: 0.95rem !important;
   }}
   .stDownloadButton > button:hover {{
     background: {PURPLE_DARK} !important;
+    color: #FFFFFF !important;
   }}
+
+  /* ── Métricas nativas de Streamlit ── */
+  [data-testid="stMetric"] label {{ color: #5A5A72 !important; font-weight:600; }}
+  [data-testid="stMetric"] [data-testid="stMetricValue"] {{ color: {PURPLE_DARK} !important; font-weight:800; }}
+
+  /* ── Success / Error / Warning boxes ── */
+  div[data-testid="stMarkdownContainer"] p {{ color: #1A1A2E; }}
 </style>
 """, unsafe_allow_html=True)
 
