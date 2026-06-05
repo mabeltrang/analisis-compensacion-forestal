@@ -42,9 +42,8 @@ st.markdown(f"""
   /* ── Fondo general: blanco puro para máximo contraste ── */
   .stApp {{ background-color: #FFFFFF; }}
 
-  /* ── Texto base: siempre oscuro ── */
-  .stApp, .stApp p, .stApp li, .stApp span,
-  .stApp label, .stApp div {{ color: #1A1A2E; }}
+  /* ── Texto base oscuro — SIN tocar code/pre para no romper bloques de código ── */
+  .stApp p, .stApp li {{ color: #1A1A2E; }}
 
   /* ── Header corporativo ── */
   .unergy-header {{
@@ -154,10 +153,9 @@ st.markdown(f"""
   [data-testid="stExpander"] summary:hover {{
     background: {PURPLE_LIGHT} !important;
   }}
+  /* Solo párrafos y listas — NO code/pre para no romper bloques de código */
   [data-testid="stExpander"] p,
-  [data-testid="stExpander"] li,
-  [data-testid="stExpander"] span,
-  [data-testid="stExpander"] div {{
+  [data-testid="stExpander"] li {{
     color: #1A1A2E !important;
   }}
 
@@ -172,15 +170,10 @@ st.markdown(f"""
   [data-testid="stAlert"] {{
     border-left: 4px solid {PURPLE} !important;
   }}
-  [data-testid="stAlert"] p,
-  [data-testid="stAlert"] div,
-  [data-testid="stAlert"] span {{
+  [data-testid="stAlert"] p {{
     color: #1A1A2E !important;
   }}
   div[data-baseweb="notification"] p {{ color: #1A1A2E !important; }}
-
-  /* ── st.info / st.warning / st.error textos ── */
-  .stAlert > div > div {{ color: #1A1A2E !important; }}
 
   /* ── Captions ── */
   [data-testid="stCaptionContainer"] p {{ color: #4A4A62 !important; font-size: 0.8rem; }}
@@ -230,8 +223,11 @@ st.markdown(f"""
   [data-testid="stMetric"] label {{ color: #5A5A72 !important; font-weight:600; }}
   [data-testid="stMetric"] [data-testid="stMetricValue"] {{ color: {PURPLE_DARK} !important; font-weight:800; }}
 
-  /* ── Success / Error / Warning boxes ── */
-  div[data-testid="stMarkdownContainer"] p {{ color: #1A1A2E; }}
+  /* ── Markdown general: párrafos oscuros, code blocks intactos ── */
+  div[data-testid="stMarkdownContainer"] > p {{ color: #1A1A2E; }}
+  div[data-testid="stMarkdownContainer"] > ul li {{ color: #1A1A2E; }}
+  /* Los bloques code/pre mantienen sus colores propios */
+  pre, code {{ color: inherit !important; }}
 </style>
 """, unsafe_allow_html=True)
 
