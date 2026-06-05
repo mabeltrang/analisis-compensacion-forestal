@@ -76,20 +76,35 @@ st.markdown(f"""
     padding: 4px;
     border: 1px solid #B8A9E0;
   }}
+  /* Quitar línea indicadora default (la roja) */
+  .stTabs [data-baseweb="tab-highlight"] {{
+    display: none !important;
+    background: transparent !important;
+  }}
+  .stTabs [data-baseweb="tab-border"] {{
+    display: none !important;
+  }}
   .stTabs [data-baseweb="tab"] {{
-    border-radius: 8px;
+    border-radius: 8px !important;
     color: {PURPLE_DARK} !important;
-    font-weight: 700;
-    font-size: 0.85rem;
-    padding: 6px 16px;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    padding: 7px 18px !important;
+    border: none !important;
+    background: transparent !important;
+  }}
+  .stTabs [data-baseweb="tab"]:hover {{
+    background: rgba(123,76,201,0.12) !important;
   }}
   .stTabs [aria-selected="true"] {{
     background: {PURPLE} !important;
     color: #FFFFFF !important;
+    border-radius: 8px !important;
   }}
-  /* Texto del tab activo */
+  /* Texto dentro del tab activo */
   .stTabs [aria-selected="true"] p,
-  .stTabs [aria-selected="true"] span {{
+  .stTabs [aria-selected="true"] span,
+  .stTabs [aria-selected="true"] div {{
     color: #FFFFFF !important;
   }}
 
@@ -226,8 +241,27 @@ st.markdown(f"""
   /* ── Markdown general: párrafos oscuros, code blocks intactos ── */
   div[data-testid="stMarkdownContainer"] > p {{ color: #1A1A2E; }}
   div[data-testid="stMarkdownContainer"] > ul li {{ color: #1A1A2E; }}
-  /* Los bloques code/pre mantienen sus colores propios */
-  pre, code {{ color: inherit !important; }}
+  /* Bloques code/pre: fondo oscuro con texto claro (st.code) */
+  /* code INLINE (backticks en markdown): fondo suave, texto morado oscuro */
+  code {{
+    background: #EDE7F9 !important;
+    color: {PURPLE_DARK} !important;
+    border-radius: 4px !important;
+    padding: 1px 5px !important;
+    font-size: 0.88em !important;
+  }}
+  /* Bloques de código completos (st.code / triple backtick): mantener tema oscuro */
+  pre code {{
+    background: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+  }}
+  pre {{
+    background: #1E1E2E !important;
+    color: #CDD6F4 !important;
+    border-radius: 8px !important;
+    padding: 14px !important;
+  }}
 </style>
 """, unsafe_allow_html=True)
 
