@@ -1,231 +1,454 @@
 # -*- coding: utf-8 -*-
 """
-App de Planes de Compensación Biótica - Unergy
-Manual 2026 (Resolución 0305/2026 MADS) - Versión 6
+App de Planes de Compensación Biótica — Unergy Energía Digital S.A.S. E.S.P.
+Manual 2026 (Resolución 0305/2026 MADS) — Versión 7
 
-NUEVO en esta versión:
-  - Adicionalidad con fórmulas científicamente correctas:
-      Conservar: acumulada exponencial (Hansen + Andam 2008 / Pfaff 2014)
-      Restaurar: curva Chapman-Richards (Poorter 2016 + Crouzeilles 2017)
-  - Tasa BAU calculada por municipio, SZH y ZH en paralelo.
-  - Cada nivel jerárquico (R1-R6) usa la tasa de su unidad espacial.
-  - Comparación Conservar vs Restaurar por ha compensada con ratio.
-  - Nota metodológica expandible con citas y DOIs.
+Cambios v7:
+- Criterio B corregido: VU=0.4 / EN=0.6 / CR=1.0 (Tabla 4 Manual 2026). NT=0.
+- Doble escenario ATC: sin CITES (oficial) y con CITES (equiparación Unergy).
+- Rediseño UI: colores corporativos Unergy, tabs, cards de métricas.
 """
+
 import streamlit as st
 import pandas as pd
-import os
-import tempfile
-import io
+import os, tempfile, io
 
 from core import inputs, contexto, inventario, atc, utils
 from core.atc import (
     adicionalidad_conservar,
     adicionalidad_conservar_anual,
     adicionalidad_restaurar,
-    tabla_adicionalidad,
 )
 from config import settings
 
-
+# ══════════════════════════════════════════════════════════════════════════════
+# CONFIG Y ESTILOS
+# ══════════════════════════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="Compensación Biótica - Unergy",
+    page_title="Compensación Biótica · Unergy",
     page_icon="🌿",
-    layout="wide"
+    layout="wide",
 )
 
-st.title("🌿 App de Planes de Compensación Biótica")
-st.markdown("**Metodología:** Manual 2026 (Resolución 0305/2026 MADS) - Versión 6")
-st.caption("Tasa BAU calculada con Hansen GFC por municipio, SZH y ZH. Adicionalidad con curvas científicas.")
+PURPLE      = "#7B4CC9"
+PURPLE_DARK = "#2D1B4E"
+PURPLE_LIGHT= "#EDE7F9"
+PURPLE_MID  = "#9B6FE8"
+WHITE       = "#FFFFFF"
+GRAY_TEXT   = "#5A5A72"
+
+st.markdown(f"""
+<style>
+  /* Fondo general */
+  .stApp {{ background-color: #F8F5FF; }}
+
+  /* Header corporativo */
+  .unergy-header {{
+    background: {PURPLE_DARK};
+    padding: 18px 32px 14px 32px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }}
+  .unergy-header h1 {{
+    color: {WHITE};
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.3px;
+  }}
+  .unergy-header p {{
+    color: #C5B3F0;
+    font-size: 0.82rem;
+    margin: 2px 0 0 0;
+  }}
+  .unergy-logo {{
+    font-size: 2.4rem;
+    line-height: 1;
+  }}
+
+  /* Tabs */
+  .stTabs [data-baseweb="tab-list"] {{
+    gap: 4px;
+    background: {PURPLE_LIGHT};
+    border-radius: 10px;
+    padding: 4px;
+  }}
+  .stTabs [data-baseweb="tab"] {{
+    border-radius: 8px;
+    color: {PURPLE_DARK};
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 6px 16px;
+  }}
+  .stTabs [aria-selected="true"] {{
+    background: {PURPLE} !important;
+    color: white !important;
+  }}
+
+  /* Cards métricas */
+  .metric-card {{
+    background: {WHITE};
+    border: 1.5px solid {PURPLE_LIGHT};
+    border-left: 4px solid {PURPLE};
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+  }}
+  .metric-card .label {{
+    font-size: 0.75rem;
+    color: {GRAY_TEXT};
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }}
+  .metric-card .value {{
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: {PURPLE_DARK};
+  }}
+  .metric-card .sub {{
+    font-size: 0.78rem;
+    color: {GRAY_TEXT};
+    margin-top: 2px;
+  }}
+
+  /* Sección header */
+  .section-header {{
+    background: linear-gradient(90deg, {PURPLE_LIGHT} 0%, {WHITE} 100%);
+    border-left: 4px solid {PURPLE};
+    border-radius: 0 8px 8px 0;
+    padding: 8px 16px;
+    margin: 18px 0 12px 0;
+  }}
+  .section-header h3 {{
+    color: {PURPLE_DARK};
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+  }}
+
+  /* Badge categoría amenaza */
+  .badge-CR  {{ background:#FDECEA; color:#C0392B; border:1px solid #E74C3C;
+                border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
+  .badge-EN  {{ background:#FEF3CD; color:#9B5E0A; border:1px solid #F39C12;
+                border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
+  .badge-VU  {{ background:#EAF4FB; color:#1A6A9A; border:1px solid #2E86C1;
+                border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
+  .badge-CITES {{ background:{PURPLE_LIGHT}; color:{PURPLE_DARK}; border:1px solid {PURPLE_MID};
+                  border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
+  .badge-LC  {{ background:#F0F0F0; color:#555; border:1px solid #CCC;
+                border-radius:4px; padding:2px 7px; font-size:0.75rem; font-weight:700; }}
+
+  /* Tabla diferencia CITES */
+  .diff-pos {{ color: #27AE60; font-weight:700; }}
+  .diff-zero{{ color: #999; }}
+
+  /* Sidebar */
+  [data-testid="stSidebar"] {{ background: {PURPLE_DARK}; }}
+  [data-testid="stSidebar"] * {{ color: {WHITE} !important; }}
+  [data-testid="stSidebar"] .stSelectbox label,
+  [data-testid="stSidebar"] .stFileUploader label,
+  [data-testid="stSidebar"] .stNumberInput label {{ color: #C5B3F0 !important; }}
+
+  /* Botón descarga */
+  .stDownloadButton > button {{
+    background: {PURPLE} !important;
+    color: white !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    border: none !important;
+  }}
+  .stDownloadButton > button:hover {{
+    background: {PURPLE_DARK} !important;
+  }}
+</style>
+""", unsafe_allow_html=True)
+
+# ── Header corporativo ────────────────────────────────────────────────────────
+st.markdown(f"""
+<div class="unergy-header">
+  <div class="unergy-logo">🌿</div>
+  <div>
+    <h1>Planes de Compensación Biótica</h1>
+    <p>Unergy Energía Digital S.A.S. E.S.P. &nbsp;·&nbsp;
+       Manual 2026 (Res. 0305/2026 MADS) &nbsp;·&nbsp; v7</p>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 
+def _metric_card(label, value, sub=""):
+    sub_html = f'<div class="sub">{sub}</div>' if sub else ""
+    st.markdown(f"""
+    <div class="metric-card">
+      <div class="label">{label}</div>
+      <div class="value">{value}</div>
+      {sub_html}
+    </div>""", unsafe_allow_html=True)
+
+
+def _section(title, icon=""):
+    st.markdown(
+        f'<div class="section-header"><h3>{icon} {title}</h3></div>',
+        unsafe_allow_html=True
+    )
+
+
+def _badge(cat):
+    cls = f"badge-{cat}" if cat in ("CR","EN","VU","LC") else "badge-CITES"
+    return f'<span class="{cls}">{cat}</span>'
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SIDEBAR
+# ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.header("1. Carga de Datos")
+    st.markdown("### ⚙️ Configuración")
+    st.markdown("---")
+
     impacto_file = st.file_uploader(
-        "KMZ del Proyecto (con folders Proyecto/Coberturas)",
-        type=["kmz", "kml"]
+        "KMZ del Proyecto",
+        type=["kmz","kml"],
+        help="Debe contener folders: Proyecto / Coberturas vegetales"
     )
     excel_file = st.file_uploader(
         "Inventario Forestal (Excel)",
-        type=["xlsx", "xls"]
+        type=["xlsx","xls"],
     )
-    st.markdown("---")
-    st.info(
-        "**Estructura esperada del KMZ:**\n"
-        "- 📁 Proyecto → con polígono 'Minigranja'\n"
-        "- 📁 Coberturas vegetales → polígonos por tipo\n"
-        "- 📁 Árboles (opcional, se ignora)\n\n"
-        "**Columnas del Excel:**\n"
-        "- Nombre científico, DAP a (m), Cobertura, AB t (m2)"
-    )
+
     st.markdown("---")
     dap_min = st.number_input(
         "DAP mínimo (cm)",
         min_value=1.0, max_value=30.0,
         value=float(settings.DAP_MIN_DEFAULT), step=0.5,
-        help="Criterio real: CAP ≥ 31 cm → DAP = 31/π ≈ 9.87 cm. No usar 10.0 exacto.",
+        help="CAP ≥ 31 cm → DAP ≈ 9.87 cm"
     )
     car_proyecto = st.selectbox(
-        "CAR competente del proyecto",
+        "CAR competente",
         options=[
             "", "CORPOCESAR", "CORPOGUAJIRA", "CRA", "CORPOBOYACA",
             "CDMB", "CAS", "CORPAMAG", "CORANTIOQUIA", "CORPOURABA",
             "CORTOLIMA", "CARDER", "CVC", "CRC", "CORPOCALDAS",
             "CAR", "CORPONOR",
         ],
-        index=0,
-        help="Se usa para cruzar el inventario contra vedas regionales vigentes.",
+        help="Para cruce con vedas regionales"
     )
 
-
-if impacto_file and excel_file:
-
-    with st.spinner("Conectando a Google Earth Engine..."):
-        success, msg = utils.init_gee_session()
-        if not success:
-            st.error(f"❌ {msg}")
-            st.stop()
-        st.success(f"✓ {msg}")
-
-    with st.spinner("Leyendo polígono de impacto del KMZ..."):
-        try:
-            gdf_impacto = inputs.cargar_poligono_impacto(
-                impacto_file, impacto_file.name
-            )
-            ok, msg = inputs.validar_geometria(gdf_impacto)
-            if not ok:
-                st.error(f"❌ {msg}")
-                st.stop()
-            # FIX: usar EPSG:3116 (MAGNA-SIRGAS) en lugar de 3857 (Mercator)
-            gdf_proj = gdf_impacto.to_crs(epsg=3116)
-            area_impacto_ha = gdf_proj.geometry.area.sum() / 10000
-        except Exception as e:
-            st.error(f"❌ Error leyendo el polígono: {e}")
-            st.stop()
-
-    with st.spinner("Leyendo coberturas del KMZ..."):
-        try:
-            coberturas_kmz = inputs.extraer_coberturas_de_kmz(
-                impacto_file, impacto_file.name
-            )
-        except Exception as e:
-            st.warning(f"⚠️ No se pudieron leer coberturas del KMZ: {e}")
-            coberturas_kmz = {}
-
-    with st.spinner("Obteniendo contexto geográfico + tasas BAU (Hansen) por municipio, SZH y ZH..."):
-        try:
-            ctx = contexto.obtener_contexto_impacto(gdf_impacto)
-        except Exception as e:
-            st.error(f"❌ Error contexto: {e}")
-            st.stop()
-
-    if coberturas_kmz:
-        ctx['areas_cobertura'] = coberturas_kmz
-        fuente_coberturas = "KMZ del proyecto (áreas reales)"
-    else:
-        fuente_coberturas = "IDEAM 1:100K (genérico)"
-        st.warning(
-            "⚠️ No se encontró el folder 'Coberturas vegetales' en el KMZ. "
-            "Se usarán las áreas de IDEAM 1:100K (menos preciso)."
-        )
-
-    with st.spinner("Procesando inventario (FCAFU = 1 + A + B + C)..."):
-        try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-                tmp.write(excel_file.getbuffer())
-                excel_path = tmp.name
-            fcafu_por_cobertura = inventario.procesar_inventario(
-                excel_path, dap_min=dap_min, car=car_proyecto
-            )
-            os.unlink(excel_path)
-        except Exception as e:
-            st.error(f"❌ Error procesando inventario: {e}")
-            st.stop()
-
-    with st.spinner("Calculando ATC por rango..."):
-        try:
-            atc_resultados = atc.calcular_atc_por_rangos(
-                fcafu_por_cobertura, ctx
-            )
-        except Exception as e:
-            st.error(f"❌ Error calculando ATC: {e}")
-            st.stop()
-
-    st.success("✅ Procesamiento completo")
-
-    # ─── CONTEXTO ───────────────────────────────────────────────────────────
     st.markdown("---")
-    st.header("📍 Contexto del Proyecto")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.metric("Área de Impacto", f"{area_impacto_ha:.2f} ha")
-        st.write(f"**Municipio:** {ctx.get('municipio', 'n/d')}")
-        st.write(f"**Departamento:** {ctx.get('departamento', 'n/d')}")
-    with c2:
-        st.write(f"**BIOMA-IAvH:** {ctx.get('bioma_principal', 'n/d')}")
-        st.write(f"**ZH:** {ctx.get('zh', 'n/d')}")
-        st.write(f"**SZH:** {ctx.get('szh', 'n/d')}")
+    st.markdown("""
+**Estructura KMZ:**
+- 📁 Proyecto → polígono impacto
+- 📁 Coberturas vegetales → por tipo
 
-    # ─── TASAS BAU ──────────────────────────────────────────────────────────
-    tasa_bau     = ctx.get('tasa_bau', 0.005)
-    tasa_bau_szh = ctx.get('tasa_bau_szh', tasa_bau)
-    tasa_bau_zh  = ctx.get('tasa_bau_zh',  tasa_bau)
-    fuente_bau     = ctx.get('tasa_bau_fuente',     'No disponible')
-    fuente_bau_szh = ctx.get('tasa_bau_szh_fuente', 'No disponible')
-    fuente_bau_zh  = ctx.get('tasa_bau_zh_fuente',  'No disponible')
+**Columnas Excel:**
+- Nombre científico
+- DAP a (m)
+- Cobertura
+- AB t (m2) *(opcional)*
+    """)
 
-    st.markdown("---")
-    st.subheader("🌲 Tasa de Pérdida de Bosque (BAU)")
-    st.caption(
-        "Calculada con Hansen GFC 2001-2025 sobre cada unidad espacial. "
-        "Cada nivel jerárquico de búsqueda usa la tasa de su unidad: "
-        "Municipio (R1/R4) · SZH (R2/R5) · ZH (R3/R6)."
-    )
 
+# ══════════════════════════════════════════════════════════════════════════════
+# PANTALLA DE BIENVENIDA
+# ══════════════════════════════════════════════════════════════════════════════
+if not impacto_file or not excel_file:
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric(
-            f"Municipio ({ctx.get('municipio', 'n/d')})",
-            f"{tasa_bau*100:.3f} %",
-            help="Usada para R1 y R4 (mismo/otro BIOMA ∩ Municipio)"
-        )
-        st.caption(fuente_bau)
+        _metric_card("1. Sube el KMZ", "📂", "Polígono de impacto + coberturas")
     with col2:
-        st.metric(
-            f"SZH ({ctx.get('szh', 'n/d')})",
-            f"{tasa_bau_szh*100:.3f} %",
-            help="Usada para R2 y R5 (mismo/otro BIOMA ∩ SZH)"
-        )
-        st.caption(fuente_bau_szh)
+        _metric_card("2. Sube el Excel", "📊", "Inventario forestal Unergy")
     with col3:
-        st.metric(
-            f"ZH ({ctx.get('zh', 'n/d')})",
-            f"{tasa_bau_zh*100:.3f} %",
-            help="Usada para R3 y R6 (mismo/otro BIOMA ∩ ZH)"
+        _metric_card("3. Obtén resultados", "📐", "FCAFU · ATC · Adicionalidad")
+
+    st.markdown("---")
+    st.markdown(f"""
+    <div style="background:{PURPLE_LIGHT}; border-radius:10px; padding:20px 24px;">
+      <h4 style="color:{PURPLE_DARK}; margin:0 0 10px 0;">¿Qué calcula esta app?</h4>
+      <ul style="color:{GRAY_TEXT}; margin:0; padding-left:18px; line-height:1.8;">
+        <li><b>FCAFU</b> por cobertura — criterios A, B (oficial y con CITES) y C del Manual 2026</li>
+        <li><b>ATC</b> por rango geográfico R1–R6 en dos escenarios: oficial y con CITES</li>
+        <li><b>Tasa BAU</b> dinámica por municipio, SZH y ZH (Hansen GFC)</li>
+        <li><b>Adicionalidad</b> a 3, 5, 10 y 15 años — Conservar y Restaurar</li>
+        <li><b>Vedas</b> nacionales y regionales cruzadas con el inventario</li>
+      </ul>
+    </div>
+    """, unsafe_allow_html=True)
+    st.stop()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PROCESAMIENTO
+# ══════════════════════════════════════════════════════════════════════════════
+with st.spinner("Conectando a Google Earth Engine..."):
+    success, msg = utils.init_gee_session()
+    if not success:
+        st.error(f"❌ {msg}")
+        st.stop()
+
+with st.spinner("Leyendo polígono de impacto..."):
+    try:
+        gdf_impacto = inputs.cargar_poligono_impacto(impacto_file, impacto_file.name)
+        ok, msg = inputs.validar_geometria(gdf_impacto)
+        if not ok:
+            st.error(f"❌ {msg}"); st.stop()
+        gdf_proj = gdf_impacto.to_crs(epsg=3116)
+        area_impacto_ha = gdf_proj.geometry.area.sum() / 10000
+    except Exception as e:
+        st.error(f"❌ Error leyendo polígono: {e}"); st.stop()
+
+with st.spinner("Leyendo coberturas del KMZ..."):
+    try:
+        coberturas_kmz = inputs.extraer_coberturas_de_kmz(impacto_file, impacto_file.name)
+    except Exception as e:
+        st.warning(f"⚠️ No se pudieron leer coberturas del KMZ: {e}")
+        coberturas_kmz = {}
+
+with st.spinner("Obteniendo contexto geográfico + tasas BAU (Hansen GFC)..."):
+    try:
+        ctx = contexto.obtener_contexto_impacto(gdf_impacto)
+    except Exception as e:
+        st.error(f"❌ Error contexto GEE: {e}"); st.stop()
+
+if coberturas_kmz:
+    ctx['areas_cobertura'] = coberturas_kmz
+    fuente_coberturas = "KMZ del proyecto (áreas reales)"
+else:
+    fuente_coberturas = "IDEAM 1:100K (genérico)"
+    st.warning("⚠️ No se encontró folder 'Coberturas vegetales' en el KMZ. Usando IDEAM 1:100K.")
+
+with st.spinner("Procesando inventario forestal (criterios A, B, C)..."):
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+            tmp.write(excel_file.getbuffer())
+            excel_path = tmp.name
+        fcafu_por_cobertura = inventario.procesar_inventario(
+            excel_path, dap_min=dap_min, car=car_proyecto
         )
-        st.caption(fuente_bau_zh)
+        os.unlink(excel_path)
+    except Exception as e:
+        st.error(f"❌ Error procesando inventario: {e}"); st.stop()
 
-    st.caption("Dataset: Hansen GFC v1.12 (Universidad de Maryland)")
+with st.spinner("Calculando ATC por rango (escenario oficial)..."):
+    try:
+        atc_resultados = atc.calcular_atc_por_rangos(fcafu_por_cobertura, ctx)
+    except Exception as e:
+        st.error(f"❌ Error calculando ATC: {e}"); st.stop()
 
-    # ─── COBERTURAS ─────────────────────────────────────────────────────────
-    st.subheader(f"Coberturas Impactadas ({fuente_coberturas})")
+# ATC escenario CITES: mismo cálculo pero con FCAFU_cites
+with st.spinner("Calculando ATC por rango (escenario con CITES)..."):
+    try:
+        # Crear copia temporal de fcafu con FCAFU_cites como FCAFU
+        fcafu_cites_tmp = {}
+        for cob, d in fcafu_por_cobertura.items():
+            fcafu_cites_tmp[cob] = {**d, 'FCAFU': d.get('FCAFU_cites', d['FCAFU'])}
+        atc_resultados_cites = atc.calcular_atc_por_rangos(fcafu_cites_tmp, ctx)
+    except Exception as e:
+        st.warning(f"⚠️ No se pudo calcular ATC con CITES: {e}")
+        atc_resultados_cites = atc_resultados
+
+st.success("✅ Procesamiento completo")
+
+# Tasas BAU
+tasa_bau     = ctx.get('tasa_bau', 0.005)
+tasa_bau_szh = ctx.get('tasa_bau_szh', tasa_bau)
+tasa_bau_zh  = ctx.get('tasa_bau_zh',  tasa_bau)
+fuente_bau     = ctx.get('tasa_bau_fuente',     'Hansen GFC')
+fuente_bau_szh = ctx.get('tasa_bau_szh_fuente', 'Hansen GFC')
+fuente_bau_zh  = ctx.get('tasa_bau_zh_fuente',  'Hansen GFC')
+
+TASA_POR_NIVEL = {
+    "Rango 1": tasa_bau,     "Rango 2": tasa_bau_szh,
+    "Rango 3": tasa_bau_zh,  "Rango 4": tasa_bau,
+    "Rango 5": tasa_bau_szh, "Rango 6": tasa_bau_zh,
+}
+K_RESTAURAR = 0.076
+F_CONSERVAR = 0.85
+F_RESTAURAR = 0.75
+HORIZONTES  = [3, 5, 10, 15]
+TASA_BAU    = tasa_bau
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TABS PRINCIPALES
+# ══════════════════════════════════════════════════════════════════════════════
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📍 Contexto",
+    "🌳 FCAFU",
+    "📐 ATC",
+    "🌱 Adicionalidad",
+    "📥 Exportar",
+])
+
+
+# ════════════════════════════════════════════════════════════════════════
+# TAB 1 — CONTEXTO
+# ════════════════════════════════════════════════════════════════════════
+with tab1:
+    _section("Contexto Geográfico del Proyecto", "📍")
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        _metric_card("Área de Impacto", f"{area_impacto_ha:.4f} ha")
+    with c2:
+        _metric_card("Municipio", ctx.get('municipio','n/d'))
+    with c3:
+        _metric_card("Departamento", ctx.get('departamento','n/d'))
+    with c4:
+        _metric_card("BIOMA-IAvH", ctx.get('bioma_principal','n/d'))
+
+    c5, c6 = st.columns(2)
+    with c5:
+        _metric_card("Zona Hidrográfica (ZH)", ctx.get('zh','n/d'))
+    with c6:
+        _metric_card("Subzona Hidrográfica (SZH)", ctx.get('szh','n/d'))
+
+    _section("Tasa de Pérdida de Bosque BAU (Hansen GFC)", "🌲")
+    st.caption("Calculada con Hansen GFC 2001–2023 sobre cada unidad espacial. "
+               "Cada nivel jerárquico usa la tasa de su unidad.")
+
+    c7, c8, c9 = st.columns(3)
+    with c7:
+        _metric_card(
+            f"Municipio · {ctx.get('municipio','n/d')}",
+            f"{tasa_bau*100:.3f} %",
+            f"Usada en R1 y R4 · {fuente_bau}"
+        )
+    with c8:
+        _metric_card(
+            f"SZH · {ctx.get('szh','n/d')}",
+            f"{tasa_bau_szh*100:.3f} %",
+            f"Usada en R2 y R5 · {fuente_bau_szh}"
+        )
+    with c9:
+        _metric_card(
+            f"ZH · {ctx.get('zh','n/d')}",
+            f"{tasa_bau_zh*100:.3f} %",
+            f"Usada en R3 y R6 · {fuente_bau_zh}"
+        )
+
+    _section(f"Coberturas Impactadas · {fuente_coberturas}", "🗺️")
     if ctx.get('areas_cobertura'):
         df_cob = pd.DataFrame([
             {"Cobertura": k, "Área (ha)": round(v, 4)}
             for k, v in ctx['areas_cobertura'].items()
         ])
         total_cob = sum(ctx['areas_cobertura'].values())
-        df_cob.loc[len(df_cob)] = ["TOTAL", round(total_cob, 4)]
+        df_cob.loc[len(df_cob)] = ["**TOTAL**", round(total_cob, 4)]
         st.dataframe(df_cob, use_container_width=True, hide_index=True)
     else:
         st.warning("⚠️ No se detectaron coberturas.")
 
-    # ─── FCAFU ──────────────────────────────────────────────────────────────
-    st.markdown("---")
-    st.header("🌳 FCAFU por Cobertura")
-    st.caption("Fórmula del Manual 2026: FCAFU = 1 + A + B + C")
 
-    # ── Alertas de veda ─────────────────────────────────────────────────────
+# ════════════════════════════════════════════════════════════════════════
+# TAB 2 — FCAFU
+# ════════════════════════════════════════════════════════════════════════
+with tab2:
+
+    # ── Alertas de veda ──────────────────────────────────────────────────
     todas_vedas = []
     for cob, d in fcafu_por_cobertura.items():
         for v in d.get('vedas_detectadas', []):
@@ -233,390 +456,382 @@ if impacto_file and excel_file:
 
     if todas_vedas:
         n_nac = sum(v['n_individuos'] for v in todas_vedas if 'nacional' in v['nivel'])
-        n_reg = sum(v['n_individuos'] for v in todas_vedas
-                    if v['nivel'] == 'regional')
+        n_reg = sum(v['n_individuos'] for v in todas_vedas if v['nivel'] == 'regional')
         st.error(
-            f"🚫 **Especies en veda detectadas en el inventario** — "
-            f"{n_nac} ind. en veda nacional · {n_reg} ind. en veda regional. "
-            f"Ver detalle abajo."
+            f"🚫 **Especies en veda detectadas** — "
+            f"{n_nac} ind. en veda nacional · {n_reg} ind. en veda regional"
         )
-        with st.expander(
-            f"📋 Detalle de especies en veda ({len(todas_vedas)} registros)",
-            expanded=True
-        ):
-            df_vedas = pd.DataFrame(todas_vedas)[
-                ['cobertura', 'nombre_cientifico', 'n_individuos', 'nivel', 'norma', 'alerta']
+        with st.expander(f"📋 Detalle especies en veda ({len(todas_vedas)} registros)", expanded=True):
+            df_v = pd.DataFrame(todas_vedas)[
+                ['cobertura','nombre_cientifico','n_individuos','nivel','norma','alerta']
             ]
-            df_vedas.columns = [
-                'Cobertura', 'Nombre científico', 'N ind.',
-                'Nivel veda', 'Norma', 'Alerta'
-            ]
-            st.dataframe(df_vedas, use_container_width=True, hide_index=True)
-
-            # Obligaciones por nivel de veda
+            df_v.columns = ['Cobertura','Nombre científico','N ind.','Nivel','Norma','Alerta']
+            st.dataframe(df_v, use_container_width=True, hide_index=True)
             if any('nacional' in v['nivel'] for v in todas_vedas):
                 st.warning(
                     "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
-                    "1. Censo al 100% de individuos fustales (DAP ≥ 10 cm) de especies vedadas.\n"
-                    "2. Medidas de manejo in situ: rescate y reubicación de individuos.\n"
+                    "1. Censo al 100% de individuos fustales de especies vedadas.\n"
+                    "2. Medidas de manejo in situ: rescate y reubicación.\n"
                     "3. Medidas ex situ: propagación en vivero y siembra en área de compensación.\n"
-                    "4. Insumos cartográficos (shapefile) con localización de cada individuo vedado.\n"
-                    "No se requiere trámite de levantamiento de veda — se gestiona en el "
-                    "mismo expediente del permiso (Parágrafo Transitorio Art. 125 Decreto 2106/2019)."
+                    "4. Shapefile con localización de cada individuo vedado."
                 )
             if any(v['nivel'] == 'regional' for v in todas_vedas):
-                car_disp = car_proyecto or "la CAR competente"
+                car_txt = car_proyecto or "la CAR competente"
                 st.warning(
-                    f"**Obligaciones — veda regional {car_disp}:**\n"
-                    "Antes del aprovechamiento se requiere:\n"
-                    "1. Solicitud formal ante el GIT Forestal de la CAR.\n"
-                    "2. Concepto técnico favorable de la CAR.\n"
-                    "3. Justificación de interés público o riesgo (según art. de excepción "
-                    "de la resolución de veda).\n"
-                    "4. Medidas de compensación y reposición que determine la CAR "
-                    "(CORPOCESAR: relación 1:5 para Res. 0035/2026)."
+                    f"**Obligaciones — veda regional {car_txt}:**\n"
+                    "1. Solicitud formal ante GIT Forestal de la CAR.\n"
+                    "2. Concepto técnico favorable.\n"
+                    "3. Justificación de interés público o riesgo.\n"
+                    "4. Medidas de compensación/reposición que determine la CAR."
                 )
 
+    # ── Tabla FCAFU resumen ──────────────────────────────────────────────
+    _section("Resumen FCAFU por Cobertura", "🌳")
+    st.markdown(
+        f"**Fórmula Manual 2026:** `FCAFU = 1 + A + B + C`  "
+        f"&nbsp;&nbsp;Criterio B: `CR=1.0 · EN=0.6 · VU=0.4 · NT=0` (Tabla 4, Res. 0305/2026)",
+        unsafe_allow_html=True
+    )
+
     if fcafu_por_cobertura:
-        df_fcafu = pd.DataFrame([
-            {
-                "Cobertura": cob,
-                "N (individuos)": d.get('N', 0),
-                "S (especies)": d.get('S', 0),
-                "A (cobertura)": round(d.get('A', 0) or 0, 3),
-                "B (amenaza)": round(d.get('B', 0) or 0, 3),
-                "C (mezcla)": round(d.get('C', 0) or 0, 3),
-                "FCAFU": round(d.get('FCAFU', 0) or 0, 3)
-            }
-            for cob, d in fcafu_por_cobertura.items()
-        ])
+        filas_fcafu = []
+        for cob, d in fcafu_por_cobertura.items():
+            b_of   = round(d.get('B_oficial', d.get('B', 0)), 4)
+            b_ci   = round(d.get('B_cites', b_of), 4)
+            f_of   = round(d.get('FCAFU', 0), 3)
+            f_ci   = round(d.get('FCAFU_cites', f_of), 3)
+            delta  = round(f_ci - f_of, 3)
+            filas_fcafu.append({
+                "Cobertura":          cob,
+                "N":                  d.get('N', 0),
+                "S":                  d.get('S', 0),
+                "A":                  round(d.get('A', 0), 3),
+                "B oficial":          b_of,
+                "B con CITES":        b_ci,
+                "C":                  round(d.get('C', 0), 3),
+                "FCAFU oficial":      f_of,
+                "FCAFU con CITES":    f_ci,
+                "Δ FCAFU":            f"+{delta}" if delta > 0 else str(delta),
+            })
+        df_fcafu = pd.DataFrame(filas_fcafu)
         st.dataframe(df_fcafu, use_container_width=True, hide_index=True)
-        # ── Desglose criterio B (amenaza) por especie ──────────────────────────
+
+        st.info(
+            "**FCAFU oficial** usa solo Res. 0126/2024 (CR/EN/VU).  "
+            "**FCAFU con CITES** suma equivalencia interna Unergy: "
+            "Apéndice I = 0.6 (≈ EN) · Apéndice II = 0.4 (≈ VU). "
+            "Sin respaldo normativo directo — presentar como escenario conservador."
+        )
+
+        # ── Desglose criterio B ──────────────────────────────────────────
         amenazadas_total = []
         for cob, d in fcafu_por_cobertura.items():
             for sp in d.get('amenazadas', []):
-                amenazadas_total.append({**sp, 'cobertura': cob,
-                                         'N_cobertura': d.get('N', 0),
-                                         'B_cobertura': round(d.get('B', 0), 4)})
+                amenazadas_total.append({**sp, 'cobertura': cob, 'N_cob': d.get('N', 0)})
+
         if amenazadas_total:
-            n_amenazadas = sum(sp['n_individuos'] for sp in amenazadas_total)
+            n_sp_amen = len({sp['nombre_cientifico'] for sp in amenazadas_total})
+            n_ind_amen = sum(sp['n_individuos'] for sp in amenazadas_total)
             with st.expander(
-                f"🔍 Desglose criterio B — amenaza ({n_amenazadas} individuos, "
-                f"{len({sp['nombre_cientifico'] for sp in amenazadas_total})} spp.)",
-                expanded=True
+                f"🔍 Desglose Criterio B — {n_ind_amen} individuos en {n_sp_amen} spp.",
+                expanded=False
             ):
                 st.markdown(
-                    "**Fórmula (Manual 2026, criterio B):**\n"
-                    r"$$B = \frac{\sum_{i=1}^{N} v_i}{N}$$"
-                    "\n\nDonde **vᵢ** es el valor de amenaza del individuo *i* "
-                    "según Res. 0126/2024: `CR=1.0 · EN=0.66 · VU=0.33 · NT=0.1 · LC=0`"
+                    r"**Fórmula:** $B = \dfrac{\sum_{i=1}^{N} v_i}{N}$  "
+                    "donde **vᵢ** = valor de amenaza del individuo *i*"
                 )
+
                 for cob, d in fcafu_por_cobertura.items():
                     spp_cob = d.get('amenazadas', [])
                     if not spp_cob:
                         continue
-                    N = d.get('N', 0)
-                    B = round(d.get('B', 0), 4)
-                    st.markdown(f"**{cob}** — N={N} ind. · B={B}")
+                    N  = d.get('N', 0)
+                    B_of = round(d.get('B_oficial', d.get('B', 0)), 4)
+                    B_ci = round(d.get('B_cites', B_of), 4)
+
+                    st.markdown(
+                        f"**{cob}** — N={N} ind. &nbsp; B oficial=`{B_of}` &nbsp; "
+                        f"B con CITES=`{B_ci}`",
+                        unsafe_allow_html=True
+                    )
                     rows_b = []
-                    suma_check = 0.0
                     for sp in spp_cob:
-                        n_sp = sp.get('n_individuos', 1)
-                        v = sp.get('valor_amenaza', 0.0)
-                        aporte = sp.get('aporte_b', round(v * n_sp / N, 4) if N else 0)
-                        suma_check += aporte
+                        n_sp   = sp.get('n_individuos', 1)
+                        v_of   = sp.get('valor_b_oficial', 0.0)
+                        v_ci   = sp.get('valor_b_cites',   v_of)
+                        ap     = sp.get('cites_apendice',  '—')
+                        cat    = sp.get('categoria_amenaza','—')
                         rows_b.append({
-                            'Nombre científico': sp.get('nombre_cientifico', sp.get('Nombre cientifico', '')),
-                            'Categoría': sp.get('categoria_amenaza', sp.get('categoria_amenaza', '')),
-                            'vᵢ': v,
-                            'N ind.': n_sp,
-                            'vᵢ × Nᵢ': round(v * n_sp, 4),
-                            'Aporte a B (vᵢ×Nᵢ/N_total)': aporte,
+                            'Nombre científico': sp.get('nombre_cientifico',''),
+                            'Cat. Res.0126':     cat,
+                            'CITES':             ap,
+                            'v oficial':         v_of,
+                            'v con CITES':       v_ci,
+                            'N ind.':            n_sp,
+                            'Aporte B oficial':  sp.get('aporte_b_oficial', round(v_of*n_sp/N,4) if N else 0),
+                            'Aporte B CITES':    sp.get('aporte_b_cites',   round(v_ci*n_sp/N,4) if N else 0),
                         })
-                    df_b = pd.DataFrame(rows_b)
-                    st.dataframe(df_b, use_container_width=True, hide_index=True)
-                    st.caption(
-                        f"B = {' + '.join(str(r['Aporte a B (vᵢ×Nᵢ/N_total)']) for r in rows_b)}"
-                        f" = **{round(suma_check, 4)}** "
-                        f"(N_total cobertura = {N})"
+                    st.dataframe(
+                        pd.DataFrame(rows_b),
+                        use_container_width=True, hide_index=True
                     )
                     st.markdown("---")
     else:
         st.warning(
             "⚠️ El inventario no generó cálculos FCAFU. "
-            "Verifica que el Excel tenga columnas **Nombre científico**, "
-            "**DAP a (m)** y **Cobertura** llenas para cada árbol."
+            "Verifica columnas **Nombre científico**, **DAP a (m)** y **Cobertura**."
         )
 
-    # ─── ATC ────────────────────────────────────────────────────────────────
-    st.markdown("---")
-    st.header("📐 Área Total a Compensar (ATC) por Rango")
-    st.caption("Fórmula: ATC = Σ (área_cobertura × (FCAFU + factor_rango))")
-    if atc_resultados:
-        df_atc = pd.DataFrame([
-            {
-                "Rango": rango_id,
-                "Factor +": data['factor_adicional'],
-                "ATC total (ha)": round(data['atc_total'], 3),
-            }
-            for rango_id, data in atc_resultados.items()
-        ])
-        st.dataframe(df_atc, use_container_width=True, hide_index=True)
-        for rango_id, data in atc_resultados.items():
-            with st.expander(f"Ver detalle de {rango_id}"):
-                if data.get('detalles'):
-                    df_det = pd.DataFrame(data['detalles'])
-                    st.dataframe(df_det, use_container_width=True, hide_index=True)
 
-    # ════════════════════════════════════════════════════════════════════════
-    # ADICIONALIDAD POR HORIZONTE
-    # ════════════════════════════════════════════════════════════════════════
-    st.markdown("---")
-    st.header("🌱 Adicionalidad Esperada")
-
-    # Mapa nivel jerárquico → tasa BAU aplicable para CONSERVAR
-    # R1/R4 = Municipio · R2/R5 = SZH · R3/R6 = ZH
-    TASA_POR_NIVEL = {
-        "Rango 1": tasa_bau,
-        "Rango 2": tasa_bau_szh,
-        "Rango 3": tasa_bau_zh,
-        "Rango 4": tasa_bau,
-        "Rango 5": tasa_bau_szh,
-        "Rango 6": tasa_bau_zh,
-    }
-
-    K_RESTAURAR = 0.076   # Chapman-Richards bs-T, Poorter 2016
-    F_CONSERVAR = 0.85    # Andam 2008 / Pfaff 2014
-    F_RESTAURAR = 0.75    # Crouzeilles 2017 / González-M 2018
-    HORIZONTES  = [3, 5, 10, 15]
-
-    # TASA_BAU como alias del municipio para el Excel y comparación
-    TASA_BAU = tasa_bau
-
+# ════════════════════════════════════════════════════════════════════════
+# TAB 3 — ATC
+# ════════════════════════════════════════════════════════════════════════
+with tab3:
+    _section("Área Total a Compensar (ATC) por Rango", "📐")
     st.markdown(
-        f"**Tasas BAU (Hansen GFC):** "
-        f"Municipio `{tasa_bau*100:.3f}%` · "
-        f"SZH `{tasa_bau_szh*100:.3f}%` · "
-        f"ZH `{tasa_bau_zh*100:.3f}%` anual"
+        "**Fórmula:** `ATC = Σ (área_cobertura × (FCAFU + factor_rango))`  "
+        "Se presentan dos escenarios: **oficial** (solo Res. 0126/2024) "
+        "y **con CITES** (equiparación interna Unergy)."
     )
 
-    # ─── NOTA METODOLÓGICA ──────────────────────────────────────────────────
-    with st.expander("📖 Metodología y fuentes de las fórmulas"):
-        st.markdown("""
-**CONSERVAR — fórmula acumulada exponencial**
+    if atc_resultados:
+        # Tabla comparativa
+        filas_atc = []
+        for rango_id, data in atc_resultados.items():
+            atc_of = round(data['atc_total'], 3)
+            atc_ci = round(atc_resultados_cites.get(rango_id, data)['atc_total'], 3)
+            delta  = round(atc_ci - atc_of, 3)
+            filas_atc.append({
+                "Rango":              rango_id,
+                "Factor adicional":   data['factor_adicional'],
+                "ATC oficial (ha)":   atc_of,
+                "ATC con CITES (ha)": atc_ci,
+                "Δ ATC (ha)":         f"+{delta}" if delta > 0 else str(delta),
+            })
+        st.dataframe(
+            pd.DataFrame(filas_atc),
+            use_container_width=True, hide_index=True
+        )
 
+        st.markdown("---")
+        sub_tab1, sub_tab2 = st.tabs(["📋 Escenario Oficial", "🔬 Escenario con CITES"])
+
+        with sub_tab1:
+            st.caption("Criterio B: solo Res. 0126/2024 (CR=1.0 · EN=0.6 · VU=0.4)")
+            for rango_id, data in atc_resultados.items():
+                with st.expander(
+                    f"{rango_id} — ATC = {round(data['atc_total'],3)} ha  "
+                    f"(factor +{data['factor_adicional']})"
+                ):
+                    if data.get('detalles'):
+                        st.dataframe(
+                            pd.DataFrame(data['detalles']),
+                            use_container_width=True, hide_index=True
+                        )
+
+        with sub_tab2:
+            st.caption(
+                "Criterio B: Res. 0126/2024 + CITES (Apéndice I=0.6 · II=0.4)  "
+                "⚠️ Equiparación interna Unergy — sin normativa directa"
+            )
+            for rango_id, data in atc_resultados_cites.items():
+                with st.expander(
+                    f"{rango_id} — ATC = {round(data['atc_total'],3)} ha  "
+                    f"(factor +{data['factor_adicional']})"
+                ):
+                    if data.get('detalles'):
+                        st.dataframe(
+                            pd.DataFrame(data['detalles']),
+                            use_container_width=True, hide_index=True
+                        )
+
+
+# ════════════════════════════════════════════════════════════════════════
+# TAB 4 — ADICIONALIDAD
+# ════════════════════════════════════════════════════════════════════════
+with tab4:
+    _section("Adicionalidad Esperada por Escenario y Horizonte", "🌱")
+
+    st.markdown(
+        f"Tasas BAU: **Municipio** `{tasa_bau*100:.3f}%` · "
+        f"**SZH** `{tasa_bau_szh*100:.3f}%` · "
+        f"**ZH** `{tasa_bau_zh*100:.3f}%`"
+    )
+
+    with st.expander("📖 Metodología y fuentes"):
+        st.markdown("""
+**CONSERVAR — Fórmula exponencial acumulada**
 ```
 ha_adicional(n) = ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85
 ```
-
-- `[1 - (1 - tasa_BAU)ⁿ]` — probabilidad acumulada de deforestación en *n* años.
-  Modelo de eventos independientes anuales. La tasa BAU se calcula con
-  **Hansen et al. (2013)** sobre la unidad espacial del nivel jerárquico:
-  municipio (R1/R4), SZH (R2/R5) o ZH (R3/R6).
-  DOI: [10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
-
-- `0.85` — fracción de la deforestación evitada que es realmente adicional.
-  El 15% restante no se hubiera deforestado de todas formas (sesgo de selección).
-  **Andam et al. (2008)** DOI: [10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105) |
-  **Pfaff et al. (2014)** DOI: [10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)
-
-> *Nota: esta fórmula combina el modelo estocástico de Hansen con el factor de
-efectividad de Andam/Pfaff. Es una construcción metodológica defendible, no
-una ecuación de una sola fuente.*
+- Tasa BAU: **Hansen et al. (2013)** [DOI:10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
+- Factor 0.85: **Andam et al. (2008)** [DOI:10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105) · **Pfaff et al. (2014)** [DOI:10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)
 
 ---
-
-**RESTAURAR — curva de Chapman-Richards (Poorter 2016)**
-
+**RESTAURAR — Curva Chapman-Richards (Poorter 2016)**
 ```
-ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
+ha_adicional(n) = ha × [1 - e^(-0.076×n)] × 0.75
 ```
-
-- `[1 - e^(-k×n)]` — modelo de recuperación de biomasa en bosques tropicales
-  secundarios. Curva asintótica: crece rápido al inicio y se estabiliza.
-  k = 0.076 para bosques secos tropicales neotropicales.
-  **Poorter et al. (2016)** Nature 530: 211-214.
-  DOI: [10.1038/nature16469](https://doi.org/10.1038/nature16469)
-
-- `0.75` — fracción de restauraciones activas que logran establecimiento exitoso.
-  Para Bosque Seco Tropical colombiano.
-  **Crouzeilles et al. (2017)** DOI: [10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345) |
-  **González-M. et al. (2018)** IAvH BST Colombia.
-""")
+- k=0.076: **Poorter et al. (2016)** Nature 530:211-214. [DOI:10.1038/nature16469](https://doi.org/10.1038/nature16469)
+- Factor 0.75: **Crouzeilles et al. (2017)** [DOI:10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345) · **González-M. et al. (2018)** IAvH BST Colombia
+        """)
 
     if atc_resultados:
+        adic_tab1, adic_tab2, adic_tab3 = st.tabs([
+            "🌳 Conservar", "🌱 Restaurar", "⚖️ Mix & Comparación"
+        ])
 
-        # ─── CONSERVAR ──────────────────────────────────────────────────────
-        st.subheader("🌳 Escenario CONSERVAR (cerramiento)")
-        st.caption(
-            "Hectáreas que NO se pierden. "
-            "Fórmula: `ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85` — "
-            "tasa BAU según unidad espacial del nivel jerárquico."
-        )
-        filas_c = []
-        for rango_id, data in atc_resultados.items():
-            atc_total  = data['atc_total']
-            tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
-            fila = {
-                "Rango":         rango_id,
-                "ATC (ha)":      round(atc_total, 2),
-                "Tasa BAU":      f"{tasa_rango*100:.3f}%",
-                "Adic/año (ha)": round(
-                    adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 4
-                ),
-            }
+        with adic_tab1:
+            st.caption(
+                "Hectáreas que NO se pierden — tasa BAU según unidad del nivel jerárquico"
+            )
+            filas_c = []
+            for rango_id, data in atc_resultados.items():
+                atc_total  = data['atc_total']
+                tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
+                fila = {
+                    "Rango":         rango_id,
+                    "ATC (ha)":      round(atc_total, 2),
+                    "Tasa BAU":      f"{tasa_rango*100:.3f}%",
+                    "Adic/año (ha)": round(adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 4),
+                }
+                for n in HORIZONTES:
+                    fila[f"{n} años (ha)"] = round(
+                        adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR), 4
+                    )
+                filas_c.append(fila)
+            st.dataframe(pd.DataFrame(filas_c), use_container_width=True, hide_index=True)
+
+        with adic_tab2:
+            st.caption(
+                "Hectáreas que SE ganan — curva Chapman-Richards (k=0.076, f=0.75)"
+            )
+            filas_r = []
+            for rango_id, data in atc_resultados.items():
+                atc_total = data['atc_total']
+                fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
+                for n in HORIZONTES:
+                    fila[f"{n} años (ha)"] = round(
+                        adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR), 4
+                    )
+                filas_r.append(fila)
+            st.dataframe(pd.DataFrame(filas_r), use_container_width=True, hide_index=True)
+            st.caption("💡 Crece rápido los primeros años y se estabiliza conforme el ecosistema madura.")
+
+        with adic_tab3:
+            # Mix 50/50
+            _section("Escenario Mix 50/50", "⚖️")
+            st.caption("50% Conservar + 50% Restaurar del ATC total — tasa BAU por nivel")
+            filas_m = []
+            for rango_id, data in atc_resultados.items():
+                atc_total  = data['atc_total']
+                mitad      = atc_total * 0.5
+                tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
+                fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
+                for n in HORIZONTES:
+                    cons = adicionalidad_conservar(mitad, n, tasa_rango, F_CONSERVAR)
+                    rest = adicionalidad_restaurar(mitad, n, K_RESTAURAR, F_RESTAURAR)
+                    fila[f"Mix {n} años (ha)"] = round(cons + rest, 4)
+                filas_m.append(fila)
+            st.dataframe(pd.DataFrame(filas_m), use_container_width=True, hide_index=True)
+
+            # Comparación por ha
+            _section("Conservar vs Restaurar (por ha compensada)", "📊")
+            st.caption(f"Referencia: tasa BAU municipio `{tasa_bau*100:.3f}%`")
+            filas_comp = []
             for n in HORIZONTES:
-                fila[f"A {n} años (ha)"] = round(
-                    adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR), 4
-                )
-            filas_c.append(fila)
-        st.dataframe(pd.DataFrame(filas_c), use_container_width=True, hide_index=True)
+                cons_ha = adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR)
+                rest_ha = adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
+                filas_comp.append({
+                    "Horizonte":        f"{n} años",
+                    "Conservar (ha/ha)":round(cons_ha, 4),
+                    "Restaurar (ha/ha)":round(rest_ha, 4),
+                    "Ratio Rest/Cons":  round(rest_ha/cons_ha, 1) if cons_ha > 0 else "—",
+                })
+            st.dataframe(pd.DataFrame(filas_comp), use_container_width=True, hide_index=True)
 
-        # ─── RESTAURAR ──────────────────────────────────────────────────────
-        st.subheader("🌱 Escenario RESTAURAR (siembra activa)")
-        st.caption(
-            "Hectáreas que SE ganan. "
-            "Fórmula: `ha × [1 - e^(-0.076×n)] × 0.75` — curva Chapman-Richards"
-        )
-        filas_r = []
-        for rango_id, data in atc_resultados.items():
-            atc_total = data['atc_total']
-            fila = {
-                "Rango":    rango_id,
-                "ATC (ha)": round(atc_total, 2),
-            }
-            for n in HORIZONTES:
-                fila[f"A {n} años (ha)"] = round(
-                    adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR), 4
-                )
-            filas_r.append(fila)
-        st.dataframe(pd.DataFrame(filas_r), use_container_width=True, hide_index=True)
-        st.caption(
-            "💡 La ganancia no es lineal: crece rápido los primeros años "
-            "y se estabiliza conforme el ecosistema madura."
-        )
+            st.info(
+                "**¿Qué horizonte usar?**\n\n"
+                "- Compra / Usufructo predial (≥ 30 años) → columna de 15 años\n"
+                "- Acuerdo de conservación 15 años → columna de 15 años\n"
+                "- Acuerdo 3–5 años → columna correspondiente\n\n"
+                "**Restaurar** genera más adicionalidad numérica. "
+                "**Conservar** protege bosque existente con menor riesgo de falla."
+            )
 
-        # ─── COMPARACIÓN ────────────────────────────────────────────────────
-        st.subheader("⚖️ Comparación Conservar vs Restaurar")
-        st.caption(
-            f"Por ha compensada — referencia: tasa BAU del municipio "
-            f"(`{tasa_bau*100:.3f}%`)"
-        )
-        filas_comp = []
-        for n in HORIZONTES:
-            # Comparación ilustrativa: municipio como referencia fija
-            cons_por_ha = adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR)
-            rest_por_ha = adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
-            filas_comp.append({
-                "Horizonte":                   f"{n} años",
-                "Conservar (ha/ha)":           round(cons_por_ha, 4),
-                "Restaurar (ha/ha)":           round(rest_por_ha, 4),
-                "Ratio Rest/Cons":             round(rest_por_ha / cons_por_ha, 1)
-                                               if cons_por_ha > 0 else "—"
-            })
-        st.dataframe(
-            pd.DataFrame(filas_comp), use_container_width=True, hide_index=True
-        )
-        st.caption(
-            "**Ratio:** cuántas veces más adicionalidad genera Restaurar vs Conservar "
-            "por ha compensada. Restaurar siempre gana en número, pero Conservar "
-            "protege bosque que ya existe con menor riesgo de falla."
-        )
 
-        # ─── MIX 50/50 ──────────────────────────────────────────────────────
-        st.subheader("⚖️ Escenario MIX 50/50")
-        st.caption("50% Conservar + 50% Restaurar del ATC total — tasa BAU por nivel")
-        filas_m = []
-        for rango_id, data in atc_resultados.items():
-            atc_total  = data['atc_total']
-            mitad      = atc_total * 0.5
-            tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
-            fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
-            for n in HORIZONTES:
-                cons = adicionalidad_conservar(mitad, n, tasa_rango, F_CONSERVAR)
-                rest = adicionalidad_restaurar(mitad, n, K_RESTAURAR, F_RESTAURAR)
-                fila[f"Mix {n} años (ha)"] = round(cons + rest, 4)
-            filas_m.append(fila)
-        st.dataframe(pd.DataFrame(filas_m), use_container_width=True, hide_index=True)
+# ════════════════════════════════════════════════════════════════════════
+# TAB 5 — EXPORTAR
+# ════════════════════════════════════════════════════════════════════════
+with tab5:
+    _section("Descarga de Resultados", "📥")
 
-        st.info(
-            "**¿Qué horizonte usar?**\n\n"
-            "- Compra/Usufructo del predio (≥30 años) → columna de 15 años\n"
-            "- Acuerdo de conservación a 15 años → columna de 15 años\n"
-            "- Acuerdo a 3–5 años → columna correspondiente\n\n"
-            "**Restaurar** genera más adicionalidad numérica. **Conservar** "
-            "protege bosque existente con menor riesgo de falla. La mezcla óptima "
-            "depende del presupuesto y del mecanismo jurídico."
-        )
-
-    # ─── DESCARGA EXCEL ─────────────────────────────────────────────────────
-    st.markdown("---")
-    st.header("📥 Descargar Resultados")
-
-    def _build_excel(ctx, fcafu_por_cobertura, atc_resultados,
+    def _build_excel(ctx, fcafu_por_cobertura,
+                     atc_resultados, atc_resultados_cites,
                      TASA_BAU, tasa_bau_szh, tasa_bau_zh,
-                     TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR, K_RESTAURAR,
-                     HORIZONTES, area_impacto_ha):
+                     TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR,
+                     K_RESTAURAR, HORIZONTES, area_impacto_ha):
         buf = io.BytesIO()
         with pd.ExcelWriter(buf, engine="openpyxl") as writer:
 
-            # Hoja 1 – Resumen del proyecto
-            resumen = pd.DataFrame({
+            # Hoja 1 – Resumen
+            pd.DataFrame({
                 "Variable": [
-                    "Municipio", "Departamento", "BIOMA-IAvH",
-                    "Zona Hidrográfica", "Subzona Hidrográfica",
+                    "Municipio","Departamento","BIOMA-IAvH",
+                    "Zona Hidrográfica","Subzona Hidrográfica",
                     "Área de impacto (ha)",
-                    "Tasa BAU Municipio (%)", "Tasa BAU SZH (%)", "Tasa BAU ZH (%)"
+                    "Tasa BAU Municipio (%)","Tasa BAU SZH (%)","Tasa BAU ZH (%)",
                 ],
                 "Valor": [
-                    ctx.get("municipio", "n/d"),
-                    ctx.get("departamento", "n/d"),
-                    ctx.get("bioma_principal", "n/d"),
-                    ctx.get("zh", "n/d"),
-                    ctx.get("szh", "n/d"),
+                    ctx.get("municipio","n/d"), ctx.get("departamento","n/d"),
+                    ctx.get("bioma_principal","n/d"),
+                    ctx.get("zh","n/d"), ctx.get("szh","n/d"),
                     round(area_impacto_ha, 4),
-                    round(TASA_BAU * 100, 4),
-                    round(tasa_bau_szh * 100, 4),
-                    round(tasa_bau_zh * 100, 4),
+                    round(TASA_BAU*100, 4),
+                    round(tasa_bau_szh*100, 4),
+                    round(tasa_bau_zh*100, 4),
                 ]
-            })
-            resumen.to_excel(writer, sheet_name="Resumen", index=False)
+            }).to_excel(writer, sheet_name="Resumen", index=False)
 
-            # Hoja 2 – FCAFU por cobertura
-            fcafu_rows = []
+            # Hoja 2 – FCAFU
+            rows_f = []
             for cob, d in fcafu_por_cobertura.items():
-                fcafu_rows.append({
-                    "Cobertura": cob,
-                    "Individuos (N)": d["N"],
-                    "Especies (S)": d["S"],
-                    "S/N": round(d["SN"], 4),
-                    "A (Ecosistema)": d["A"],
-                    "B (Amenaza)": round(d["B"], 4),
-                    "C (Composición)": d["C"],
-                    "FCAFU": round(d["FCAFU"], 4),
-                    "Área Basal total (m²)": round(d.get("area_basal_total", 0), 4),
+                rows_f.append({
+                    "Cobertura":      cob,
+                    "N":              d["N"], "S": d["S"],
+                    "S/N":            round(d["SN"], 4),
+                    "A":              d["A"],
+                    "B oficial":      round(d.get("B_oficial", d.get("B",0)), 4),
+                    "B con CITES":    round(d.get("B_cites",   d.get("B",0)), 4),
+                    "C":              d["C"],
+                    "FCAFU oficial":  round(d["FCAFU"], 4),
+                    "FCAFU con CITES":round(d.get("FCAFU_cites", d["FCAFU"]), 4),
+                    "AB total (m²)":  round(d.get("area_basal_total",0), 4),
                 })
-            pd.DataFrame(fcafu_rows).to_excel(writer, sheet_name="FCAFU", index=False)
+            pd.DataFrame(rows_f).to_excel(writer, sheet_name="FCAFU", index=False)
 
-            # Hoja 3 – ATC por rango
-            atc_rows = []
-            for rango_id, data in atc_resultados.items():
-                atc_rows.append({
-                    "Rango": rango_id,
-                    "Factor Adicional": data.get("factor_adicional", ""),
-                    "ATC total (ha)": round(data["atc_total"], 4),
+            # Hoja 3 – ATC oficial
+            rows_a = []
+            for rid, data in atc_resultados.items():
+                rows_a.append({
+                    "Rango": rid,
+                    "Factor adicional": data.get("factor_adicional",""),
+                    "ATC oficial (ha)": round(data["atc_total"], 4),
+                    "ATC con CITES (ha)": round(
+                        atc_resultados_cites.get(rid, data)["atc_total"], 4
+                    ),
                 })
-            pd.DataFrame(atc_rows).to_excel(writer, sheet_name="ATC_por_Rango", index=False)
+            pd.DataFrame(rows_a).to_excel(writer, sheet_name="ATC_por_Rango", index=False)
 
-            # Hoja 4 – Adicionalidad Conservar (tasa por nivel)
-            cons_rows = []
-            for rango_id, data in atc_resultados.items():
+            # Hoja 4 – Adicionalidad Conservar
+            rows_c = []
+            for rid, data in atc_resultados.items():
                 atc_total  = data["atc_total"]
-                tasa_rango = TASA_POR_NIVEL.get(rango_id, TASA_BAU)
+                tasa_rango = TASA_POR_NIVEL.get(rid, TASA_BAU)
                 fila = {
-                    "Rango": rango_id,
+                    "Rango": rid,
                     "ATC (ha)": round(atc_total, 4),
-                    "Tasa BAU usada (%)": round(tasa_rango * 100, 4),
+                    "Tasa BAU (%)": round(tasa_rango*100, 4),
                     "Adic/año (ha)": round(
                         adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 6
                     ),
@@ -625,48 +840,49 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
                     fila[f"A {n} años (ha)"] = round(
                         adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR), 6
                     )
-                cons_rows.append(fila)
-            pd.DataFrame(cons_rows).to_excel(writer, sheet_name="Adicionalidad_Conservar", index=False)
+                rows_c.append(fila)
+            pd.DataFrame(rows_c).to_excel(writer, sheet_name="Adicionalidad_Conservar", index=False)
 
             # Hoja 5 – Adicionalidad Restaurar
-            rest_rows = []
-            for rango_id, data in atc_resultados.items():
+            rows_r = []
+            for rid, data in atc_resultados.items():
                 atc_total = data["atc_total"]
-                fila = {
-                    "Rango": rango_id,
-                    "ATC (ha)": round(atc_total, 4),
-                }
+                fila = {"Rango": rid, "ATC (ha)": round(atc_total, 4)}
                 for n in HORIZONTES:
                     fila[f"A {n} años (ha)"] = round(
                         adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR), 6
                     )
-                rest_rows.append(fila)
-            pd.DataFrame(rest_rows).to_excel(writer, sheet_name="Adicionalidad_Restaurar", index=False)
+                rows_r.append(fila)
+            pd.DataFrame(rows_r).to_excel(writer, sheet_name="Adicionalidad_Restaurar", index=False)
 
-            # Hoja 6 – Comparación por ha compensada (referencia: municipio)
-            comp_rows = []
+            # Hoja 6 – Comparación por ha
+            rows_cp = []
             for n in HORIZONTES:
                 cons_ha = adicionalidad_conservar(1.0, n, TASA_BAU, F_CONSERVAR)
                 rest_ha = adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
-                comp_rows.append({
-                    "Horizonte (años)": n,
+                rows_cp.append({
+                    "Horizonte (años)":  n,
                     "Conservar (ha/ha)": round(cons_ha, 6),
                     "Restaurar (ha/ha)": round(rest_ha, 6),
-                    "Ratio Rest/Cons": round(rest_ha / cons_ha, 2) if cons_ha > 0 else None,
+                    "Ratio Rest/Cons":   round(rest_ha/cons_ha, 2) if cons_ha > 0 else None,
                 })
-            pd.DataFrame(comp_rows).to_excel(writer, sheet_name="Comparacion_por_ha", index=False)
+            pd.DataFrame(rows_cp).to_excel(writer, sheet_name="Comparacion_por_ha", index=False)
 
-            # Hoja 7 – Especies amenazadas
-            sp_rows = []
+            # Hoja 7 – Especies amenazadas + CITES
+            rows_sp = []
             for cob, d in fcafu_por_cobertura.items():
                 for sp in d.get("amenazadas", []):
-                    sp_rows.append({
-                        "Cobertura": cob,
-                        "Nombre científico": sp.get("Nombre cientifico", ""),
-                        "Categoría": sp.get("categoria_amenaza", ""),
+                    rows_sp.append({
+                        "Cobertura":        cob,
+                        "Nombre científico":sp.get("nombre_cientifico",""),
+                        "Cat. Res.0126":    sp.get("categoria_amenaza",""),
+                        "CITES":            sp.get("cites_apendice","—"),
+                        "v oficial":        sp.get("valor_b_oficial", 0),
+                        "v con CITES":      sp.get("valor_b_cites",   0),
+                        "N individuos":     sp.get("n_individuos", 0),
                     })
-            if sp_rows:
-                pd.DataFrame(sp_rows).to_excel(
+            if rows_sp:
+                pd.DataFrame(rows_sp).to_excel(
                     writer, sheet_name="Especies_Amenazadas", index=False
                 )
 
@@ -674,12 +890,13 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
         return buf.getvalue()
 
     if atc_resultados and fcafu_por_cobertura:
-        nombre_mun = ctx.get("municipio", "proyecto").replace(" ", "_")
+        nombre_mun  = ctx.get("municipio","proyecto").replace(" ","_")
         excel_bytes = _build_excel(
-            ctx, fcafu_por_cobertura, atc_resultados,
+            ctx, fcafu_por_cobertura,
+            atc_resultados, atc_resultados_cites,
             TASA_BAU, tasa_bau_szh, tasa_bau_zh,
-            TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR, K_RESTAURAR,
-            HORIZONTES, area_impacto_ha
+            TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR,
+            K_RESTAURAR, HORIZONTES, area_impacto_ha
         )
         st.download_button(
             label="⬇️ Descargar Excel de resultados",
@@ -687,68 +904,36 @@ ha_adicional(n) = ha × [1 - e^(-0.076 × n)] × 0.75
             file_name=f"compensacion_{nombre_mun}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-        st.caption("Incluye: Resumen, FCAFU, ATC por rango, Adicionalidad Conservar/Restaurar, Comparación por ha, Especies amenazadas.")
+        st.caption(
+            "Hojas incluidas: Resumen · FCAFU (oficial + CITES) · ATC por Rango · "
+            "Adicionalidad Conservar · Adicionalidad Restaurar · Comparación por ha · "
+            "Especies Amenazadas"
+        )
     else:
-        st.warning("⚠️ No hay resultados calculados aún. Carga el KMZ y el inventario primero.")
+        st.warning("⚠️ No hay resultados aún. Carga el KMZ y el inventario.")
 
-    # ─── MAPAS ──────────────────────────────────────────────────────────────
-    st.markdown("---")
-    st.header("🗺️ Mapas y Análisis Espacial")
+    _section("Mapas y Análisis Espacial", "🗺️")
     st.info(
-        "**Mapas de áreas candidatas (R1-R6) en Google Earth Engine.**\n\n"
-        "1. `code.earthengine.google.com`\n"
-        "2. Pegar el script del rango correspondiente\n"
-        "3. Reemplazar el asset del impacto\n"
-        "4. Run → Tasks → Run exportaciones\n"
-        "5. Shapefiles a Drive → abrir en QGIS/ArcMap"
+        "**Mapas de áreas candidatas (R1–R6) en Google Earth Engine**\n\n"
+        "1. Abre `code.earthengine.google.com`\n"
+        "2. Pega el script del rango correspondiente\n"
+        "3. Reemplaza el asset del impacto\n"
+        "4. Run → Tasks → Exportar shapefiles a Drive\n"
+        "5. Abre en QGIS / ArcMap"
     )
 
-    # ─── BIBLIOGRAFÍA ───────────────────────────────────────────────────────
-    st.markdown("---")
-    st.header("📚 Fuentes y Factores de Efectividad")
-    c1, c2 = st.columns(2)
-    with c1:
+    _section("Referencias", "📚")
+    c_ref1, c_ref2 = st.columns(2)
+    with c_ref1:
         st.markdown("**🌳 CONSERVAR — Factor efectividad: 0.85**")
-        st.markdown(
-            "- Andam et al. (2008) PNAS — "
-            "[10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105)"
-        )
-        st.markdown(
-            "- Pfaff et al. (2014) World Dev — "
-            "[10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)"
-        )
-    with c2:
-        st.markdown("**🌱 RESTAURAR — Factor efectividad: 0.75 | k = 0.076**")
-        st.markdown(
-            "- Poorter et al. (2016) Nature — "
-            "[10.1038/nature16469](https://doi.org/10.1038/nature16469)"
-        )
-        st.markdown(
-            "- Crouzeilles et al. (2017) Sci Adv — "
-            "[10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345)"
-        )
-        st.markdown(
-            "- González-M. et al. (2018) IAvH BST — "
-            "[Ver](http://repository.humboldt.org.co/handle/20.500.11761/35442)"
-        )
+        st.markdown("- Andam et al. (2008) PNAS — [10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105)")
+        st.markdown("- Pfaff et al. (2014) World Dev — [10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)")
+    with c_ref2:
+        st.markdown("**🌱 RESTAURAR — Factor efectividad: 0.75 · k = 0.076**")
+        st.markdown("- Poorter et al. (2016) Nature — [10.1038/nature16469](https://doi.org/10.1038/nature16469)")
+        st.markdown("- Crouzeilles et al. (2017) Sci Adv — [10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345)")
+        st.markdown("- González-M. et al. (2018) IAvH BST Colombia")
     st.caption(
-        "**Tasa BAU**: Hansen et al. (2013). High-Resolution Global Maps of "
-        "21st-Century Forest Cover Change. Science 342: 850-853. "
-        "[10.1126/science.1244693](https://doi.org/10.1126/science.1244693) — "
-        "calculada sobre municipio (R1/R4), SZH (R2/R5) y ZH (R3/R6)."
-    )
-
-else:
-    st.info("👈 Sube un KMZ y el inventario forestal en el panel lateral.")
-    st.markdown("---")
-    st.markdown(
-        "### Esta app calcula:\n\n"
-        "1. **FCAFU** por cobertura (1 + A + B + C del Manual)\n"
-        "2. **ATC** por rango usando áreas REALES del KMZ\n"
-        "3. **Tasa BAU** dinámica por municipio, SZH y ZH (Hansen Global Forest Change)\n"
-        "4. **Adicionalidad** por escenario y horizonte temporal:\n"
-        "   - Conservar: curva exponencial acumulada (Andam 2008 / Pfaff 2014)\n"
-        "   - Restaurar: curva Chapman-Richards (Poorter 2016 / Crouzeilles 2017)\n\n"
-        "El KMZ debe contener los folders **Proyecto** (impacto) y "
-        "**Coberturas vegetales** (polígonos por tipo)."
+        "**Tasa BAU:** Hansen et al. (2013) Science 342:850-853 — "
+        "[10.1126/science.1244693](https://doi.org/10.1126/science.1244693)"
     )
