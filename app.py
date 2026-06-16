@@ -472,12 +472,13 @@ TASA_BAU    = tasa_bau
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS PRINCIPALES
 # ══════════════════════════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📍 Contexto",
     "🌳 FCAFU",
     "📐 ATC",
     "🌱 Adicionalidad",
     "📥 Exportar",
+    "🚫 Vedas",
 ])
 
 
@@ -1034,3 +1035,121 @@ with tab5:
         "**Tasa BAU:** Hansen et al. (2013) Science 342:850-853 — "
         "[10.1126/science.1244693](https://doi.org/10.1126/science.1244693)"
     )
+
+# ════════════════════════════════════════════════════════════════════════
+# TAB 6 — VEDAS
+# ════════════════════════════════════════════════════════════════════════
+with tab6:
+    from config.vedas import VEDAS_NACIONALES, VEDAS_REGIONALES
+
+    _section("Consulta de Vedas de Flora", "🚫")
+
+    # ── Intro ────────────────────────────────────────────────────────────
+    st.info(
+        "Las vedas **no modifican el FCAFU** ni el área de compensación, pero generan "
+        "**obligaciones procedimentales** adicionales ante la CAR (concepto técnico, "
+        "rescate, reubicación, censo 100%). Verifica siempre la norma vigente al momento "
+        "de radicación."
+    )
+
+    # ── Vedas Nacionales ─────────────────────────────────────────────────
+    with st.expander("🇨🇴 Vedas Nacionales — aplican en todo el territorio", expanded=True):
+        st.caption("Fuentes: Res. 0316/1974 INDERENA · Ley 61/1985 · Res. 1602/1995 + 020/1996 MADS")
+        for sp in VEDAS_NACIONALES:
+            nombres_sci = " / ".join(
+                f"*{n.capitalize()}*" for n in sp["sci_fragmentos"]
+            )
+            st.markdown(
+                f"**{sp['nombre_comun']}** &nbsp;({nombres_sci})  \n"
+                f"<small>📋 {sp['norma']} &nbsp;|&nbsp; {sp['nota']}</small>",
+                unsafe_allow_html=True,
+            )
+            st.markdown("---")
+
+    # ── Vedas Regionales ─────────────────────────────────────────────────
+    _section("Vedas Regionales por CAR", "🏛️")
+
+    # Selector de CAR(s) a consultar
+    cars_disponibles = sorted(VEDAS_REGIONALES.keys())
+    cars_seleccionadas = st.multiselect(
+        "Selecciona una o varias CARs para consultar sus vedas regionales",
+        options=cars_disponibles,
+        default=[car_proyecto] if car_proyecto and car_proyecto in VEDAS_REGIONALES else [],
+        help="Si seleccionaste una CAR en la barra lateral, aparece preseleccionada aquí."
+    )
+
+    if not cars_seleccionadas:
+        st.warning("Selecciona al menos una CAR para ver sus vedas regionales.")
+    else:
+        for car_key in cars_seleccionadas:
+            datos = VEDAS_REGIONALES[car_key]
+            tipo_badge = (
+                "🔴 Veda indefinida" if datos.get("tipo") == "indefinida"
+                else "🟡 Veda temporal"
+            )
+            st.markdown(f"### {car_key} — {tipo_badge}")
+            st.markdown(
+                f"📋 **Norma:** {datos['norma']}  \n"
+                f"ℹ️ {datos['nota']}"
+            )
+            # Tabla de especies
+            rows = []
+            for sp in datos.get("spp", []):
+                nombres_sci = "; ".join(
+                    n.capitalize() for n in sp["sci_fragmentos"]
+                )
+                rows.append({
+                    "Nombre común": sp["nombre_comun"],
+                    "Nombre científico (fragmentos de búsqueda)": nombres_sci,
+                })
+            if rows:
+                import pandas as pd
+                df_veda = pd.DataFrame(rows)
+                st.dataframe(
+                    df_veda,
+                    use_container_width=True,
+                    hide_index=True,
+                )
+            st.markdown("---")
+
+    # ── Buscador rápido por especie ───────────────────────────────────────
+    _section("Buscador de Especie", "🔍")
+    busqueda = st.text_input(
+        "Ingresa nombre científico o común para verificar si está en veda",
+        placeholder="ej. Anacardium excelsum · Samán · Ceiba pentandra",
+    )
+    if busqueda.strip():
+        from config.vedas import consultar_veda
+        # Buscamos contra todas las CARs disponibles para no depender de selección
+        resultado_nac = consultar_veda(busqueda.strip())
+        hits_regionales = []
+        for ck in cars_disponibles:
+            r = consultar_veda(busqueda.strip(), car=ck)
+            if r["en_veda_regional"] and r["veda_regional_info"]:
+                info = r["veda_regional_info"].copy()
+                info["car"] = ck
+                hits_regionales.append(info)
+
+        hay_nac = resultado_nac["en_veda_nacional"]
+        hay_reg = len(hits_regionales) > 0
+
+        if hay_nac or hay_reg:
+            if hay_nac:
+                info = resultado_nac["veda_nacional_info"]
+                st.error(
+                    f"🚫 **Veda NACIONAL** — {info['nombre_comun']}  \n"
+                    f"📋 {info['norma']}  \n"
+                    f"{info['nota']}"
+                )
+            if hay_reg:
+                for item in hits_regionales:
+                    st.warning(
+                        f"⚠️ **Veda REGIONAL** ({item['car']}) — {item.get('nombre_comun', busqueda)}  \n"
+                        f"📋 {item['norma']}  \n"
+                        f"{item['nota']}"
+                    )
+        else:
+            st.success(
+                f"✅ **'{busqueda}'** no figura en la base de datos de vedas "
+                f"(nacional ni regional). Verifica también con la CAR competente."
+            )
