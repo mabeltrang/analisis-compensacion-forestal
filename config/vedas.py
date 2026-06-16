@@ -208,6 +208,7 @@ VEDAS_REGIONALES = {
             {"nombre_comun": "Samán", "sci_fragmentos": ["albizia saman", "samanea saman"]},
             {"nombre_comun": "Caracolí", "sci_fragmentos": ["anacardium excelsum"]},
             {"nombre_comun": "Ceiba", "sci_fragmentos": ["ceiba pentandra"]},
+            {"nombre_comun": "Palma de Cuezco", "sci_fragmentos": ["scheelea butyraceae", "attalea butyracea"]},
         ]
     },
     "CORPOCALDAS": {
