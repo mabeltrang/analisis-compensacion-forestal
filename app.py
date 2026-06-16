@@ -502,7 +502,16 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # PANTALLA DE BIENVENIDA
 # ══════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+# PANTALLA DE BIENVENIDA
+# ══════════════════════════════════════════════════════════════════════════════
 if not impacto_file or not excel_file:
+    # Tab de Vedas PRIMERO — visible sin necesidad de scroll
+    _tab_vedas_only = st.tabs(["🚫 Vedas"])
+    with _tab_vedas_only[0]:
+        _render_tab_vedas(todas_vedas=None, car_proyecto=car_proyecto)
+
+    st.markdown("---")
     col1, col2, col3 = st.columns(3)
     with col1:
         _metric_card("1. Sube el KMZ", "📂", "Polígono de impacto + coberturas")
@@ -524,14 +533,6 @@ if not impacto_file or not excel_file:
       </ul>
     </div>
     """, unsafe_allow_html=True)
-
-_archivos_listos = bool(impacto_file and excel_file)
-
-if not _archivos_listos:
-    # Mostrar solo el tab de Vedas en la bienvenida
-    _tab_vedas_only = st.tabs(["🚫 Vedas"])
-    with _tab_vedas_only[0]:
-        _render_tab_vedas(todas_vedas=None, car_proyecto=car_proyecto)
     st.stop()
 
 
