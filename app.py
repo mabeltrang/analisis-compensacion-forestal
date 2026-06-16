@@ -541,16 +541,16 @@ with tab1:
         st.warning("⚠️ No se detectaron coberturas.")
 
 
+# ── Cálculo global de vedas detectadas (disponible para tab2 y tab6) ──
+todas_vedas = []
+for cob, d in fcafu_por_cobertura.items():
+    for v in d.get('vedas_detectadas', []):
+        todas_vedas.append({**v, 'cobertura': cob})
+
 # ════════════════════════════════════════════════════════════════════════
 # TAB 2 — FCAFU
 # ════════════════════════════════════════════════════════════════════════
 with tab2:
-
-    # ── Alertas de veda ──────────────────────────────────────────────────
-    todas_vedas = []
-    for cob, d in fcafu_por_cobertura.items():
-        for v in d.get('vedas_detectadas', []):
-            todas_vedas.append({**v, 'cobertura': cob})
 
     if todas_vedas:
         n_nac = sum(v['n_individuos'] for v in todas_vedas if 'nacional' in v['nivel'])
@@ -1040,11 +1040,10 @@ with tab5:
 # TAB 6 — VEDAS
 # ════════════════════════════════════════════════════════════════════════
 with tab6:
-    from config.vedas import VEDAS_NACIONALES, VEDAS_REGIONALES
+    from config.vedas import VEDAS_NACIONALES, VEDAS_REGIONALES, consultar_veda
 
-    _section("Consulta de Vedas de Flora", "🚫")
+    _section("Vedas de Flora — Consulta y Cruce con Inventario", "🚫")
 
-    # ── Intro ────────────────────────────────────────────────────────────
     st.info(
         "Las vedas **no modifican el FCAFU** ni el área de compensación, pero generan "
         "**obligaciones procedimentales** adicionales ante la CAR (concepto técnico, "
@@ -1052,13 +1051,71 @@ with tab6:
         "de radicación."
     )
 
-    # ── Vedas Nacionales ─────────────────────────────────────────────────
-    with st.expander("🇨🇴 Vedas Nacionales — aplican en todo el territorio", expanded=True):
-        st.caption("Fuentes: Res. 0316/1974 INDERENA · Ley 61/1985 · Res. 1602/1995 + 020/1996 MADS")
-        for sp in VEDAS_NACIONALES:
-            nombres_sci = " / ".join(
-                f"*{n.capitalize()}*" for n in sp["sci_fragmentos"]
+    # ════════════════════════════════════════════════════════════════════
+    # SECCIÓN A — Cruce con inventario (solo si hay datos cargados)
+    # ════════════════════════════════════════════════════════════════════
+    hay_inventario = 'fcafu_por_cobertura' in dir() and fcafu_por_cobertura
+
+    if hay_inventario:
+        _section("Especies en Veda Detectadas en el Inventario", "📋")
+
+        if todas_vedas:
+            n_nac = sum(v['n_individuos'] for v in todas_vedas if 'nacional' in v.get('nivel', ''))
+            n_reg = sum(v['n_individuos'] for v in todas_vedas if v.get('nivel') == 'regional')
+            n_total = len({v['nombre_cientifico'] for v in todas_vedas})
+
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("Especies en veda", n_total)
+            col_b.metric("Ind. veda nacional", n_nac)
+            col_c.metric("Ind. veda regional", n_reg)
+
+            st.markdown("---")
+
+            # Tabla detalle
+            df_v = pd.DataFrame(todas_vedas)[
+                ['cobertura', 'nombre_cientifico', 'n_individuos', 'nivel', 'norma', 'alerta']
+            ]
+            df_v.columns = ['Cobertura', 'Nombre científico', 'N ind.', 'Nivel', 'Norma', 'Alerta']
+            st.dataframe(df_v, use_container_width=True, hide_index=True)
+
+            # Obligaciones
+            if any('nacional' in v.get('nivel', '') for v in todas_vedas):
+                st.error(
+                    "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
+                    "1. Censo al 100% de individuos fustales de la especie vedada.\n"
+                    "2. Medidas in situ: rescate y reubicación de individuos.\n"
+                    "3. Medidas ex situ: propagación en vivero y siembra en área de compensación.\n"
+                    "4. Shapefile georreferenciado con localización de cada individuo vedado."
+                )
+            if any(v.get('nivel') == 'regional' for v in todas_vedas):
+                car_txt = car_proyecto or "la CAR competente"
+                st.warning(
+                    f"**Obligaciones — veda regional ({car_txt}):**\n"
+                    "1. Solicitud formal ante GIT Forestal de la CAR.\n"
+                    "2. Concepto técnico favorable previo a cualquier intervención.\n"
+                    "3. Justificación de interés público o condición de riesgo.\n"
+                    "4. Medidas de compensación o reposición que determine la CAR."
+                )
+        else:
+            st.success(
+                "✅ Ninguna especie del inventario figura en la base de datos de vedas "
+                f"(nacional ni {car_proyecto or 'regional'}). "
+                "Verifica igualmente con la CAR competente antes de la radicación."
             )
+
+        st.markdown("---")
+    else:
+        st.caption("💡 Carga el KMZ y el inventario forestal para ver el cruce automático con las especies inventariadas.")
+        st.markdown("---")
+
+    # ════════════════════════════════════════════════════════════════════
+    # SECCIÓN B — Vedas Nacionales (siempre visible)
+    # ════════════════════════════════════════════════════════════════════
+    with st.expander("🇨🇴 Vedas Nacionales — aplican en todo el territorio nacional", expanded=not hay_inventario):
+        st.caption("Fuentes: Res. 0316/1974 INDERENA · Ley 61/1985 · Res. 1602/1995 + Res. 020/1996 MADS")
+        st.markdown("---")
+        for sp in VEDAS_NACIONALES:
+            nombres_sci = " / ".join(f"*{n.capitalize()}*" for n in sp["sci_fragmentos"])
             st.markdown(
                 f"**{sp['nombre_comun']}** &nbsp;({nombres_sci})  \n"
                 f"<small>📋 {sp['norma']} &nbsp;|&nbsp; {sp['nota']}</small>",
@@ -1066,88 +1123,76 @@ with tab6:
             )
             st.markdown("---")
 
-    # ── Vedas Regionales ─────────────────────────────────────────────────
+    # ════════════════════════════════════════════════════════════════════
+    # SECCIÓN C — Vedas Regionales por CAR (siempre visible)
+    # ════════════════════════════════════════════════════════════════════
     _section("Vedas Regionales por CAR", "🏛️")
 
-    # Selector de CAR(s) a consultar
     cars_disponibles = sorted(VEDAS_REGIONALES.keys())
+    default_cars = [car_proyecto] if car_proyecto and car_proyecto in VEDAS_REGIONALES else []
     cars_seleccionadas = st.multiselect(
-        "Selecciona una o varias CARs para consultar sus vedas regionales",
+        "Selecciona una o varias CARs",
         options=cars_disponibles,
-        default=[car_proyecto] if car_proyecto and car_proyecto in VEDAS_REGIONALES else [],
-        help="Si seleccionaste una CAR en la barra lateral, aparece preseleccionada aquí."
+        default=default_cars,
+        help="Si seleccionaste una CAR en el sidebar, aparece preseleccionada."
     )
 
     if not cars_seleccionadas:
-        st.warning("Selecciona al menos una CAR para ver sus vedas regionales.")
+        st.caption("Selecciona al menos una CAR para ver sus vedas regionales.")
     else:
         for car_key in cars_seleccionadas:
             datos = VEDAS_REGIONALES[car_key]
-            tipo_badge = (
-                "🔴 Veda indefinida" if datos.get("tipo") == "indefinida"
-                else "🟡 Veda temporal"
-            )
+            tipo_badge = "🔴 Veda indefinida" if datos.get("tipo") == "indefinida" else "🟡 Veda temporal"
             st.markdown(f"### {car_key} — {tipo_badge}")
             st.markdown(
                 f"📋 **Norma:** {datos['norma']}  \n"
                 f"ℹ️ {datos['nota']}"
             )
-            # Tabla de especies
-            rows = []
-            for sp in datos.get("spp", []):
-                nombres_sci = "; ".join(
-                    n.capitalize() for n in sp["sci_fragmentos"]
-                )
-                rows.append({
+            rows = [
+                {
                     "Nombre común": sp["nombre_comun"],
-                    "Nombre científico (fragmentos de búsqueda)": nombres_sci,
-                })
+                    "Nombre científico (fragmentos)": "; ".join(
+                        n.capitalize() for n in sp["sci_fragmentos"]
+                    ),
+                }
+                for sp in datos.get("spp", [])
+            ]
             if rows:
-                import pandas as pd
-                df_veda = pd.DataFrame(rows)
-                st.dataframe(
-                    df_veda,
-                    use_container_width=True,
-                    hide_index=True,
-                )
+                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
             st.markdown("---")
 
-    # ── Buscador rápido por especie ───────────────────────────────────────
+    # ════════════════════════════════════════════════════════════════════
+    # SECCIÓN D — Buscador libre (siempre visible)
+    # ════════════════════════════════════════════════════════════════════
     _section("Buscador de Especie", "🔍")
     busqueda = st.text_input(
         "Ingresa nombre científico o común para verificar si está en veda",
         placeholder="ej. Anacardium excelsum · Samán · Ceiba pentandra",
     )
     if busqueda.strip():
-        from config.vedas import consultar_veda
-        # Buscamos contra todas las CARs disponibles para no depender de selección
         resultado_nac = consultar_veda(busqueda.strip())
         hits_regionales = []
         for ck in cars_disponibles:
             r = consultar_veda(busqueda.strip(), car=ck)
-            if r["en_veda_regional"] and r["veda_regional_info"]:
+            if r["en_veda_regional"] and r.get("veda_regional_info"):
                 info = r["veda_regional_info"].copy()
                 info["car"] = ck
                 hits_regionales.append(info)
 
-        hay_nac = resultado_nac["en_veda_nacional"]
-        hay_reg = len(hits_regionales) > 0
-
-        if hay_nac or hay_reg:
-            if hay_nac:
+        if resultado_nac["en_veda_nacional"] or hits_regionales:
+            if resultado_nac["en_veda_nacional"]:
                 info = resultado_nac["veda_nacional_info"]
                 st.error(
                     f"🚫 **Veda NACIONAL** — {info['nombre_comun']}  \n"
                     f"📋 {info['norma']}  \n"
                     f"{info['nota']}"
                 )
-            if hay_reg:
-                for item in hits_regionales:
-                    st.warning(
-                        f"⚠️ **Veda REGIONAL** ({item['car']}) — {item.get('nombre_comun', busqueda)}  \n"
-                        f"📋 {item['norma']}  \n"
-                        f"{item['nota']}"
-                    )
+            for item in hits_regionales:
+                st.warning(
+                    f"⚠️ **Veda REGIONAL** ({item['car']}) — {item.get('nombre_comun', busqueda)}  \n"
+                    f"📋 {item['norma']}  \n"
+                    f"{item['nota']}"
+                )
         else:
             st.success(
                 f"✅ **'{busqueda}'** no figura en la base de datos de vedas "
