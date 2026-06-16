@@ -506,24 +506,21 @@ with st.sidebar:
 # PANTALLA DE BIENVENIDA
 # ══════════════════════════════════════════════════════════════════════════════
 if not impacto_file or not excel_file:
-    # Tab de Vedas PRIMERO — visible sin necesidad de scroll
-    _tab_vedas_only = st.tabs(["🚫 Vedas"])
+    _tab_vedas_only = st.tabs(["🚫 Vedas", "ℹ️ Cómo usar"])
     with _tab_vedas_only[0]:
         _render_tab_vedas(todas_vedas=None, car_proyecto=car_proyecto)
-
-    st.markdown("---")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        _metric_card("1. Sube el KMZ", "📂", "Polígono de impacto + coberturas")
-    with col2:
-        _metric_card("2. Sube el Excel", "📊", "Inventario forestal Unergy")
-    with col3:
-        _metric_card("3. Obtén resultados", "📐", "FCAFU · ATC · Adicionalidad")
-
-    st.markdown("---")
-    st.markdown(f"""
+    with _tab_vedas_only[1]:
+        st.markdown("### ¿Qué calcula esta app?")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            _metric_card("1. Sube el KMZ", "📂", "Polígono de impacto + coberturas")
+        with col2:
+            _metric_card("2. Sube el Excel", "📊", "Inventario forestal Unergy")
+        with col3:
+            _metric_card("3. Obtén resultados", "📐", "FCAFU · ATC · Adicionalidad")
+        st.markdown("---")
+        st.markdown(f"""
     <div style="background:{PURPLE_LIGHT}; border-radius:10px; padding:20px 24px;">
-      <h4 style="color:{PURPLE_DARK}; margin:0 0 10px 0;">¿Qué calcula esta app?</h4>
       <ul style="color:{GRAY_TEXT}; margin:0; padding-left:18px; line-height:1.8;">
         <li><b>FCAFU</b> por cobertura — criterios A, B (oficial y con CITES) y C del Manual 2026</li>
         <li><b>ATC</b> por rango geográfico R1–R6 en dos escenarios: oficial y con CITES</li>
@@ -532,7 +529,7 @@ if not impacto_file or not excel_file:
         <li><b>Vedas</b> nacionales y regionales cruzadas con el inventario</li>
       </ul>
     </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     st.stop()
 
 
