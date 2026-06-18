@@ -1,2105 +1,245 @@
-nombre_cientifico,Reino,Familia,genero,categoria
-Arthonia obscurella,Fungi,Arthoniaceae,Arthonia,CR
-Arthonia septemlocularis,Fungi,Arthoniaceae,Arthonia,CR
-Ancistrosporella leucophila,Fungi,Roccellaceae,Ancistrosporella,CR
-Byssoloma permutans,Fungi,Byssolomataceae,Byssoloma,CR
-Lecanactis proximans,Fungi,Roccellaceae,Lecanactis,CR
-Schismatomma leucopsarum,Fungi,Roccellaceae,Schismatomma,CR
-Bogoriella apposita,Fungi,Trypetheliaceae,Bogoriella,VU
-Bacidia proposita,Fungi,Ramalinaceae,Bacidia,CR
-Badimia vezdana,Fungi,Ramalinaceae,Badimia,CR
-Ramalina bogotensis,Fungi,Ramalinaceae,Ramalina,CR
-Ramalina protensa,Fungi,Ramalinaceae,Ramalina,CR
-Gyalideopsis chicaque,Fungi,Gomphillaceae,Gyalideopsis,CR
-Fissurina linoana,Fungi,Graphidaceae,Fissurina,CR
-Graphis amaliana,Fungi,Graphidaceae,Graphis,EN
-Graphis carmenelisana,Fungi,Graphidaceae,Graphis,CR
-Graphis kavintuca,Fungi,Graphidaceae,Graphis,EN
-Graphis lurizana,Fungi,Graphidaceae,Graphis,CR
-Graphis mokanarum,Fungi,Graphidaceae,Graphis,CR
-Graphis rosalbiana,Fungi,Graphidaceae,Graphis,CR
-Graphis santanderiana,Fungi,Graphidaceae,Graphis,CR
-Graphis solmariana,Fungi,Graphidaceae,Graphis,CR
-Myriotrema fragile,Fungi,Graphidaceae,Myriotrema,CR
-Ocellularia auberianoides,Fungi,Graphidaceae,Ocellularia,EN
-Ocellularia percolumellata,Fungi,Graphidaceae,Ocellularia,EN
-Ocellularia umbilicatoides,Fungi,Graphidaceae,Ocellularia,CR
-Ocellularia usnicolor,Fungi,Graphidaceae,Ocellularia,CR
-Phaeographina cabbalistica,Fungi,Graphidaceae,Phaeographina,CR
-Phaeographis dividens,Fungi,Graphidaceae,Phaeographis,CR
-Phaeographis galeanoae,Fungi,Graphidaceae,Phaeographis,CR
-Phaeographis leucocheila,Fungi,Graphidaceae,Phaeographis,CR
-Platythecium serpentinellum,Fungi,Graphidaceae,Platythecium,CR
-Redingeria glyphica,Fungi,Graphidaceae,Redingeria,CR
-Thalloloma haemographum,Fungi,Graphidaceae,Thalloloma,CR
-Thelotrema conveniens,Fungi,Graphidaceae,Thelotrema,EN
-Thelotrema leucocarpoides,Fungi,Graphidaceae,Thelotrema,CR
-Thelotrema sphinctrinellum,Fungi,Graphidaceae,Thelotrema,CR
-Aspidothelium silverstonei,Fungi,Thelenellaceae,Aspidothelium,CR
-Leptogium inversum,Fungi,Collemataceae,Leptogium,VU
-Lobariella angustata,Fungi,Lobariaceae,Lobariella,VU
-Lobariella ecorticata,Fungi,Lobariaceae,Lobariella,CR
-Lobariella flavomedullosa,Fungi,Lobariaceae,Lobariella,VU
-Lobariella parmelioides,Fungi,Lobariaceae,Lobariella,EN
-Lobariella pseudocrenulata,Fungi,Lobariaceae,Lobariella,EN
-Lobariella reticulata,Fungi,Lobariaceae,Lobariella,EN
-Sticta peltigerella,Fungi,Lobariaceae,Sticta,VU
-Sticta rubropruinosa,Fungi,Lobariaceae,Sticta,CR
-Sticta silverstonii,Fungi,Lobariaceae,Sticta,CR
-Sticta tunjensis,Fungi,Lobariaceae,Sticta,VU
-Pertusaria confundens,Fungi,Pertusariaceae,Pertusaria,EN
-Pertusaria thelocarpoides,Fungi,Pertusariaceae,Pertusaria,CR
-Caloplaca conjungens,Fungi,Teloschistaceae,Caloplaca,CR
-Cora accipiter,Fungi,Hygrophoraceae,Cora,EN
-Cora arachnodavidea,Fungi,Hygrophoraceae,Cora,EN
-Cora arcabucana,Fungi,Hygrophoraceae,Cora,CR
-Cora aturucoa,Fungi,Hygrophoraceae,Cora,CR
-Cora barbifera,Fungi,Hygrophoraceae,Cora,CR
-Cora byssoidea,Fungi,Hygrophoraceae,Cora,CR
-Cora casanarensis,Fungi,Hygrophoraceae,Cora,VU
-Cora corelleslia,Fungi,Hygrophoraceae,Cora,EN
-Cora davibogotana,Fungi,Hygrophoraceae,Cora,EN
-Cora davicrinita,Fungi,Hygrophoraceae,Cora,VU
-Cora davidia,Fungi,Hygrophoraceae,Cora,VU
-Cora fimbriata,Fungi,Hygrophoraceae,Cora,EN
-Cora gigantea,Fungi,Hygrophoraceae,Cora,EN
-Cora hafecesweorthensis,Fungi,Hygrophoraceae,Cora,CR
-Cora hirsuta,Fungi,Hygrophoraceae,Cora,CR
-Cora inversa,Fungi,Hygrophoraceae,Cora,VU
-Cora leslactuca,Fungi,Hygrophoraceae,Cora,CR
-Cora pastorum,Fungi,Hygrophoraceae,Cora,CR
-Cora pikynasa,Fungi,Hygrophoraceae,Cora,CR
-Cora putumayensis,Fungi,Hygrophoraceae,Cora,CR
-Cora quillacinga,Fungi,Hygrophoraceae,Cora,EN
-Cora rothesiorum,Fungi,Hygrophoraceae,Cora,EN
-Cora setosa,Fungi,Hygrophoraceae,Cora,CR
-Cora udebeceana,Fungi,Hygrophoraceae,Cora,CR
-Cora undulata,Fungi,Hygrophoraceae,Cora,CR
-Cora verjonensis,Fungi,Hygrophoraceae,Cora,CR
-Lepidostroma calocerum,Fungi,Lepidostromataceae,Lepidostroma,EN
-Multiclavula coronilla,Fungi,Hydnaceae,Multiclavula,CR
-Sulzbacheromyces chocoensis,Fungi,Lepidostromataceae,Sulzbacheromyces,CR
-Sulzbacheromyces tutunendo,Fungi,Lepidostromataceae,Sulzbacheromyces,CR
-Allophoron farinosum,Fungi,Incertae sedis,Allophoron,CR
-Anomobryum clavicaule,Plantae,Bryaceae,Anomobryum,VU
-Bryum sordidum,Plantae,Bryaceae,Bryum,EN
-Schizymenium pectinatum,Plantae,Miniaceae,Schizymenium,VU
-Dicranella muralis,Plantae,Dicranaceae,Dicranella,VU
-Dicranella pusilla,Plantae,Dicranaceae,Dicranella,VU
-Pleuridium lindigianum,Plantae,Ditrichaceae,Pleuridium,EN
-Calyptrochaeta nutans,Plantae,Daltoniaceae,Calyptrochaeta,EN
-Leskeodon paisa,Plantae,Daltoniaceae,Leskeodon,CR
-Lepidopilum wallisii,Plantae,Pilotrichaceae,Lepidopilum,CR
-Eurhynchium semitortum,Plantae,Brachytheciaceae,Eurhynchium,VU
-Trichosteleum mastopomatoides,Plantae,Sematophyllaceae,Trichosteleum,CR
-Cyrto-hypnum arzobispoae,Plantae,Thuidiaceae,Cyrto-hypnum,VU
-Macromitrium tocaremae,Plantae,Orthotrichaceae,Macromitrium,VU
-Didymodon lindigii,Plantae,Pottiaceae,Didymodon,VU
-Tayloria altorum,Plantae,Splachnaceae,Tayloria,CR
-Sphagnum angustifolium,Plantae,Sphagnaceae,Sphagnum,EN
-Sphagnum antioquiense,Plantae,Sphagnaceae,Sphagnum,CR
-Sphagnum boomii,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum boyacanum,Plantae,Sphagnaceae,Sphagnum,CR
-Sphagnum capillaceum,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum cleefii,Plantae,Sphagnaceae,Sphagnum,CR
-Sphagnum curvatulum,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum diblastoides,Plantae,Sphagnaceae,Sphagnum,CR
-Sphagnum falcatulum,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum imperforatum,Plantae,Sphagnaceae,Sphagnum,CR
-Sphagnum laxirameum,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum lewisii,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum ornatum,Plantae,Sphagnaceae,Sphagnum,CR
-Sphagnum platyphyllum,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum pylaesii,Plantae,Sphagnaceae,Sphagnum,EN
-Sphagnum rotundatum,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum santanderense,Plantae,Sphagnaceae,Sphagnum,CR
-Sphagnum sonsonense,Plantae,Sphagnaceae,Sphagnum,EN
-Sphagnum squarrosum,Plantae,Sphagnaceae,Sphagnum,VU
-Sphagnum sumapazense,Plantae,Sphagnaceae,Sphagnum,VU
-Neesioscyphus allionii,Plantae,Balantiopsidaceae,Neesioscyphus,CR
-Ruizanthus venezuelanus,Plantae,Balantiopsidaceae,Ruizanthus,VU
-Nowellia curvifolia,Plantae,Cephaloziaceae,Nowellia,EN
-Cephaloziella divaricata,Plantae,Cephaloziellaceae,Cephaloziella,CR
-Cephaloziopsis intertexta,Plantae,Cephaloziellaceae,Cephaloziopsis,EN
-Bazzania denticulifera,Plantae,Lepidoziaceae,Bazzania,CR
-Micropterygium longicellulatum,Plantae,Lepidoziaceae,Micropterygium,VU
-Chaetocolea palmata,Plantae,Pseudolepicoleaceae,Chaetocolea,VU
-Temnoma chaetophyllum,Plantae,Pseudolepicoleaceae,Temnoma,CR
-Metzgeria lechleri,Plantae,Metzgeriaceae,Metzgeria,EN
-Blepharolejeunea saccata,Plantae,Lejeuneaceae,Blepharolejeunea,CR
-Ceratolejeunea globulifera,Plantae,Lejeuneaceae,Ceratolejeunea,EN
-Cheilolejeunea aurifera,Plantae,Lejeuneaceae,Cheilolejeunea,VU
-Cheilolejeunea tonduzana,Plantae,Lejeuneaceae,Cheilolejeunea,VU
-Cololejeunea minuscula,Plantae,Lejeuneaceae,Cololejeunea,VU
-Cololejeunea papilliloba,Plantae,Lejeuneaceae,Cololejeunea,VU
-Cololejeunea sicifolia,Plantae,Lejeuneaceae,Cololejeunea,VU
-Colura cylindrica,Plantae,Lejeuneaceae,Colura,EN
-Dibrachiella bischleriana,Plantae,Lejeuneaceae,Dibrachiella,EN
-Lejeunea inflexiloba,Plantae,Lejeuneaceae,Lejeunea,CR
-Prionolejeunea magnistipula,Plantae,Lejeuneaceae,Prionolejeunea,EN
-Porella brachiata,Plantae,Porellaceae,Porella,VU
-Riccia weinionis,Plantae,Ricciaceae,Riccia,CR
-Alsophila esmeraldensis,Plantae,Cyatheaceae,Alsophila,VU
-Alsophila imrayana,Plantae,Cyatheaceae,Alsophila,VU
-Alsophila incana,Plantae,Cyatheaceae,Alsophila,VU
-Alsophila paucifolia,Plantae,Cyatheaceae,Alsophila,VU
-Alsophila rupestris,Plantae,Cyatheaceae,Alsophila,CR
-Cyathea acutidens,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea aemula,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea antioquensis,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea arborea,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea boconensis,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea callejasii,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea cardenasii,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea cervantesiana,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea clandestina,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea coloradoana,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea eggersii,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea giraldoi,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea gracilis,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea guentheriana,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea haughtii,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea kalbreyeri,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea kessleriana,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea lindigii,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea longipetiolulata,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea minuta,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea nodulifera,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea oblonga,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea obnoxia,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea pacis,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea pholidota,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea pilozana,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea pinnuloides,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea prosopioides,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea renjifoi,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea retanae,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea rodriguezii,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea singularis,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea straminea,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea tejedoris,Plantae,Cyatheaceae,Cyathea,VU
-Cyathea toroi,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea uleana,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea uregoana,Plantae,Cyatheaceae,Cyathea,EN
-Cyathea varians,Plantae,Cyatheaceae,Cyathea,CR
-Cyathea werffii,Plantae,Cyatheaceae,Cyathea,CR
-Dicksonia lehnertiana,Plantae,Dicksoniaceae,Dicksonia,EN
-Dicksonia stuebelii,Plantae,Dicksoniaceae,Dicksonia,CR
-Zamia amplifolia,Plantae,Zamiaceae,Zamia,EN
-Zamia disodon,Plantae,Zamiaceae,Zamia,EN
-Zamia encephalartoides,Plantae,Zamiaceae,Zamia,EN
-Zamia huilensis,Plantae,Zamiaceae,Zamia,EN
-Zamia incognita,Plantae,Zamiaceae,Zamia,EN
-Zamia melanorrhachis,Plantae,Zamiaceae,Zamia,EN
-Zamia montana,Plantae,Zamiaceae,Zamia,CR
-Zamia oligodonta,Plantae,Zamiaceae,Zamia,CR
-Zamia pyrophylla,Plantae,Zamiaceae,Zamia,CR
-Zamia restrepoi,Plantae,Zamiaceae,Zamia,CR
-Zamia wallisii,Plantae,Zamiaceae,Zamia,CR
-Podocarpus guatemalensis,Plantae,Podocarpaceae,Podocarpus,VU
-Podocarpus oleifolius,Plantae,Podocarpaceae,Podocarpus,VU
-Prumnopitys harmsiana,Plantae,Podocarpaceae,Prumnopitys,VU
-Prumnopitys montana,Plantae,Podocarpaceae,Prumnopitys,VU
-Myrrhidendron pennellii,Plantae,Apiaceae,Myrrhidendron,VU
-Dendropanax glaberrimus,Plantae,Araliaceae,Dendropanax,CR
-Dendropanax lehmannii,Plantae,Araliaceae,Dendropanax,VU
-Dendropanax pachypodus,Plantae,Araliaceae,Dendropanax,EN
-Oreopanax acerifolius,Plantae,Araliaceae,Oreopanax,EN
-Oreopanax brunneus,Plantae,Araliaceae,Oreopanax,VU
-Oreopanax cyclophyllus,Plantae,Araliaceae,Oreopanax,CR
-Oreopanax fontqueranus,Plantae,Araliaceae,Oreopanax,EN
-Oreopanax gargantae,Plantae,Araliaceae,Oreopanax,CR
-Oreopanax hypargyreus,Plantae,Araliaceae,Oreopanax,CR
-Oreopanax killipii,Plantae,Araliaceae,Oreopanax,CR
-Oreopanax lawrancei,Plantae,Araliaceae,Oreopanax,CR
-Oreopanax niger,Plantae,Araliaceae,Oreopanax,CR
-Oreopanax ruizanus,Plantae,Araliaceae,Oreopanax,EN
-Oreopanax sucrensis,Plantae,Araliaceae,Oreopanax,CR
-Oreopanax trianae,Plantae,Araliaceae,Oreopanax,VU
-Oreopanax velutinus,Plantae,Araliaceae,Oreopanax,CR
-Schefflera bifurcata,Plantae,Araliaceae,Schefflera,VU
-Schefflera calyptricuspidata,Plantae,Araliaceae,Schefflera,EN
-Schefflera connata,Plantae,Araliaceae,Schefflera,EN
-Schefflera digyna,Plantae,Araliaceae,Schefflera,EN
-Schefflera heterotricha,Plantae,Araliaceae,Schefflera,VU
-Schefflera paniculitomentosa,Plantae,Araliaceae,Schefflera,VU
-Schefflera samariana,Plantae,Araliaceae,Schefflera,EN
-Schefflera sararensis,Plantae,Araliaceae,Schefflera,CR
-Ilex bullata,Plantae,Aquifoliaceae,Ilex,CR
-Ilex gale,Plantae,Aquifoliaceae,Ilex,EN
-Ilex mucronulata,Plantae,Aquifoliaceae,Ilex,EN
-Ilex pustulosa,Plantae,Aquifoliaceae,Ilex,EN
-Ilex velutinulosa,Plantae,Aquifoliaceae,Ilex,CR
-Citronella silvatica,Plantae,Cardiopteridaceae,Citronella,VU
-Aequatorium latibracteolatum,Plantae,Asteraceae,Aequatorium,EN
-Coespeletia laxiflora,Plantae,Asteraceae,Coespeletia,CR
-Critoniopsis cinerea,Plantae,Asteraceae,Critoniopsis,CR
-Critoniopsis cuatrecasasii,Plantae,Asteraceae,Critoniopsis,CR
-Critoniopsis franciscana,Plantae,Asteraceae,Critoniopsis,CR
-Critoniopsis glandulata,Plantae,Asteraceae,Critoniopsis,VU
-Critoniopsis popayanensis,Plantae,Asteraceae,Critoniopsis,VU
-Critoniopsis uribei,Plantae,Asteraceae,Critoniopsis,CR
-Critoniopsis ursicola,Plantae,Asteraceae,Critoniopsis,EN
-Diplostephium dentatum,Plantae,Asteraceae,Diplostephium,CR
-Diplostephium ellipticum,Plantae,Asteraceae,Diplostephium,CR
-Diplostephium oblongifolium,Plantae,Asteraceae,Diplostephium,EN
-Diplostephium perijaense,Plantae,Asteraceae,Diplostephium,CR
-Diplostephium santamartae,Plantae,Asteraceae,Diplostephium,EN
-Espeletia annemariana,Plantae,Asteraceae,Espeletia,EN
-Espeletia arbelaezii,Plantae,Asteraceae,Espeletia,VU
-Espeletia ariana,Plantae,Asteraceae,Espeletia,VU
-Espeletia azucarina,Plantae,Asteraceae,Espeletia,CR
-Espeletia brachyaxiantha,Plantae,Asteraceae,Espeletia,EN
-Espeletia brassicoidea,Plantae,Asteraceae,Espeletia,VU
-Espeletia cabrerensis,Plantae,Asteraceae,Espeletia,VU
-Espeletia cachaluensis,Plantae,Asteraceae,Espeletia,CR
-Espeletia canescens,Plantae,Asteraceae,Espeletia,EN
-Espeletia cayetana,Plantae,Asteraceae,Espeletia,EN
-Espeletia chocontana,Plantae,Asteraceae,Espeletia,EN
-Espeletia cleefii,Plantae,Asteraceae,Espeletia,EN
-Espeletia conglomerata,Plantae,Asteraceae,Espeletia,VU
-Espeletia discoidea,Plantae,Asteraceae,Espeletia,EN
-Espeletia dugandii,Plantae,Asteraceae,Espeletia,CR
-Espeletia episcopalis,Plantae,Asteraceae,Espeletia,VU
-Espeletia estanislana,Plantae,Asteraceae,Espeletia,EN
-Espeletia formosa,Plantae,Asteraceae,Espeletia,EN
-Espeletia idroboi,Plantae,Asteraceae,Espeletia,EN
-Espeletia incana,Plantae,Asteraceae,Espeletia,VU
-Espeletia jaramilloi,Plantae,Asteraceae,Espeletia,VU
-Espeletia mirabilis,Plantae,Asteraceae,Espeletia,CR
-Espeletia miradorensis,Plantae,Asteraceae,Espeletia,CR
-Espeletia nemekenei,Plantae,Asteraceae,Espeletia,EN
-Espeletia oswaldiana,Plantae,Asteraceae,Espeletia,CR
-Espeletia paipana,Plantae,Asteraceae,Espeletia,CR
-Espeletia perijaensis,Plantae,Asteraceae,Espeletia,EN
-Espeletia pescana,Plantae,Asteraceae,Espeletia,VU
-Espeletia pulcherrima,Plantae,Asteraceae,Espeletia,EN
-Espeletia raquirensis,Plantae,Asteraceae,Espeletia,CR
-Espeletia roberti,Plantae,Asteraceae,Espeletia,EN
-Espeletia rositae,Plantae,Asteraceae,Espeletia,EN
-Espeletia schultesiana,Plantae,Asteraceae,Espeletia,VU
-Espeletia soroca,Plantae,Asteraceae,Espeletia,CR
-Espeletia standleyana,Plantae,Asteraceae,Espeletia,VU
-Espeletia steyermarkii,Plantae,Asteraceae,Espeletia,CR
-Espeletia summapacis,Plantae,Asteraceae,Espeletia,EN
-Espeletia tibamoensis,Plantae,Asteraceae,Espeletia,CR
-Espeletia tunjana,Plantae,Asteraceae,Espeletia,EN
-Espeletiopsis betancurii,Plantae,Asteraceae,Espeletiopsis,CR
-Espeletiopsis caldasii,Plantae,Asteraceae,Espeletiopsis,CR
-Espeletiopsis diazii,Plantae,Asteraceae,Espeletiopsis,CR
-Espeletiopsis funckii,Plantae,Asteraceae,Espeletiopsis,EN
-Espeletiopsis garciae,Plantae,Asteraceae,Espeletiopsis,VU
-Espeletiopsis insignis,Plantae,Asteraceae,Espeletiopsis,EN
-Espeletiopsis jimenez-quesadae,Plantae,Asteraceae,Espeletiopsis,VU
-Espeletiopsis purpurascens,Plantae,Asteraceae,Espeletiopsis,EN
-Espeletiopsis rabanalensis,Plantae,Asteraceae,Espeletiopsis,EN
-Espeletiopsis sanchezii,Plantae,Asteraceae,Espeletiopsis,EN
-Espeletiopsis sclerophylla,Plantae,Asteraceae,Espeletiopsis,EN
-Gynoxys columbiana,Plantae,Asteraceae,Gynoxys,EN
-Gynoxys florulenta,Plantae,Asteraceae,Gynoxys,VU
-Gynoxys hirsuta,Plantae,Asteraceae,Gynoxys,VU
-Gynoxys hirsutissima,Plantae,Asteraceae,Gynoxys,CR
-Gynoxys laurata,Plantae,Asteraceae,Gynoxys,EN
-Jalcophila colombiana,Plantae,Asteraceae,Jalcophila,EN
-Jaramilloa hylibates,Plantae,Asteraceae,Jaramilloa,EN
-Libanothamnus divisoriensis,Plantae,Asteraceae,Libanothamnus,EN
-Libanothamnus tamanus,Plantae,Asteraceae,Libanothamnus,VU
-Linochilus antioquensis,Plantae,Asteraceae,Linochilus,VU
-Linochilus apiculatus,Plantae,Asteraceae,Linochilus,EN
-Linochilus camargoanus,Plantae,Asteraceae,Linochilus,EN
-Linochilus chrysotrichus,Plantae,Asteraceae,Linochilus,CR
-Linochilus colombianus,Plantae,Asteraceae,Linochilus,VU
-Linochilus coriaceus,Plantae,Asteraceae,Linochilus,EN
-Linochilus frontinensis,Plantae,Asteraceae,Linochilus,EN
-Linochilus heterophyllus,Plantae,Asteraceae,Linochilus,VU
-Linochilus jaramilloi,Plantae,Asteraceae,Linochilus,EN
-Linochilus juajibioyi,Plantae,Asteraceae,Linochilus,VU
-Linochilus violaceus,Plantae,Asteraceae,Linochilus,EN
-Llerasia caucana,Plantae,Asteraceae,Llerasia,VU
-Lycoseris colombiana,Plantae,Asteraceae,Lycoseris,VU
-Mikania tristachya,Plantae,Asteraceae,Mikania,CR
-Paragynoxys uribei,Plantae,Asteraceae,Paragynoxys,VU
-Paramiflos glandulosus,Plantae,Asteraceae,Paramiflos,VU
-Pectis monocephala,Plantae,Asteraceae,Pectis,VU
-Pentacalia albi-panquei,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia almorzana,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia cacaosensis,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia diamantensis,Plantae,Asteraceae,Pentacalia,CR
-Pentacalia elatoides,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia fimbriifera,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia harrietae,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia novolanata,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia perijaensis,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia ricoensis,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia robertii,Plantae,Asteraceae,Pentacalia,VU
-Pentacalia summapacis,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia taironae,Plantae,Asteraceae,Pentacalia,EN
-Pentacalia vallecaucana,Plantae,Asteraceae,Pentacalia,VU
-Pentacalia viridi-alba,Plantae,Asteraceae,Pentacalia,VU
-Pentacalia yanetharum,Plantae,Asteraceae,Pentacalia,EN
-Perymenium colombianum,Plantae,Asteraceae,Perymenium,EN
-Piptocarpha boyacensis,Plantae,Asteraceae,Piptocarpha,EN
-Ruilopezia cardonae,Plantae,Asteraceae,Ruilopezia,VU
-Steiractinia rusbyana,Plantae,Asteraceae,Steiractinia,EN
-Tamania chardonii,Plantae,Asteraceae,Tamania,EN
-Cordia fuertesii,Plantae,Cordiaceae,Cordia,EN
-Cordia killipiana,Plantae,Cordiaceae,Cordia,EN
-Cordia ramirezii,Plantae,Cordiaceae,Cordia,CR
-Varronia acuta,Plantae,Cordiaceae,Varronia,EN
-Tournefortia brantii,Plantae,Heliotropiaceae,Tournefortia,EN
-Tournefortia killipii,Plantae,Heliotropiaceae,Tournefortia,EN
-Viburnum antioquiense,Plantae,Viburnaceae,Viburnum,EN
-Viburnum axillare,Plantae,Viburnaceae,Viburnum,EN
-Viburnum lehmannii,Plantae,Viburnaceae,Viburnum,VU
-Viburnum subsessile,Plantae,Viburnaceae,Viburnum,EN
-Viburnum suratense,Plantae,Viburnaceae,Viburnum,EN
-Saurauia chocoensis,Plantae,Actinidiaceae,Saurauia,VU
-Saurauia micayensis,Plantae,Actinidiaceae,Saurauia,VU
-Saurauia oroquensis,Plantae,Actinidiaceae,Saurauia,CR
-Saurauia pulchra,Plantae,Actinidiaceae,Saurauia,VU
-Bejaria nana,Plantae,Ericaceae,Bejaria,EN
-Cavendishia dendrophila,Plantae,Ericaceae,Cavendishia,CR
-Cavendishia jardinensis,Plantae,Ericaceae,Cavendishia,CR
-Cavendishia longirachis,Plantae,Ericaceae,Cavendishia,EN
-Cavendishia macrocephala,Plantae,Ericaceae,Cavendishia,VU
-Cavendishia nuda,Plantae,Ericaceae,Cavendishia,CR
-Cavendishia sessiliflora,Plantae,Ericaceae,Cavendishia,EN
-Cavendishia sophoclesioides,Plantae,Ericaceae,Cavendishia,CR
-Macleania crassa,Plantae,Ericaceae,Macleania,VU
-Macleania pubiflora,Plantae,Ericaceae,Macleania,VU
-Orthaea caudata,Plantae,Ericaceae,Orthaea,CR
-Orthaea cavendishioides,Plantae,Ericaceae,Orthaea,EN
-Pernettya hirta,Plantae,Ericaceae,Pernettya,EN
-Plutarchia coronaria,Plantae,Ericaceae,Plutarchia,VU
-Plutarchia dasyphylla,Plantae,Ericaceae,Plutarchia,EN
-Plutarchia dichogama,Plantae,Ericaceae,Plutarchia,EN
-Plutarchia guascensis,Plantae,Ericaceae,Plutarchia,VU
-Plutarchia minor,Plantae,Ericaceae,Plutarchia,EN
-Plutarchia miranda,Plantae,Ericaceae,Plutarchia,EN
-Plutarchia monantha,Plantae,Ericaceae,Plutarchia,EN
-Plutarchia pubiflora,Plantae,Ericaceae,Plutarchia,EN
-Plutarchia rigida,Plantae,Ericaceae,Plutarchia,VU
-Semiramisia pulcherrima,Plantae,Ericaceae,Semiramisia,EN
-Themistoclesia mucronata,Plantae,Ericaceae,Themistoclesia,VU
-Themistoclesia recurva,Plantae,Ericaceae,Themistoclesia,VU
-Themistoclesia rostrata,Plantae,Ericaceae,Themistoclesia,VU
-Thibaudia fallax,Plantae,Ericaceae,Thibaudia,CR
-Bertholletia excelsa,Plantae,Lecythidaceae,Bertholletia,VU
-Cariniana pyriformis,Plantae,Lecythidaceae,Cariniana,CR
-Couroupita nicaraguarensis,Plantae,Lecythidaceae,Couroupita,VU
-Eschweilera bogotensis,Plantae,Lecythidaceae,Eschweilera,VU
-Eschweilera cabrerana,Plantae,Lecythidaceae,Eschweilera,EN
-Eschweilera integricalyx,Plantae,Lecythidaceae,Eschweilera,VU
-Eschweilera neei,Plantae,Lecythidaceae,Eschweilera,VU
-Eschweilera pachyderma,Plantae,Lecythidaceae,Eschweilera,VU
-Eschweilera rimbachii,Plantae,Lecythidaceae,Eschweilera,VU
-Grias colombiana,Plantae,Lecythidaceae,Grias,EN
-Grias multinervia,Plantae,Lecythidaceae,Grias,EN
-Gustavia angustifolia,Plantae,Lecythidaceae,Gustavia,EN
-Gustavia dubia,Plantae,Lecythidaceae,Gustavia,VU
-Gustavia excelsa,Plantae,Lecythidaceae,Gustavia,VU
-Gustavia foliosa,Plantae,Lecythidaceae,Gustavia,EN
-Gustavia gentryi,Plantae,Lecythidaceae,Gustavia,VU
-Gustavia gracillima,Plantae,Lecythidaceae,Gustavia,VU
-Gustavia grandibracteata,Plantae,Lecythidaceae,Gustavia,VU
-Gustavia latifolia,Plantae,Lecythidaceae,Gustavia,EN
-Gustavia longifuniculata,Plantae,Lecythidaceae,Gustavia,VU
-Gustavia petiolata,Plantae,Lecythidaceae,Gustavia,VU
-Gustavia romeroi,Plantae,Lecythidaceae,Gustavia,VU
-Lecythis mesophylla,Plantae,Lecythidaceae,Lecythis,VU
-Lecythis tuyrana,Plantae,Lecythidaceae,Lecythis,VU
-Freziera sericea,Plantae,Pentaphylacaceae,Freziera,EN
-Ardisia killipii,Plantae,Primulaceae,Ardisia,CR
-Clavija cauliflora,Plantae,Primulaceae,Clavija,EN
-Clavija grandis,Plantae,Primulaceae,Clavija,EN
-Clavija killipii,Plantae,Primulaceae,Clavija,EN
-Clavija plumbea,Plantae,Primulaceae,Clavija,CR
-Clavija sanctae-martae,Plantae,Primulaceae,Clavija,VU
-Cybianthus cogolloi,Plantae,Primulaceae,Cybianthus,EN
-Geissanthus callejasii,Plantae,Primulaceae,Geissanthus,EN
-Geissanthus cestrifolius,Plantae,Primulaceae,Geissanthus,VU
-Geissanthus francoae,Plantae,Primulaceae,Geissanthus,VU
-Geissanthus goudotianus,Plantae,Primulaceae,Geissanthus,EN
-Geissanthus kalbreyeri,Plantae,Primulaceae,Geissanthus,VU
-Geissanthus sessiliflorus,Plantae,Primulaceae,Geissanthus,CR
-Hymenandra callejasii,Plantae,Primulaceae,Hymenandra,EN
-Myrsine paramensis,Plantae,Primulaceae,Myrsine,EN
-Myrsine perreticulata,Plantae,Primulaceae,Myrsine,CR
-Chrysophyllum euryphyllum,Plantae,Sapotaceae,Chrysophyllum,EN
-Styrax lasiocalyx,Plantae,Styracaceae,Styrax,CR
-Styrax schultzei,Plantae,Styracaceae,Styrax,CR
-Symplocos lehmannii,Plantae,Symplocaceae,Symplocos,EN
-Symplocos phaeoneura,Plantae,Symplocaceae,Symplocos,VU
-Symplocos pichindensis,Plantae,Symplocaceae,Symplocos,CR
-Symplocos quindiuensis,Plantae,Symplocaceae,Symplocos,VU
-Symplocos rhomboidea,Plantae,Symplocaceae,Symplocos,EN
-Symplocos trianae,Plantae,Symplocaceae,Symplocos,EN
-Symplocos venulosa,Plantae,Symplocaceae,Symplocos,VU
-Aspidosperma polyneuron,Plantae,Apocynaceae,Aspidosperma,EN
-Lacmellea abbreviata,Plantae,Apocynaceae,Lacmellea,VU
-Malouetia cuatrecasatis,Plantae,Apocynaceae,Malouetia,EN
-Mandevilla aridana,Plantae,Apocynaceae,Mandevilla,CR
-Metastelma atrovirens,Plantae,Apocynaceae,Metastelma,CR
-Arachnothryx educta,Plantae,Rubiaceae,Arachnothryx,EN
-Arachnothryx euryphylla,Plantae,Rubiaceae,Arachnothryx,VU
-Arachnothryx guettardioides,Plantae,Rubiaceae,Arachnothryx,CR
-Chomelia longiflora,Plantae,Rubiaceae,Chomelia,CR
-Coussarea antioquiana,Plantae,Rubiaceae,Coussarea,VU
-Coussarea insolita,Plantae,Rubiaceae,Coussarea,EN
-Elaeagia barbata,Plantae,Rubiaceae,Elaeagia,CR
-Guettarda ocoteifolia,Plantae,Rubiaceae,Guettarda,EN
-Joosia antioquiana,Plantae,Rubiaceae,Joosia,EN
-Macrocnemum stylocarpum,Plantae,Rubiaceae,Macrocnemum,CR
-Palicourea antioquiana,Plantae,Rubiaceae,Palicourea,VU
-Palicourea denslowiae,Plantae,Rubiaceae,Palicourea,EN
-Palicourea killipii,Plantae,Rubiaceae,Palicourea,VU
-Psychotria altiplanensis,Plantae,Rubiaceae,Psychotria,EN
-Psychotria gallerana,Plantae,Rubiaceae,Psychotria,VU
-Psychotria ovatistipula,Plantae,Rubiaceae,Psychotria,EN
-Rudgea vallis,Plantae,Rubiaceae,Rudgea,VU
-Simira cesariana,Plantae,Rubiaceae,Simira,EN
-Simira hirsuta,Plantae,Rubiaceae,Simira,EN
-Aphelandra porphyrocarpa,Plantae,Acanthaceae,Aphelandra,VU
-Aphelandra taborensis,Plantae,Acanthaceae,Aphelandra,CR
-Ruellia potamophila,Plantae,Acanthaceae,Ruellia,VU
-Handroanthus coralibe,Plantae,Bignoniaceae,Handroanthus,VU
-Romeroa verticillata,Plantae,Bignoniaceae,Romeroa,EN
-Adenocalymma magdalenense,Plantae,Bignoniaceae,Adenocalymma,VU
-Besleria decipiens,Plantae,Gesneriaceae,Besleria,EN
-Aegiphila pennellii,Plantae,Lamiaceae,Aegiphila,VU
-Aegiphila sylvatica,Plantae,Lamiaceae,Aegiphila,CR
-Hyptidendron arboreum,Plantae,Lamiaceae,Hyptidendron,VU
-Hyptis purdiei,Plantae,Lamiaceae,Hyptis,EN
-Lepechinia betonicifolia,Plantae,Lamiaceae,Lepechinia,VU
-Lepechinia cocuyensis,Plantae,Lamiaceae,Lepechinia,VU
-Lepechinia velutina,Plantae,Lamiaceae,Lepechinia,EN
-Lepechinia vulcanicola,Plantae,Lamiaceae,Lepechinia,VU
-Mesosphaerum diffusum,Plantae,Lamiaceae,Mesosphaerum,EN
-Mesosphaerum melissoides,Plantae,Lamiaceae,Mesosphaerum,VU
-Mesosphaerum obtusatum,Plantae,Lamiaceae,Mesosphaerum,EN
-Mesosphaerum perbullatum,Plantae,Lamiaceae,Mesosphaerum,VU
-Salvia alvajaca,Plantae,Lamiaceae,Salvia,EN
-Salvia ampelophylla,Plantae,Lamiaceae,Salvia,VU
-Salvia carbonoi,Plantae,Lamiaceae,Salvia,VU
-Salvia chicamochae,Plantae,Lamiaceae,Salvia,EN
-Salvia cocuyana,Plantae,Lamiaceae,Salvia,EN
-Salvia codazziana,Plantae,Lamiaceae,Salvia,EN
-Salvia corrugata,Plantae,Lamiaceae,Salvia,VU
-Salvia cyanotropha,Plantae,Lamiaceae,Salvia,EN
-Salvia falcata,Plantae,Lamiaceae,Salvia,VU
-Salvia funckii,Plantae,Lamiaceae,Salvia,EN
-Salvia hermesiana,Plantae,Lamiaceae,Salvia,VU
-Salvia jaramilloi,Plantae,Lamiaceae,Salvia,VU
-Salvia libanensis,Plantae,Lamiaceae,Salvia,EN
-Salvia macrostachya,Plantae,Lamiaceae,Salvia,CR
-Salvia manaurica,Plantae,Lamiaceae,Salvia,VU
-Salvia nubigena,Plantae,Lamiaceae,Salvia,EN
-Salvia pamplonitana,Plantae,Lamiaceae,Salvia,CR
-Salvia paramicola,Plantae,Lamiaceae,Salvia,EN
-Salvia rubriflora,Plantae,Lamiaceae,Salvia,VU
-Salvia sagittata,Plantae,Lamiaceae,Salvia,VU
-Salvia sciaphila,Plantae,Lamiaceae,Salvia,EN
-Salvia sochensis,Plantae,Lamiaceae,Salvia,EN
-Salvia sordida,Plantae,Lamiaceae,Salvia,CR
-Salvia tolimensis,Plantae,Lamiaceae,Salvia,VU
-Salvia uribei,Plantae,Lamiaceae,Salvia,EN
-Salvia venulosa,Plantae,Lamiaceae,Salvia,VU
-Salvia xeropapillosa,Plantae,Lamiaceae,Salvia,VU
-Satureja anachoreta,Plantae,Lamiaceae,Satureja,VU
-Scutellaria cuatrecasana,Plantae,Lamiaceae,Scutellaria,VU
-Scutellaria hookeri,Plantae,Lamiaceae,Scutellaria,EN
-Scutellaria parrae,Plantae,Lamiaceae,Scutellaria,CR
-Scutellaria pseudocoleus,Plantae,Lamiaceae,Scutellaria,VU
-Scutellaria roseocyanea,Plantae,Lamiaceae,Scutellaria,EN
-Stachys radicans,Plantae,Lamiaceae,Stachys,VU
-Vitex columbiensis,Plantae,Lamiaceae,Vitex,VU
-Chionanthus abriaquiensis,Plantae,Oleaceae,Chionanthus,CR
-Aragoa abscondita,Plantae,Plantaginaceae,Aragoa,VU
-Aragoa corrugatifolia,Plantae,Plantaginaceae,Aragoa,VU
-Aragoa cupressina,Plantae,Plantaginaceae,Aragoa,EN
-Aragoa dugandii,Plantae,Plantaginaceae,Aragoa,EN
-Aragoa hammenii,Plantae,Plantaginaceae,Aragoa,CR
-Aragoa parviflora,Plantae,Plantaginaceae,Aragoa,CR
-Aragoa perez-arbelaeziana,Plantae,Plantaginaceae,Aragoa,EN
-Aragoa picachensis,Plantae,Plantaginaceae,Aragoa,CR
-Citharexylum vallense,Plantae,Verbenaceae,Citharexylum,EN
-Metteniusa cundinamarcensis,Plantae,Metteniusaceae,Metteniusa,CR
-Metteniusa huilensis,Plantae,Metteniusaceae,Metteniusa,VU
-Metteniusa santanderensis,Plantae,Metteniusaceae,Metteniusa,CR
-Cestrum killipii,Plantae,Solanaceae,Cestrum,CR
-Solanum humboldtianum,Plantae,Solanaceae,Solanum,EN
-Browningia hernandezii,Plantae,Cactaceae,Browningia,EN
-Cephalotomandra fragrans,Plantae,Nyctaginaceae,Cephalotomandra,EN
-Guapira uberrima,Plantae,Nyctaginaceae,Guapira,EN
-Triplaris purdiei,Plantae,Polygonaceae,Triplaris,VU
-Tripodanthus belmirensis,Plantae,Loranthaceae,Tripodanthus,EN
-Phoradendron longissimum,Plantae,Santalaceae,Phoradendron,CR
-Phoradendron lorifolium,Plantae,Santalaceae,Phoradendron,EN
-Acoelorraphe wrightii,Plantae,Arecaceae,Acoelorraphe,VU
-Aiphanes acaulis,Plantae,Arecaceae,Aiphanes,EN
-Aiphanes buenaventurae,Plantae,Arecaceae,Aiphanes,EN
-Aiphanes duquei,Plantae,Arecaceae,Aiphanes,EN
-Aiphanes gelatinosa,Plantae,Arecaceae,Aiphanes,EN
-Aiphanes graminifolia,Plantae,Arecaceae,Aiphanes,CR
-Aiphanes killipii,Plantae,Arecaceae,Aiphanes,CR
-Aiphanes leiostachys,Plantae,Arecaceae,Aiphanes,CR
-Aiphanes lindeniana,Plantae,Arecaceae,Aiphanes,EN
-Aiphanes parvifolia,Plantae,Arecaceae,Aiphanes,EN
-Aiphanes pilaris,Plantae,Arecaceae,Aiphanes,CR
-Astrocaryum malybo,Plantae,Arecaceae,Astrocaryum,EN
-Astrocaryum triandrum,Plantae,Arecaceae,Astrocaryum,EN
-Attalea amygdalina,Plantae,Arecaceae,Attalea,EN
-Attalea cohune,Plantae,Arecaceae,Attalea,EN
-Attalea colenda,Plantae,Arecaceae,Attalea,EN
-Attalea iguadummat,Plantae,Arecaceae,Attalea,VU
-Attalea nucifera,Plantae,Arecaceae,Attalea,VU
-Bactris charnleyae,Plantae,Arecaceae,Bactris,VU
-Bactris rostrata,Plantae,Arecaceae,Bactris,VU
-Calyptrogyne costatifrons,Plantae,Arecaceae,Calyptrogyne,VU
-Ceroxylon alpinum,Plantae,Arecaceae,Ceroxylon,EN
-Ceroxylon ceriferum,Plantae,Arecaceae,Ceroxylon,EN
-Ceroxylon parvifrons,Plantae,Arecaceae,Ceroxylon,VU
-Ceroxylon quindiuense,Plantae,Arecaceae,Ceroxylon,EN
-Ceroxylon sasaimae,Plantae,Arecaceae,Ceroxylon,EN
-Ceroxylon ventricosum,Plantae,Arecaceae,Ceroxylon,EN
-Ceroxylon vogelianum,Plantae,Arecaceae,Ceroxylon,VU
-Chamaedorea pumila,Plantae,Arecaceae,Chamaedorea,VU
-Chamaedorea pygmaea,Plantae,Arecaceae,Chamaedorea,VU
-Chamaedorea ricardoi,Plantae,Arecaceae,Chamaedorea,EN
-Chamaedorea subjectifolia,Plantae,Arecaceae,Chamaedorea,VU
-Coccothrinax argentata,Plantae,Arecaceae,Coccothrinax,EN
-Cryosophila kalbreyeri,Plantae,Arecaceae,Cryosophila,VU
-Elaeis oleifera,Plantae,Arecaceae,Elaeis,EN
-Geonoma bernalii,Plantae,Arecaceae,Geonoma,EN
-Geonoma chlamydostachys,Plantae,Arecaceae,Geonoma,VU
-Geonoma galeanoae,Plantae,Arecaceae,Geonoma,VU
-Geonoma santanderensis,Plantae,Arecaceae,Geonoma,VU
-Hyospathe frontinensis,Plantae,Arecaceae,Hyospathe,VU
-Hyospathe wendlandiana,Plantae,Arecaceae,Hyospathe,EN
-Oenocarpus circumtextus,Plantae,Arecaceae,Oenocarpus,VU
-Pholidostachys panamensis,Plantae,Arecaceae,Pholidostachys,VU
-Pholidostachys sanluisensis,Plantae,Arecaceae,Pholidostachys,VU
-Phytelephas tumacana,Plantae,Arecaceae,Phytelephas,EN
-Reinhardtia gracilis,Plantae,Arecaceae,Reinhardtia,CR
-Reinhardtia koschnyana,Plantae,Arecaceae,Reinhardtia,CR
-Reinhardtia simplex,Plantae,Arecaceae,Reinhardtia,CR
-Roystonea oleracea,Plantae,Arecaceae,Roystonea,CR
-Sabinaria magnifica,Plantae,Arecaceae,Sabinaria,VU
-Syagrus sancona,Plantae,Arecaceae,Syagrus,VU
-Wettinia hirsuta,Plantae,Arecaceae,Wettinia,VU
-Wettinia microcarpa,Plantae,Arecaceae,Wettinia,VU
-Eucharis caucana,Plantae,Amaryllidaceae,Eucharis,EN
-Acineta antioquiae,Plantae,Orchidaceae,Acineta,CR
-Acineta moorei,Plantae,Orchidaceae,Acineta,EN
-Andinia monilia,Plantae,Orchidaceae,Andinia,EN
-Anguloa cliftonii,Plantae,Orchidaceae,Anguloa,CR
-Anguloa clowesii,Plantae,Orchidaceae,Anguloa,EN
-Anguloa dubia,Plantae,Orchidaceae,Anguloa,CR
-Anguloa eburnea,Plantae,Orchidaceae,Anguloa,VU
-Anguloa hohenlohii,Plantae,Orchidaceae,Anguloa,EN
-Anguloa virginalis,Plantae,Orchidaceae,Anguloa,VU
-Byrsella fragrans,Plantae,Orchidaceae,Byrsella,EN
-Cattleya dowiana,Plantae,Orchidaceae,Cattleya,VU
-Cattleya quadricolor,Plantae,Orchidaceae,Cattleya,EN
-Cattleya schroederae,Plantae,Orchidaceae,Cattleya,EN
-Cattleya trianae,Plantae,Orchidaceae,Cattleya,EN
-Cattleya warscewiczii,Plantae,Orchidaceae,Cattleya,EN
-Comparettia ignea,Plantae,Orchidaceae,Comparettia,CR
-Coryanthes toulemondiana,Plantae,Orchidaceae,Coryanthes,CR
-Coryanthes vieirae,Plantae,Orchidaceae,Coryanthes,CR
-Coryanthes villegasiana,Plantae,Orchidaceae,Coryanthes,CR
-Cycnoches barthiorum,Plantae,Orchidaceae,Cycnoches,VU
-Cycnoches brachydactylon,Plantae,Orchidaceae,Cycnoches,EN
-Cycnoches herrenhusanum,Plantae,Orchidaceae,Cycnoches,VU
-Cyrtochilum betancurii,Plantae,Orchidaceae,Cyrtochilum,CR
-Cyrtochilum corniculatum,Plantae,Orchidaceae,Cyrtochilum,CR
-Cyrtochilum englerianum,Plantae,Orchidaceae,Cyrtochilum,VU
-Cyrtochilum exasperatum,Plantae,Orchidaceae,Cyrtochilum,VU
-Cyrtochilum ioplocon,Plantae,Orchidaceae,Cyrtochilum,EN
-Cyrtochilum ixioides,Plantae,Orchidaceae,Cyrtochilum,VU
-Cyrtochilum leucopterum,Plantae,Orchidaceae,Cyrtochilum,EN
-Cyrtochilum misasianum,Plantae,Orchidaceae,Cyrtochilum,EN
-Dracula alcithoe,Plantae,Orchidaceae,Dracula,EN
-Dracula amaliae,Plantae,Orchidaceae,Dracula,VU
-Dracula andreettae,Plantae,Orchidaceae,Dracula,VU
-Dracula aphrodes,Plantae,Orchidaceae,Dracula,VU
-Dracula bella,Plantae,Orchidaceae,Dracula,VU
-Dracula bellerophon,Plantae,Orchidaceae,Dracula,EN
-Dracula benedictii,Plantae,Orchidaceae,Dracula,VU
-Dracula berthae,Plantae,Orchidaceae,Dracula,VU
-Dracula carcinopsis,Plantae,Orchidaceae,Dracula,EN
-Dracula chiroptera,Plantae,Orchidaceae,Dracula,VU
-Dracula citrina,Plantae,Orchidaceae,Dracula,VU
-Dracula cochliops,Plantae,Orchidaceae,Dracula,EN
-Dracula cutis-bufonis,Plantae,Orchidaceae,Dracula,VU
-Dracula decussata,Plantae,Orchidaceae,Dracula,VU
-Dracula diabola,Plantae,Orchidaceae,Dracula,VU
-Dracula diana,Plantae,Orchidaceae,Dracula,VU
-Dracula exasperata,Plantae,Orchidaceae,Dracula,VU
-Dracula gigas,Plantae,Orchidaceae,Dracula,VU
-Dracula gorgona,Plantae,Orchidaceae,Dracula,VU
-Dracula gorgonella,Plantae,Orchidaceae,Dracula,VU
-Dracula insolita,Plantae,Orchidaceae,Dracula,VU
-Dracula lehmanniana,Plantae,Orchidaceae,Dracula,VU
-Dracula lemurella,Plantae,Orchidaceae,Dracula,CR
-Dracula levii,Plantae,Orchidaceae,Dracula,EN
-Dracula ligiae,Plantae,Orchidaceae,Dracula,VU
-Dracula minax,Plantae,Orchidaceae,Dracula,VU
-Dracula nosferatu,Plantae,Orchidaceae,Dracula,EN
-Dracula nycterina,Plantae,Orchidaceae,Dracula,EN
-Dracula octavioi,Plantae,Orchidaceae,Dracula,EN
-Dracula ophioceps,Plantae,Orchidaceae,Dracula,EN
-Dracula orientalis,Plantae,Orchidaceae,Dracula,VU
-Dracula ortiziana,Plantae,Orchidaceae,Dracula,VU
-Dracula pholeodytes,Plantae,Orchidaceae,Dracula,VU
-Dracula posadarum,Plantae,Orchidaceae,Dracula,VU
-Dracula psittacina,Plantae,Orchidaceae,Dracula,VU
-Dracula robledorum,Plantae,Orchidaceae,Dracula,EN
-Dracula roezlii,Plantae,Orchidaceae,Dracula,VU
-Dracula sergioi,Plantae,Orchidaceae,Dracula,VU
-Dracula severa,Plantae,Orchidaceae,Dracula,EN
-Dracula sibundoyensis,Plantae,Orchidaceae,Dracula,EN
-Dracula syndactyla,Plantae,Orchidaceae,Dracula,VU
-Dracula velutina,Plantae,Orchidaceae,Dracula,VU
-Dracula verticulosa,Plantae,Orchidaceae,Dracula,VU
-Dracula villegasii,Plantae,Orchidaceae,Dracula,VU
-Dracula vinacea,Plantae,Orchidaceae,Dracula,VU
-Dracula vlad-tepes,Plantae,Orchidaceae,Dracula,VU
-Elleanthus cinnabarinus,Plantae,Orchidaceae,Elleanthus,CR
-Embreea rodigasiana,Plantae,Orchidaceae,Embreea,CR
-Epidendrum amayense,Plantae,Orchidaceae,Epidendrum,EN
-Epidendrum ampelomelanoxeros,Plantae,Orchidaceae,Epidendrum,EN
-Epidendrum cleefii,Plantae,Orchidaceae,Epidendrum,VU
-Epidendrum decurviflorum,Plantae,Orchidaceae,Epidendrum,EN
-Epidendrum fusagasugaense,Plantae,Orchidaceae,Epidendrum,EN
-Epidendrum heliconaense,Plantae,Orchidaceae,Epidendrum,EN
-Epidendrum magnibracteum,Plantae,Orchidaceae,Epidendrum,EN
-Epidendrum ortizii,Plantae,Orchidaceae,Epidendrum,EN
-Epidendrum pazii,Plantae,Orchidaceae,Epidendrum,EN
-Epidendrum sisgaense,Plantae,Orchidaceae,Epidendrum,VU
-Epidendrum uribei,Plantae,Orchidaceae,Epidendrum,CR
-Epidendrum wolfii,Plantae,Orchidaceae,Epidendrum,CR
-Guarianthe patinii,Plantae,Orchidaceae,Guarianthe,VU
-Houlletia conspersa,Plantae,Orchidaceae,Houlletia,CR
-Lepanthes arbuscula,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes cingens,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes cuatrecasasii,Plantae,Orchidaceae,Lepanthes,CR
-Lepanthes eros,Plantae,Orchidaceae,Lepanthes,VU
-Lepanthes escobariana,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes fibulifera,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes ligiae,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes oreibates,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes osiris,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes parmata,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes pterygion,Plantae,Orchidaceae,Lepanthes,EN
-Lepanthes quandi,Plantae,Orchidaceae,Lepanthes,VU
-Lepanthes tibouchinicola,Plantae,Orchidaceae,Lepanthes,EN
-Lycaste campbellii,Plantae,Orchidaceae,Lycaste,VU
-Lycaste macrobulbon,Plantae,Orchidaceae,Lycaste,VU
-Lycaste schilleriana,Plantae,Orchidaceae,Lycaste,VU
-Lycaste xytriophora,Plantae,Orchidaceae,Lycaste,VU
-Lycomormium schmidtii,Plantae,Orchidaceae,Lycomormium,CR
-Masdevallia alismifolia,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia angulifera,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia anisomorpha,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia apparitio,Plantae,Orchidaceae,Masdevallia,CR
-Masdevallia arangoi,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia buccinator,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia cacodes,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia caesia,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia caudata,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia cerastes,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia clandestina,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia coccinea,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia crescenticola,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia discolor,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia dryada,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia elephanticeps,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia encephala,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia falcago,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia fasciata,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia foetens,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia gilbertoi,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia heteroptera,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia hians,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia hieroglyphica,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia hortensis,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia hylodes,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia ignea,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia indecora,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia leontoglossa,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia ludibunda,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia macrura,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia mandarina,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia marthae,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia mastodon,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia medusa,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia mejiana,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia melanoxantha,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia meleagris,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia misasii,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia mooreana,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia mutica,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia navicularis,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia niesseniae,Plantae,Orchidaceae,Masdevallia,CR
-Masdevallia nivea,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia odontocera,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia os-draconis,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia oscarii,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia pachyantha,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia pachysepala,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia pardina,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia pastinata,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia pescadoensis,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia pteroglossa,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia pterygiophora,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia purpurella,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia racemosa,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia renzii,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia rhinophora,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia saltatrix,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia sanctae-rosae,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia schizantha,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia schlimii,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia schmidt-mummii,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia scobina,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia segurae,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia sernae,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia siphonantha,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia stenorhynchos,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia sumapazensis,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia trochilus,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia urceolaris,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia valenciae,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia velella,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia velifera,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia ventricularia,Plantae,Orchidaceae,Masdevallia,EN
-Masdevallia vieirana,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia virgo-cuencae,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia wuellneri,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia xanthina,Plantae,Orchidaceae,Masdevallia,VU
-Masdevallia zapatae,Plantae,Orchidaceae,Masdevallia,EN
-Miltoniopsis phalaenopsis,Plantae,Orchidaceae,Miltoniopsis,VU
-Miltoniopsis vexillaria,Plantae,Orchidaceae,Miltoniopsis,VU
-Odontoglossum aspidorhinum,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum blandum,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum crinitum,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum crocidipterum,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum gloriosum,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum harryanum,Plantae,Orchidaceae,Odontoglossum,EN
-Odontoglossum mirandum,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum naevium,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum nevadense,Plantae,Orchidaceae,Odontoglossum,EN
-Odontoglossum povedanum,Plantae,Orchidaceae,Odontoglossum,CR
-Odontoglossum praenitens,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum revolutum,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum rhynchanthum,Plantae,Orchidaceae,Odontoglossum,EN
-Odontoglossum subuligerum,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum tripudians,Plantae,Orchidaceae,Odontoglossum,VU
-Odontoglossum wallisii,Plantae,Orchidaceae,Odontoglossum,VU
-Oncidium alberti,Plantae,Orchidaceae,Oncidium,VU
-Oncidium alvarezii,Plantae,Orchidaceae,Oncidium,CR
-Oncidium auriculatum,Plantae,Orchidaceae,Oncidium,VU
-Oncidium cuculligerum,Plantae,Orchidaceae,Oncidium,EN
-Oncidium decorum,Plantae,Orchidaceae,Oncidium,EN
-Oncidium nevadense,Plantae,Orchidaceae,Oncidium,CR
-Oncidium nobile,Plantae,Orchidaceae,Oncidium,VU
-Oncidium panduratoides,Plantae,Orchidaceae,Oncidium,EN
-Oncidium povedanum,Plantae,Orchidaceae,Oncidium,CR
-Otoglossum arminii,Plantae,Orchidaceae,Otoglossum,VU
-Peristeria cochlearis,Plantae,Orchidaceae,Peristeria,CR
-Phragmipedium schlimii,Plantae,Orchidaceae,Phragmipedium,EN
-Pleurothallis killipii,Plantae,Orchidaceae,Pleurothallis,VU
-Pleurothallis mundula,Plantae,Orchidaceae,Pleurothallis,EN
-Polycycnis lehmannii,Plantae,Orchidaceae,Polycycnis,CR
-Polycycnis villegasiana,Plantae,Orchidaceae,Polycycnis,CR
-Pterichis colombiana,Plantae,Orchidaceae,Pterichis,CR
-Restrepia aristulifera,Plantae,Orchidaceae,Restrepia,VU
-Restrepia aspasicensis,Plantae,Orchidaceae,Restrepia,CR
-Restrepia chameleon,Plantae,Orchidaceae,Restrepia,VU
-Restrepia chocoensis,Plantae,Orchidaceae,Restrepia,EN
-Restrepia chrysoglossa,Plantae,Orchidaceae,Restrepia,VU
-Restrepia cuprea,Plantae,Orchidaceae,Restrepia,EN
-Restrepia echinata,Plantae,Orchidaceae,Restrepia,VU
-Restrepia echo,Plantae,Orchidaceae,Restrepia,VU
-Restrepia escobariana,Plantae,Orchidaceae,Restrepia,VU
-Restrepia falkenbergii,Plantae,Orchidaceae,Restrepia,EN
-Restrepia limbata,Plantae,Orchidaceae,Restrepia,VU
-Restrepia metae,Plantae,Orchidaceae,Restrepia,VU
-Restrepia nittiorhyncha,Plantae,Orchidaceae,Restrepia,EN
-Restrepia pandurata,Plantae,Orchidaceae,Restrepia,CR
-Restrepia purpurea,Plantae,Orchidaceae,Restrepia,VU
-Restrepia sanguinea,Plantae,Orchidaceae,Restrepia,VU
-Restrepia seketii,Plantae,Orchidaceae,Restrepia,VU
-Restrepia tabeae,Plantae,Orchidaceae,Restrepia,VU
-Restrepia tsubotae,Plantae,Orchidaceae,Restrepia,EN
-Sievekingia colombiana,Plantae,Orchidaceae,Sievekingia,EN
-Sievekingia filifera,Plantae,Orchidaceae,Sievekingia,EN
-Stanhopea platyceras,Plantae,Orchidaceae,Stanhopea,VU
-Stanhopea shuttleworthii,Plantae,Orchidaceae,Stanhopea,VU
-Stanhopea tolimensis,Plantae,Orchidaceae,Stanhopea,CR
-Sigmatostalix pandurata,Plantae,Orchidaceae,Sigmatostalix,EN
-Trevoria chloris,Plantae,Orchidaceae,Trevoria,CR
-Trigonochilum bachmannii,Plantae,Orchidaceae,Trigonochilum,VU
-Aechmea andaquiensis,Plantae,Bromeliaceae,Aechmea,CR
-Aechmea anomala,Plantae,Bromeliaceae,Aechmea,CR
-Aechmea baudoensis,Plantae,Bromeliaceae,Aechmea,CR
-Aechmea confertiflora,Plantae,Bromeliaceae,Aechmea,EN
-Aechmea confusa,Plantae,Bromeliaceae,Aechmea,EN
-Aechmea politii,Plantae,Bromeliaceae,Aechmea,VU
-Aechmea romeroi,Plantae,Bromeliaceae,Aechmea,EN
-Aechmea tessmannii,Plantae,Bromeliaceae,Aechmea,EN
-Aechmea zebrina,Plantae,Bromeliaceae,Aechmea,EN
-Billbergia ambigua,Plantae,Bromeliaceae,Billbergia,CR
-Billbergia macrolepis,Plantae,Bromeliaceae,Billbergia,VU
-Billbergia rupestris,Plantae,Bromeliaceae,Billbergia,VU
-Brewcaria reflexa,Plantae,Bromeliaceae,Brewcaria,VU
-Bromelia fragilis,Plantae,Bromeliaceae,Bromelia,CR
-Bromelia nidus-puellae,Plantae,Bromeliaceae,Bromelia,CR
-Bromelia trianae,Plantae,Bromeliaceae,Bromelia,CR
-Greigia aristeguietae,Plantae,Bromeliaceae,Greigia,VU
-Greigia columbiana,Plantae,Bromeliaceae,Greigia,VU
-Greigia mulfordii,Plantae,Bromeliaceae,Greigia,VU
-Greigia collina,Plantae,Bromeliaceae,Greigia,VU
-Greigia danielii,Plantae,Bromeliaceae,Greigia,VU
-Greigia nubigena,Plantae,Bromeliaceae,Greigia,CR
-Greigia ocellata,Plantae,Bromeliaceae,Greigia,CR
-Guzmania attenuata,Plantae,Bromeliaceae,Guzmania,VU
-Guzmania bakeri,Plantae,Bromeliaceae,Guzmania,CR
-Guzmania betancurii,Plantae,Bromeliaceae,Guzmania,EN
-Guzmania breviscapa,Plantae,Bromeliaceae,Guzmania,EN
-Guzmania cylindrica,Plantae,Bromeliaceae,Guzmania,EN
-Guzmania delicatula,Plantae,Bromeliaceae,Guzmania,EN
-Guzmania formosa,Plantae,Bromeliaceae,Guzmania,EN
-Guzmania goudotiana,Plantae,Bromeliaceae,Guzmania,VU
-Guzmania hitchcockiana,Plantae,Bromeliaceae,Guzmania,VU
-Guzmania longipetala,Plantae,Bromeliaceae,Guzmania,VU
-Guzmania pallida,Plantae,Bromeliaceae,Guzmania,EN
-Guzmania palustris,Plantae,Bromeliaceae,Guzmania,EN
-Guzmania polycephala,Plantae,Bromeliaceae,Guzmania,VU
-Guzmania radiata,Plantae,Bromeliaceae,Guzmania,VU
-Guzmania regalis,Plantae,Bromeliaceae,Guzmania,VU
-Guzmania rugosa,Plantae,Bromeliaceae,Guzmania,EN
-Guzmania wittmackii,Plantae,Bromeliaceae,Guzmania,VU
-Hohenbergia andina,Plantae,Bromeliaceae,Hohenbergia,EN
-Mezobromelia bicolor,Plantae,Bromeliaceae,Mezobromelia,CR
-Pepinia alborubra,Plantae,Bromeliaceae,Pepinia,EN
-Pepinia cuatrecasana,Plantae,Bromeliaceae,Pepinia,VU
-Pepinia heliophila,Plantae,Bromeliaceae,Pepinia,VU
-Pepinia juncoides,Plantae,Bromeliaceae,Pepinia,VU
-Pepinia killipiana,Plantae,Bromeliaceae,Pepinia,EN
-Pepinia pectinata,Plantae,Bromeliaceae,Pepinia,EN
-Pepinia quesnelioides,Plantae,Bromeliaceae,Pepinia,EN
-Pitcairnia altoatratoensis,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia alversonii,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia arenicola,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia barrigae,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia basincurva,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia delicata,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia dolichopetala,Plantae,Bromeliaceae,Pitcairnia,VU
-Pitcairnia elongata,Plantae,Bromeliaceae,Pitcairnia,VU
-Pitcairnia fluvialis,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia foreroi,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia fosteriana,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia grubbiana,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia guaritermae,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia huilensis,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia jaramilloi,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia johannis,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia kniphofioides,Plantae,Bromeliaceae,Pitcairnia,VU
-Pitcairnia lindae,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia macrobotrys,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia occidentalis,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia palmoides,Plantae,Bromeliaceae,Pitcairnia,VU
-Pitcairnia petraea,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia poortmanii,Plantae,Bromeliaceae,Pitcairnia,VU
-Pitcairnia ramosii,Plantae,Bromeliaceae,Pitcairnia,CR
-Pitcairnia rigida,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia schultzei,Plantae,Bromeliaceae,Pitcairnia,VU
-Pitcairnia semaphora,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia stenophylla,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia sylvestris,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia tolimensis,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia trimorpha,Plantae,Bromeliaceae,Pitcairnia,EN
-Pitcairnia woronowii,Plantae,Bromeliaceae,Pitcairnia,CR
-Puya aristeguietae,Plantae,Bromeliaceae,Puya,CR
-Puya barkleyana,Plantae,Bromeliaceae,Puya,EN
-Puya boyacana,Plantae,Bromeliaceae,Puya,CR
-Puya cleefii,Plantae,Bromeliaceae,Puya,CR
-Puya cuatrecasasii,Plantae,Bromeliaceae,Puya,VU
-Puya dichroa,Plantae,Bromeliaceae,Puya,CR
-Puya exuta,Plantae,Bromeliaceae,Puya,EN
-Puya furfuracea,Plantae,Bromeliaceae,Puya,CR
-Puya gargantae,Plantae,Bromeliaceae,Puya,EN
-Puya grantii,Plantae,Bromeliaceae,Puya,CR
-Puya grubbii,Plantae,Bromeliaceae,Puya,EN
-Puya killipii,Plantae,Bromeliaceae,Puya,VU
-Puya lehmanniana,Plantae,Bromeliaceae,Puya,EN
-Puya loca,Plantae,Bromeliaceae,Puya,EN
-Puya ochroleuca,Plantae,Bromeliaceae,Puya,EN
-Puya roldanii,Plantae,Bromeliaceae,Puya,EN
-Puya sanctae-martae,Plantae,Bromeliaceae,Puya,EN
-Puya santanderensis,Plantae,Bromeliaceae,Puya,CR
-Puya thomasiana,Plantae,Bromeliaceae,Puya,EN
-Puya venezuelana,Plantae,Bromeliaceae,Puya,EN
-Puya vestita,Plantae,Bromeliaceae,Puya,VU
-Racinaea sanctae-martae,Plantae,Bromeliaceae,Racinaea,EN
-Ronnbergia nidularioides,Plantae,Bromeliaceae,Ronnbergia,EN
-Ronnbergia subpetiolata,Plantae,Bromeliaceae,Ronnbergia,CR
-Ronnbergia viridispica,Plantae,Bromeliaceae,Ronnbergia,CR
-Steyerbromelia naquenensis,Plantae,Bromeliaceae,Steyerbromelia,CR
-Tillandsia acuminata,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia brevior,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia breviturneri,Plantae,Bromeliaceae,Tillandsia,EN
-Tillandsia chartacea,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia cuatrecasasii,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia engleriana,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia excavata,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia fassettii,Plantae,Bromeliaceae,Tillandsia,EN
-Tillandsia fusiformis,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia pallescens,Plantae,Bromeliaceae,Tillandsia,VU
-Tillandsia racinae,Plantae,Bromeliaceae,Tillandsia,EN
-Tillandsia rariflora,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia reversa,Plantae,Bromeliaceae,Tillandsia,EN
-Tillandsia romeroi,Plantae,Bromeliaceae,Tillandsia,EN
-Tillandsia schimperiana,Plantae,Bromeliaceae,Tillandsia,CR
-Tillandsia sigmoidea,Plantae,Bromeliaceae,Tillandsia,EN
-Tillandsia suescana,Plantae,Bromeliaceae,Tillandsia,EN
-Vriesea hodgei,Plantae,Bromeliaceae,Vriesea,CR
-Vriesea ospinae,Plantae,Bromeliaceae,Vriesea,VU
-Werauhia verrucosa,Plantae,Bromeliaceae,Werauhia,CR
-Aniba novo-granatensis,Plantae,Lauraceae,Aniba,CR
-Aniba perutilis,Plantae,Lauraceae,Aniba,CR
-Aniba rosaeodora,Plantae,Lauraceae,Aniba,CR
-Caryodaphnopsis cogolloi,Plantae,Lauraceae,Caryodaphnopsis,EN
-Licaria cogolloi,Plantae,Lauraceae,Licaria,EN
-Licaria tenuifolia,Plantae,Lauraceae,Licaria,CR
-Mespilodaphne quixos,Plantae,Lauraceae,Mespilodaphne,EN
-Ocotea antioquiensis,Plantae,Lauraceae,Ocotea,CR
-Ocotea cuatrecasasii,Plantae,Lauraceae,Ocotea,CR
-Ocotea pedicellata,Plantae,Lauraceae,Ocotea,VU
-Ocotea umbrina,Plantae,Lauraceae,Ocotea,EN
-Persea chrysophylla,Plantae,Lauraceae,Persea,VU
-Pleurothyrium bracteatum,Plantae,Lauraceae,Pleurothyrium,CR
-Rhodostemonodaphne antioquensis,Plantae,Lauraceae,Rhodostemonodaphne,EN
-Rhodostemonodaphne frontinensis,Plantae,Lauraceae,Rhodostemonodaphne,VU
-Rhodostemonodaphne velutina,Plantae,Lauraceae,Rhodostemonodaphne,CR
-Williamodendron quadrilocellatum,Plantae,Lauraceae,Williamodendron,CR
-Siparuna lozaniana,Plantae,Siparunaceae,Siparuna,VU
-Annona rufinervis,Plantae,Annonaceae,Annona,EN
-Duguetia colombiana,Plantae,Annonaceae,Duguetia,VU
-Oxandra oblongifolia,Plantae,Annonaceae,Oxandra,CR
-Pseudoxandra sclerocarpa,Plantae,Annonaceae,Pseudoxandra,VU
-Pseudoxandra vallicola,Plantae,Annonaceae,Pseudoxandra,EN
-Unonopsis megalophylla,Plantae,Annonaceae,Unonopsis,VU
-Magnolia arcabucoana,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia argyrothricha,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia calimaensis,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia calophylla,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia cararensis,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia caricaefragrans,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia cespedesii,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia chimantensis,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia chocoensis,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia colombiana,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia coronata,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia espinalii,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia georgii,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia gilbertoi,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia guatapensis,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia henaoi,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia hernandezii,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia jardinensis,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia katiorum,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia lenticellata,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia mahechae,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia narinensis,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia neomagnifolia,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia polyhypsophylla,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia rimachii,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia sambuensis,Plantae,Magnoliaceae,Magnolia,VU
-Magnolia santanderiana,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia silvioi,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia striatifolia,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia urraoensis,Plantae,Magnoliaceae,Magnolia,EN
-Magnolia virolinensis,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia wolfii,Plantae,Magnoliaceae,Magnolia,CR
-Magnolia yarumalensis,Plantae,Magnoliaceae,Magnolia,EN
-Compsoneura anoriensis,Plantae,Myristicaceae,Compsoneura,EN
-Iryanthera megistocarpa,Plantae,Myristicaceae,Iryanthera,EN
-Otoba acuminata,Plantae,Myristicaceae,Otoba,VU
-Otoba lehmannii,Plantae,Myristicaceae,Otoba,VU
-Virola dixonii,Plantae,Myristicaceae,Virola,VU
-Peperomia andrei,Plantae,Piperaceae,Peperomia,EN
-Peperomia santanderana,Plantae,Piperaceae,Peperomia,EN
-Piper insignilaminum,Plantae,Piperaceae,Piper,VU
-Piper sabaletasanum,Plantae,Piperaceae,Piper,CR
-Piper subtomentosum,Plantae,Piperaceae,Piper,CR
-Meliosma antioquiensis,Plantae,Sabiaceae,Meliosma,EN
-Meliosma caucana,Plantae,Sabiaceae,Meliosma,CR
-Meliosma cundinamarcensis,Plantae,Sabiaceae,Meliosma,VU
-Meliosma glossophylla,Plantae,Sabiaceae,Meliosma,VU
-Meliosma lindae,Plantae,Sabiaceae,Meliosma,CR
-Berberis carupensis,Plantae,Berberidaceae,Berberis,CR
-Berberis cuatrecasasii,Plantae,Berberidaceae,Berberis,EN
-Berberis meollacensis,Plantae,Berberidaceae,Berberis,EN
-Berberis sumapazana,Plantae,Berberidaceae,Berberis,EN
-Berberis tabiensis,Plantae,Berberidaceae,Berberis,VU
-Berberis uribei,Plantae,Berberidaceae,Berberis,CR
-Capparidastrum grandiflorum,Plantae,Capparaceae,Capparidastrum,VU
-Vasconcellea sphaerocarpa,Plantae,Caricaceae,Vasconcellea,VU
-Monteverdia corei,Plantae,Celastraceae,Monteverdia,EN
-Brownea santanderensis,Plantae,Fabaceae,Brownea,EN
-Browneopsis sanintiae,Plantae,Fabaceae,Browneopsis,CR
-Libidibia ebano,Plantae,Fabaceae,Libidibia,VU
-Chloroleucon sempervivum,Plantae,Fabaceae,Chloroleucon,EN
-Clathrotropis brunnea,Plantae,Fabaceae,Clathrotropis,EN
-Dipteryx oleifera,Plantae,Fabaceae,Dipteryx,VU
-Klugiodendron umbrianum,Plantae,Fabaceae,Klugiodendron,CR
-Lonchocarpus antioquiensis,Plantae,Fabaceae,Lonchocarpus,CR
-Lupinus colombiensis,Plantae,Fabaceae,Lupinus,VU
-Mimosa trianae,Plantae,Fabaceae,Mimosa,EN
-Mora oleifera,Plantae,Fabaceae,Mora,EN
-Muellera burkartii,Plantae,Fabaceae,Muellera,EN
-Ormosia cuatrecasasii,Plantae,Fabaceae,Ormosia,VU
-Ormosia revoluta,Plantae,Fabaceae,Ormosia,VU
-Peltogyne purpurea,Plantae,Fabaceae,Peltogyne,VU
-Piptadenia uliginosa,Plantae,Fabaceae,Piptadenia,EN
-Prioria copaifera,Plantae,Fabaceae,Prioria,EN
-Pseudopiptadenia colombiana,Plantae,Fabaceae,Pseudopiptadenia,CR
-Swartzia amabale,Plantae,Fabaceae,Swartzia,EN
-Swartzia magdalenae,Plantae,Fabaceae,Swartzia,CR
-Swartzia mucronifera,Plantae,Fabaceae,Swartzia,VU
-Swartzia radiale,Plantae,Fabaceae,Swartzia,EN
-Zapoteca microcephala,Plantae,Fabaceae,Zapoteca,EN
-Zygia andaquiensis,Plantae,Fabaceae,Zygia,EN
-Zygia codonocalyx,Plantae,Fabaceae,Zygia,CR
-Zygia garcia-barrigae,Plantae,Fabaceae,Zygia,CR
-Zygia hernandezii,Plantae,Fabaceae,Zygia,CR
-Zygia lehmannii,Plantae,Fabaceae,Zygia,VU
-Zygia multipunctata,Plantae,Fabaceae,Zygia,EN
-Acanthocladus colombianus,Plantae,Polygalaceae,Acanthocladus,CR
-Colombobalanus excelsa,Plantae,Fagaceae,Colombobalanus,VU
-Quercus humboldtii,Plantae,Fagaceae,Quercus,VU
-Juglans neotropica,Plantae,Juglandaceae,Juglans,EN
-Perrottetia calva,Plantae,Dipentodontaceae,Perrottetia,EN
-Perrottetia colorata,Plantae,Dipentodontaceae,Perrottetia,CR
-Perrottetia guacharana,Plantae,Dipentodontaceae,Perrottetia,EN
-Perrottetia maxima,Plantae,Dipentodontaceae,Perrottetia,VU
-Mayna pubescens,Plantae,Achariaceae,Mayna,EN
-Mayna suaveolens,Plantae,Achariaceae,Mayna,EN
-Marila geminata,Plantae,Calophyllaceae,Marila,VU
-Anthodiscus montanus,Plantae,Caryocaraceae,Anthodiscus,VU
-Caryocar amygdaliferum,Plantae,Caryocaraceae,Caryocar,VU
-Cordillera platycalyx,Plantae,Chrysobalanaceae,Cordillera,EN
-Hirtella enneandra,Plantae,Chrysobalanaceae,Hirtella,EN
-Hirtella leonotis,Plantae,Chrysobalanaceae,Hirtella,EN
-Hirtella magnifolia,Plantae,Chrysobalanaceae,Hirtella,VU
-Hirtella maguirei,Plantae,Chrysobalanaceae,Hirtella,CR
-Hirtella tubiflora,Plantae,Chrysobalanaceae,Hirtella,VU
-Hirtella vesiculosa,Plantae,Chrysobalanaceae,Hirtella,VU
-Hymenopus lasseri,Plantae,Chrysobalanaceae,Hymenopus,VU
-Hymenopus minutiflorus,Plantae,Chrysobalanaceae,Hymenopus,EN
-Leptobalanus calvescens,Plantae,Chrysobalanaceae,Leptobalanus,EN
-Leptobalanus cuatrecasasii,Plantae,Chrysobalanaceae,Leptobalanus,EN
-Leptobalanus cuspidatus,Plantae,Chrysobalanaceae,Leptobalanus,CR
-Licania arborea,Plantae,Chrysobalanaceae,Licania,EN
-Licania calvescens,Plantae,Chrysobalanaceae,Licania,VU
-Licania cuspidata,Plantae,Chrysobalanaceae,Licania,CR
-Licania durifolia,Plantae,Chrysobalanaceae,Licania,EN
-Licania espinae,Plantae,Chrysobalanaceae,Licania,CR
-Licania glauca,Plantae,Chrysobalanaceae,Licania,VU
-Licania pittieri,Plantae,Chrysobalanaceae,Licania,EN
-Licania platypus,Plantae,Chrysobalanaceae,Licania,EN
-Licania silvae,Plantae,Chrysobalanaceae,Licania,VU
-Licania sparsipilis,Plantae,Chrysobalanaceae,Licania,EN
-Moquilea cabrerae,Plantae,Chrysobalanaceae,Moquilea,VU
-Moquilea salicifolia,Plantae,Chrysobalanaceae,Moquilea,EN
-Moquilea velata,Plantae,Chrysobalanaceae,Moquilea,EN
-Parinari pachyphylla,Plantae,Chrysobalanaceae,Parinari,EN
-Parinari parvifolia,Plantae,Chrysobalanaceae,Parinari,CR
-Parinari romeroi,Plantae,Chrysobalanaceae,Parinari,VU
-Chrysochlamys goudotii,Plantae,Clusiaceae,Chrysochlamys,EN
-Clusia caicedoi,Plantae,Clusiaceae,Clusia,EN
-Clusia caryophylloides,Plantae,Clusiaceae,Clusia,CR
-Clusia chusqueae,Plantae,Clusiaceae,Clusia,VU
-Clusia cundinamarcensis,Plantae,Clusiaceae,Clusia,VU
-Clusia diguensis,Plantae,Clusiaceae,Clusia,CR
-Clusia fistulosa,Plantae,Clusiaceae,Clusia,VU
-Clusia hachensis,Plantae,Clusiaceae,Clusia,VU
-Clusia lehmannii,Plantae,Clusiaceae,Clusia,CR
-Clusia nervosa,Plantae,Clusiaceae,Clusia,CR
-Clusia polyandra,Plantae,Clusiaceae,Clusia,EN
-Clusia rubescens,Plantae,Clusiaceae,Clusia,CR
-Clusia tequendamae,Plantae,Clusiaceae,Clusia,CR
-Clusia volubilis,Plantae,Clusiaceae,Clusia,VU
-Garcinia pulvinata,Plantae,Clusiaceae,Garcinia,CR
-Dichapetalum donnell-smithii,Plantae,Dichapetalaceae,Dichapetalum,VU
-Dichapetalum foreroi,Plantae,Dichapetalaceae,Dichapetalum,VU
-Dichapetalum rugosum,Plantae,Dichapetalaceae,Dichapetalum,VU
-Stephanopodium cuspidatum,Plantae,Dichapetalaceae,Stephanopodium,EN
-Stephanopodium gentryi,Plantae,Dichapetalaceae,Stephanopodium,VU
-Tapura bullata,Plantae,Dichapetalaceae,Tapura,EN
-Tapura colombiana,Plantae,Dichapetalaceae,Tapura,VU
-Erythroxylum cassinoides,Plantae,Erythroxylaceae,Erythroxylum,EN
-Erythroxylum plowmanianum,Plantae,Erythroxylaceae,Erythroxylum,VU
-Erythroxylum riverae,Plantae,Erythroxylaceae,Erythroxylum,CR
-Acalypha inaequilatera,Plantae,Euphorbiaceae,Acalypha,CR
-Conceveiba santanderensis,Plantae,Euphorbiaceae,Conceveiba,VU
-Croton aristophlebius,Plantae,Euphorbiaceae,Croton,EN
-Croton ater,Plantae,Euphorbiaceae,Croton,EN
-Croton boavitanus,Plantae,Euphorbiaceae,Croton,CR
-Croton cupreatus,Plantae,Euphorbiaceae,Croton,VU
-Croton rufolepidotus,Plantae,Euphorbiaceae,Croton,EN
-Croton sibundoyensis,Plantae,Euphorbiaceae,Croton,EN
-Hypericum parallelum,Plantae,Hypericaceae,Hypericum,EN
-Hypericum pimeleoides,Plantae,Hypericaceae,Hypericum,VU
-Humiriastrum procerum,Plantae,Humiriaceae,Humiriastrum,CR
-Amorimia concinna,Plantae,Malpighiaceae,Amorimia,EN
-Bunchosia anomala,Plantae,Malpighiaceae,Bunchosia,EN
-Passiflora bracteosa,Plantae,Passifloraceae,Passiflora,EN
-Passiflora bucaramangensis,Plantae,Passifloraceae,Passiflora,EN
-Passiflora callistemma,Plantae,Passifloraceae,Passiflora,VU
-Passiflora colombiana,Plantae,Passifloraceae,Passiflora,EN
-Passiflora cremastantha,Plantae,Passifloraceae,Passiflora,CR
-Passiflora crispolanata,Plantae,Passifloraceae,Passiflora,VU
-Passiflora dawei,Plantae,Passifloraceae,Passiflora,VU
-Passiflora engleriana,Plantae,Passifloraceae,Passiflora,EN
-Passiflora erythrophylla,Plantae,Passifloraceae,Passiflora,VU
-Passiflora haughtii,Plantae,Passifloraceae,Passiflora,VU
-Passiflora jardinensis,Plantae,Passifloraceae,Passiflora,VU
-Passiflora lindeniana,Plantae,Passifloraceae,Passiflora,EN
-Passiflora linearistipula,Plantae,Passifloraceae,Passiflora,VU
-Passiflora magdalenae,Plantae,Passifloraceae,Passiflora,VU
-Passiflora magnifica,Plantae,Passifloraceae,Passiflora,VU
-Passiflora pamplonensis,Plantae,Passifloraceae,Passiflora,CR
-Passiflora pennellii,Plantae,Passifloraceae,Passiflora,VU
-Passiflora semiciliosa,Plantae,Passifloraceae,Passiflora,VU
-Passiflora sierrae,Plantae,Passifloraceae,Passiflora,VU
-Passiflora tenerifensis,Plantae,Passifloraceae,Passiflora,VU
-Passiflora trianae,Plantae,Passifloraceae,Passiflora,EN
-Passiflora trisulca,Plantae,Passifloraceae,Passiflora,EN
-Passiflora uribei,Plantae,Passifloraceae,Passiflora,VU
-Ouratea pyrifera,Plantae,Ochnaceae,Ouratea,VU
-Cassipourea floribunda,Plantae,Rhizophoraceae,Cassipourea,VU
-Neosprucea sararensis,Plantae,Salicaceae,Neosprucea,EN
-Xylosma obovata,Plantae,Salicaceae,Xylosma,VU
-Rinorea antioquiensis,Plantae,Violaceae,Rinorea,EN
-Rinorea cordata,Plantae,Violaceae,Rinorea,EN
-Rinorea hymenosepala,Plantae,Violaceae,Rinorea,EN
-Rinorea marginata,Plantae,Violaceae,Rinorea,EN
-Ayenia cuatrecasae,Plantae,Malvaceae,Ayenia,EN
-Ayenia klugii,Plantae,Malvaceae,Ayenia,CR
-Bernoullia uribeana,Plantae,Malvaceae,Bernoullia,CR
-Cavanillesia chicamochae,Plantae,Malvaceae,Cavanillesia,EN
-Ceiba samauma,Plantae,Malvaceae,Ceiba,VU
-Gaya mutisiana,Plantae,Malvaceae,Gaya,VU
-Herrania umbratica,Plantae,Malvaceae,Herrania,CR
-Huberodendron patinoi,Plantae,Malvaceae,Huberodendron,VU
-Matisia carderi,Plantae,Malvaceae,Matisia,CR
-Matisia dowdingii,Plantae,Malvaceae,Matisia,CR
-Matisia serpicostata,Plantae,Malvaceae,Matisia,CR
-Matisia sulcata,Plantae,Malvaceae,Matisia,CR
-Melochia colombiana,Plantae,Malvaceae,Melochia,EN
-Pachira mutisiana,Plantae,Malvaceae,Pachira,EN
-Pachira pulchra,Plantae,Malvaceae,Pachira,EN
-Pachira quinata,Plantae,Malvaceae,Pachira,EN
-Phragmotheca lemniscata,Plantae,Malvaceae,Phragmotheca,CR
-Phragmotheca mambitana,Plantae,Malvaceae,Phragmotheca,CR
-Phragmotheca rubriflora,Plantae,Malvaceae,Phragmotheca,EN
-Quararibea cacao,Plantae,Malvaceae,Quararibea,CR
-Quararibea foenigraeca,Plantae,Malvaceae,Quararibea,VU
-Quararibea rangelii,Plantae,Malvaceae,Quararibea,EN
-Quararibea ruiziana,Plantae,Malvaceae,Quararibea,CR
-Spirotheca mahechae,Plantae,Malvaceae,Spirotheca,CR
-Daphnopsis anomala,Plantae,Thymelaeaceae,Daphnopsis,EN
-Adelobotrys antioquiensis,Plantae,Melastomataceae,Adelobotrys,VU
-Allomaieta hirsuta,Plantae,Melastomataceae,Allomaieta,VU
-Blakea argentea,Plantae,Melastomataceae,Blakea,VU
-Blakea clusiifolia,Plantae,Melastomataceae,Blakea,VU
-Blakea discolor,Plantae,Melastomataceae,Blakea,VU
-Blakea longipes,Plantae,Melastomataceae,Blakea,VU
-Blakea muricata,Plantae,Melastomataceae,Blakea,CR
-Blakea schultzei,Plantae,Melastomataceae,Blakea,VU
-Blakea squamigera,Plantae,Melastomataceae,Blakea,EN
-Blakea superba,Plantae,Melastomataceae,Blakea,VU
-Chalybea corymbifera,Plantae,Melastomataceae,Chalybea,EN
-Chalybea kirkbridei,Plantae,Melastomataceae,Chalybea,EN
-Chalybea macrocarpa,Plantae,Melastomataceae,Chalybea,EN
-Chalybea mutisiana,Plantae,Melastomataceae,Chalybea,EN
-Chalybea occidentalis,Plantae,Melastomataceae,Chalybea,EN
-Graffenrieda maklenkensis,Plantae,Melastomataceae,Graffenrieda,EN
-Henriettea maguirei,Plantae,Melastomataceae,Henriettea,VU
-Killipia pedunculata,Plantae,Melastomataceae,Killipia,EN
-Meriania albertiae,Plantae,Melastomataceae,Meriania,VU
-Meriania antioquiensis,Plantae,Melastomataceae,Meriania,VU
-Meriania arizae,Plantae,Melastomataceae,Meriania,EN
-Meriania barbosae,Plantae,Melastomataceae,Meriania,EN
-Meriania colombiana,Plantae,Melastomataceae,Meriania,EN
-Meriania mutabilis,Plantae,Melastomataceae,Meriania,VU
-Meriania pallida,Plantae,Melastomataceae,Meriania,EN
-Meriania umbellata,Plantae,Melastomataceae,Meriania,EN
-Meriania versicolor,Plantae,Melastomataceae,Meriania,EN
-Miconia acanthocoryne,Plantae,Melastomataceae,Miconia,EN
-Miconia annulata,Plantae,Melastomataceae,Miconia,VU
-Miconia antioquiensis,Plantae,Melastomataceae,Miconia,EN
-Miconia bella,Plantae,Melastomataceae,Miconia,VU
-Miconia blakeifolia,Plantae,Melastomataceae,Miconia,VU
-Miconia caucana,Plantae,Melastomataceae,Miconia,EN
-Miconia macrantha,Plantae,Melastomataceae,Miconia,CR
-Miconia majalis,Plantae,Melastomataceae,Miconia,VU
-Miconia miocarpa,Plantae,Melastomataceae,Miconia,EN
-Miconia parvifolia,Plantae,Melastomataceae,Miconia,VU
-Miconia pastoensis,Plantae,Melastomataceae,Miconia,VU
-Miconia rava,Plantae,Melastomataceae,Miconia,CR
-Miconia reclinata,Plantae,Melastomataceae,Miconia,VU
-Miconia rigens,Plantae,Melastomataceae,Miconia,VU
-Miconia setosa,Plantae,Melastomataceae,Miconia,EN
-Miconia subsessilifolia,Plantae,Melastomataceae,Miconia,VU
-Miconia voronovii,Plantae,Melastomataceae,Miconia,EN
-Mouriri colombiana,Plantae,Melastomataceae,Mouriri,VU
-Tibouchina paleacea,Plantae,Melastomataceae,Tibouchina,VU
-Eugenia variareolata,Plantae,Myrtaceae,Eugenia,EN
-Myrcia estoraquensis,Plantae,Myrtaceae,Myrcia,CR
-Myrcia lozanoi,Plantae,Myrtaceae,Myrcia,VU
-Myrcia pseudobrunneica,Plantae,Myrtaceae,Myrcia,EN
-Vochysia antioquiae,Plantae,Vochysiaceae,Vochysia,EN
-Vochysia artantha,Plantae,Vochysiaceae,Vochysia,EN
-Vochysia magna,Plantae,Vochysiaceae,Vochysia,EN
-Vochysia pacifica,Plantae,Vochysiaceae,Vochysia,EN
-Brunellia amayensis,Plantae,Brunelliaceae,Brunellia,CR
-Brunellia boqueronensis,Plantae,Brunelliaceae,Brunellia,VU
-Brunellia latifolia,Plantae,Brunelliaceae,Brunellia,EN
-Brunellia macrophylla,Plantae,Brunelliaceae,Brunellia,EN
-Brunellia occidentalis,Plantae,Brunelliaceae,Brunellia,VU
-Brunellia pallida,Plantae,Brunelliaceae,Brunellia,VU
-Brunellia racemifera,Plantae,Brunelliaceae,Brunellia,EN
-Brunellia rufa,Plantae,Brunelliaceae,Brunellia,CR
-Brunellia stuebelii,Plantae,Brunelliaceae,Brunellia,EN
-Brunellia velutina,Plantae,Brunelliaceae,Brunellia,VU
-Rourea antioquensis,Plantae,Connaraceae,Rourea,EN
-Weinmannia parvifoliolata,Plantae,Cunoniaceae,Weinmannia,EN
-Weinmannia tolimensis,Plantae,Cunoniaceae,Weinmannia,VU
-Sloanea esmeraldana,Plantae,Elaeocarpaceae,Sloanea,VU
-Sloanea garcia-cossioi,Plantae,Elaeocarpaceae,Sloanea,CR
-Sloanea helianthoides,Plantae,Elaeocarpaceae,Sloanea,CR
-Sloanea huilaeana,Plantae,Elaeocarpaceae,Sloanea,CR
-Sloanea loquitoi,Plantae,Elaeocarpaceae,Sloanea,CR
-Sloanea pseudogranulosa,Plantae,Elaeocarpaceae,Sloanea,CR
-Ficus eliadis,Plantae,Moraceae,Ficus,EN
-Ficus guatiquiae,Plantae,Moraceae,Ficus,EN
-Ficus tequendamae,Plantae,Moraceae,Ficus,EN
-Karwinskia colombiana,Plantae,Rhamnaceae,Karwinskia,EN
-Ampelocera albertiae,Plantae,Ulmaceae,Ampelocera,EN
-Cecropia goudotiana,Plantae,Urticaceae,Cecropia,EN
-Cecropia multisecta,Plantae,Urticaceae,Cecropia,EN
-Coussapoa tolimensis,Plantae,Urticaceae,Coussapoa,EN
-Mauria cuatrecasasii,Plantae,Anacardiaceae,Mauria,EN
-Mauria obtusifolia,Plantae,Anacardiaceae,Mauria,EN
-Dacryodes colombiana,Plantae,Burseraceae,Dacryodes,EN
-Dacryodes hydriflora,Plantae,Burseraceae,Dacryodes,EN
-Cedrela odorata,Plantae,Meliaceae,Cedrela,EN
-Ruagea smithii,Plantae,Meliaceae,Ruagea,VU
-Swietenia macrophylla,Plantae,Meliaceae,Swietenia,CR
-Trichilia carinata,Plantae,Meliaceae,Trichilia,EN
-Trichilia oligofoliolata,Plantae,Meliaceae,Trichilia,EN
-Zanthoxylum gentryi,Plantae,Rutaceae,Zanthoxylum,VU
-Cupania semiglabra,Plantae,Sapindaceae,Cupania,EN
-Melicoccus antioquensis,Plantae,Sapindaceae,Melicoccus,CR
-Paullinia globosa,Plantae,Sapindaceae,Paullinia,VU
-Talisia stricta,Plantae,Sapindaceae,Talisia,VU
-Bulnesia arborea,Plantae,Zygophyllaceae,Bulnesia,EN
-Guaiacum officinale,Plantae,Zygophyllaceae,Guaiacum,CR
-Hedyosmum steinii,Plantae,Chloranthaceae,Hedyosmum,VU
-Acropora cervicornis,Animalia,Acroporidae,Acropora,CR
-Acropora palmata,Animalia,Acroporidae,Acropora,EN
-Dendrogyra cylindrus,Animalia,Meandrinidae,Dendrogyra,EN
-Mussa angulosa,Animalia,Faviidae,Mussa,VU
-Gorgonia ventalina,Animalia,Gorgoniidae,Gorgonia,VU
-Pacifigorgia cairnsi,Animalia,Gorgoniidae,Pacifigorgia,VU
-Pacifigorgia irene,Animalia,Gorgoniidae,Pacifigorgia,VU
-Muricea austera,Animalia,Plexauridae,Muricea,VU
-Muricea crassa,Animalia,Plexauridae,Muricea,VU
-Megaphobema robustum,Animalia,Theraphosidae,Megaphobema,VU
-Pamphobeteus ferox,Animalia,Theraphosidae,Pamphobeteus,EN
-Pamphobeteus fortis,Animalia,Theraphosidae,Pamphobeteus,EN
-Xenesthis immanis,Animalia,Theraphosidae,Xenesthis,EN
-Surazomus sturmi,Animalia,Hubbardiidae,Surazomus,VU
-Chactas oxfordi,Animalia,Chactidae,Chactas,VU
-Tityus columbianus,Animalia,Buthidae,Tityus,VU
-Tityus engelkei,Animalia,Buthidae,Tityus,VU
-Carpilius corallinus,Animalia,Carpiliidae,Carpilius,VU
-Cardisoma guanhumi,Animalia,Gecarcinidae,Cardisoma,VU
-Gecarcinus lateralis,Animalia,Gecarcinidae,Gecarcinus,VU
-Gecarcinus ruricola,Animalia,Gecarcinidae,Gecarcinus,EN
-Emerita portoricensis,Animalia,Hippidae,Emerita,VU
-Hippa testudinaria,Animalia,Hippidae,Hippa,VU
-Maguimithrax spinosissimus,Animalia,Mithracidae,Maguimithrax,VU
-Panulirus argus,Animalia,Palinuridae,Panulirus,VU
-Penaeus occidentalis,Animalia,Penaeidae,Penaeus,CR
-Penaeus schmitti,Animalia,Penaeidae,Penaeus,VU
-Callinectes sapidus,Animalia,Portunidae,Callinectes,VU
-Callinectes bocourti,Animalia,Portunidae,Callinectes,VU
-Chaceus curumanensis,Animalia,Pseudothelphusidae,Chaceus,EN
-Chaceus ibiricensis,Animalia,Pseudothelphusidae,Chaceus,EN
-Hypolobocera andagoensis,Animalia,Pseudothelphusidae,Hypolobocera,EN
-Hypolobocera buenaventurensis,Animalia,Pseudothelphusidae,Hypolobocera,EN
-Hypolobocera cajambrensis,Animalia,Pseudothelphusidae,Hypolobocera,EN
-Hypolobocera emberarum,Animalia,Pseudothelphusidae,Hypolobocera,EN
-Hypolobocera rotundilobata,Animalia,Pseudothelphusidae,Hypolobocera,EN
-Lindacatalina sinuensis,Animalia,Pseudothelphusidae,Lindacatalina,EN
-Lindacatalina sumacensis,Animalia,Pseudothelphusidae,Lindacatalina,EN
-Neostrengeria alexae,Animalia,Pseudothelphusidae,Neostrengeria,EN
-Neostrengeria lemaitrei,Animalia,Pseudothelphusidae,Neostrengeria,EN
-Neostrengeria libradensis,Animalia,Pseudothelphusidae,Neostrengeria,EN
-Neostrengeria macarenae,Animalia,Pseudothelphusidae,Neostrengeria,EN
-Neostrengeria macropa,Animalia,Pseudothelphusidae,Neostrengeria,EN
-Neostrengeria natashae,Animalia,Pseudothelphusidae,Neostrengeria,EN
-Neostrengeria sketi,Animalia,Pseudothelphusidae,Neostrengeria,EN
-Phallangothelphusa juansei,Animalia,Pseudothelphusidae,Phallangothelphusa,EN
-Strengeriana antioquensis,Animalia,Pseudothelphusidae,Strengeriana,EN
-Strengeriana casallasi,Animalia,Pseudothelphusidae,Strengeriana,EN
-Strengeriana flagellata,Animalia,Pseudothelphusidae,Strengeriana,EN
-Strengeriana foresti,Animalia,Pseudothelphusidae,Strengeriana,EN
-Strengeriana huilensis,Animalia,Pseudothelphusidae,Strengeriana,EN
-Strengeriana villaensis,Animalia,Pseudothelphusidae,Strengeriana,EN
-Bottiella cucutensis,Animalia,Trichodactylidae,Bottiella,EN
-Bottiella medemi,Animalia,Trichodactylidae,Bottiella,VU
-Bottiella niceforei,Animalia,Trichodactylidae,Bottiella,EN
-Macrodontia cervicornis,Animalia,Cerambycidae,Macrodontia,VU
-Titanus giganteus,Animalia,Cerambycidae,Titanus,VU
-Proculus opacus,Animalia,Passalidae,Proculus,VU
-Dynastes neptunus,Animalia,Scarabaeidae,Dynastes,VU
-Megasoma mars,Animalia,Scarabaeidae,Megasoma,EN
-Aglae caerulea,Animalia,Apidae,Aglae,VU
-Eufriesea auripes,Animalia,Apidae,Eufriesea,EN
-Eufriesea chrysopyga,Animalia,Apidae,Eufriesea,EN
-Eufriesea dressleri,Animalia,Apidae,Eufriesea,CR
-Eufriesea lucida,Animalia,Apidae,Eufriesea,EN
-Eufriesea lucifera,Animalia,Apidae,Eufriesea,EN
-Exaerete dentata,Animalia,Apidae,Exaerete,CR
-Exaerete frontalis,Animalia,Apidae,Exaerete,CR
-Exaerete smaragdina,Animalia,Apidae,Exaerete,CR
-Melipona eburnea,Animalia,Apidae,Melipona,VU
-Melipona favosa,Animalia,Apidae,Melipona,VU
-Cephalotes palta,Animalia,Formicidae,Cephalotes,VU
-Cephalotes patei,Animalia,Formicidae,Cephalotes,VU
-Editha magnifica,Animalia,Crabronidae,Editha,VU
-Charterginus zavattari,Animalia,Vespidae,Charterginus,VU
-Montezumia colombiana,Animalia,Eumenidae,Montezumia,EN
-Zethus neotomitus,Animalia,Eumenidae,Zethus,EN
-Zethus restrepoicus,Animalia,Eumenidae,Zethus,EN
-Zethus satanicus,Animalia,Eumenidae,Zethus,EN
-Arhuaco ica,Animalia,Nymphalidae,Arhuaco,VU
-Lymanopoda caeruleata,Animalia,Nymphalidae,Lymanopoda,EN
-Lymanopoda paramera,Animalia,Nymphalidae,Lymanopoda,CR
-Morpho rhodopteron,Animalia,Nymphalidae,Morpho,EN
-Prepona praeneste,Animalia,Nymphalidae,Prepona,VU
-Prepona werneri,Animalia,Nymphalidae,Prepona,VU
-Pterourus euterpinus,Animalia,Papilionidae,Pterourus,EN
-Copaxa apollinairei,Animalia,Saturniidae,Copaxa,VU
-Syssphinx chocoensis,Animalia,Saturniidae,Syssphinx,VU
-Anadara tuberculosa,Animalia,Arcidae,Anadara,VU
-Larkinia grandis,Animalia,Arcidae,Larkinia,VU
-Anomalocardia flexuosa,Animalia,Veneridae,Anomalocardia,VU
-Polymesoda arctata,Animalia,Cyrenidae,Polymesoda,EN
-Cittarium pica,Animalia,Tegulidae,Cittarium,EN
-Muracypraea mus,Animalia,Cypraeidae,Muracypraea,VU
-Aliger gigas,Animalia,Strombidae,Aliger,VU
-Anachis coseli,Animalia,Columbellidae,Anachis,VU
-Acostaea rivolii,Animalia,Mycetopodidae,Acostaea,CR
-Diplodontites olssoni,Animalia,Mycetopodidae,Diplodontites,VU
-Holothuria mexicana,Animalia,Holothuriidae,Holothuria,CR
-Isostichopus badionotus,Animalia,Stichopodidae,Isostichopus,VU
-Ophiothrix synoecina,Animalia,Ophiotrichidae,Ophiothrix,EN
-Ginglymostoma cirratum,Animalia,Ginglymostomatidae,Ginglymostoma,VU
-Alopias pelagicus,Animalia,Alopiidae,Alopias,VU
-Carcharhinus falciformis,Animalia,Carcharhinidae,Carcharhinus,VU
-Carcharhinus limbatus,Animalia,Carcharhinidae,Carcharhinus,VU
-Carcharhinus longimanus,Animalia,Carcharhinidae,Carcharhinus,VU
-Sphyrna lewini,Animalia,Sphyrnidae,Sphyrna,VU
-Sphyrna mokarran,Animalia,Sphyrnidae,Sphyrna,VU
-Mustelus henlei,Animalia,Triakidae,Mustelus,VU
-Mustelus lunulatus,Animalia,Triakidae,Mustelus,VU
-Mustelus minicanis,Animalia,Triakidae,Mustelus,VU
-Diplobatis colombiensis,Animalia,Narcinidae,Diplobatis,EN
-Diplobatis guamachensis,Animalia,Narcinidae,Diplobatis,VU
-Pristis pectinata,Animalia,Pristidae,Pristis,CR
-Pristis pristis,Animalia,Pristidae,Pristis,CR
-Pseudobatos leucorhynchus,Animalia,Rhinobatidae,Pseudobatos,VU
-Hypanus longus,Animalia,Dasyatidae,Hypanus,VU
-Paratrygon aiereba,Animalia,Potamotrygonidae,Paratrygon,VU
-Potamotrygon motoro,Animalia,Potamotrygonidae,Potamotrygon,VU
-Potamotrygon schroederi,Animalia,Potamotrygonidae,Potamotrygon,VU
-Potamotrygon yepezi,Animalia,Potamotrygonidae,Potamotrygon,VU
-Megalops atlanticus,Animalia,Megalopidae,Megalops,CR
-Arapaima gigas,Animalia,Arapaimidae,Arapaima,VU
-Osteoglossum bicirrhosum,Animalia,Osteoglossidae,Osteoglossum,VU
-Osteoglossum ferreirai,Animalia,Osteoglossidae,Osteoglossum,EN
-Abramites eques,Animalia,Anostomidae,Abramites,VU
-Leporinus muyscorum,Animalia,Anostomidae,Leporinus,VU
-Brycon labiatus,Animalia,Bryconidae,Brycon,EN
-Brycon moorei,Animalia,Bryconidae,Brycon,VU
-Cynopotamus atratoensis,Animalia,Characidae,Cynopotamus,VU
-Genycharax tarpon,Animalia,Characidae,Genycharax,VU
-Salminus affinis,Animalia,Bryconidae,Salminus,VU
-Characidium phoxocephalum,Animalia,Crenuchidae,Characidium,VU
-Curimata mivartii,Animalia,Curimatidae,Curimata,VU
-Pseudocurimata patiae,Animalia,Curimatidae,Pseudocurimata,VU
-Parodon caliensis,Animalia,Parodontidae,Parodon,VU
-Ichthyoelephas longirostris,Animalia,Prochilodontidae,Ichthyoelephas,EN
-Prochilodus magdalenae,Animalia,Prochilodontidae,Prochilodus,VU
-Prochilodus reticulatus,Animalia,Prochilodontidae,Prochilodus,VU
-Mylossoma acanthogaster,Animalia,Serrasalmidae,Mylossoma,VU
-Ariopsis canteri,Animalia,Ariidae,Ariopsis,EN
-Cathorops mapale,Animalia,Ariidae,Cathorops,VU
-Sciades proops,Animalia,Ariidae,Sciades,VU
-Ageneiosus pardalis,Animalia,Auchenipteridae,Ageneiosus,VU
-Callichthys fabricioi,Animalia,Callichthyidae,Callichthys,VU
-Doraops zuloagai,Animalia,Doradidae,Doraops,VU
-Rhinodoras thomersoni,Animalia,Doradidae,Rhinodoras,VU
-Pimelodella macrocephala,Animalia,Heptapteridae,Pimelodella,VU
-Panaque cochliodon,Animalia,Loricariidae,Panaque,VU
-Brachyplatystoma filamentosum,Animalia,Pimelodidae,Brachyplatystoma,VU
-Brachyplatystoma juruense,Animalia,Pimelodidae,Brachyplatystoma,VU
-Brachyplatystoma platynemum,Animalia,Pimelodidae,Brachyplatystoma,VU
-Brachyplatystoma rousseauxii,Animalia,Pimelodidae,Brachyplatystoma,VU
-Brachyplatystoma vaillantii,Animalia,Pimelodidae,Brachyplatystoma,VU
-Pimelodus coprophagus,Animalia,Pimelodidae,Pimelodus,VU
-Pimelodus grosskopfii,Animalia,Pimelodidae,Pimelodus,VU
-Platysilurus malarmo,Animalia,Pimelodidae,Platysilurus,VU
-Pseudoplatystoma magdaleniatum,Animalia,Pimelodidae,Pseudoplatystoma,CR
-Pseudoplatystoma metaense,Animalia,Pimelodidae,Pseudoplatystoma,VU
-Pseudoplatystoma orinocoense,Animalia,Pimelodidae,Pseudoplatystoma,VU
-Pseudoplatystoma punctifer,Animalia,Pimelodidae,Pseudoplatystoma,VU
-Pseudoplatystoma tigrinum,Animalia,Pimelodidae,Pseudoplatystoma,VU
-Sorubim cuspicaudus,Animalia,Pimelodidae,Sorubim,VU
-Zungaro zungaro,Animalia,Pimelodidae,Zungaro,VU
-Cruciglanis pacifici,Animalia,Pseudopimelodidae,Cruciglanis,VU
-Eremophilus mutisii,Animalia,Trichomycteridae,Eremophilus,VU
-Trichomycterus cachiraensis,Animalia,Trichomycteridae,Trichomycterus,VU
-Trichomycterus donascimientoi,Animalia,Trichomycteridae,Trichomycterus,VU
-Trichomycterus gorgona,Animalia,Trichomycteridae,Trichomycterus,VU
-Trichomycterus rosablanca,Animalia,Trichomycteridae,Trichomycterus,VU
-Trichomycterus sandovali,Animalia,Trichomycteridae,Trichomycterus,VU
-Trichomycterus santanderensis,Animalia,Trichomycteridae,Trichomycterus,CR
-Trichomycterus sketi,Animalia,Trichomycteridae,Trichomycterus,VU
-Trichomycterus uisae,Animalia,Trichomycteridae,Trichomycterus,VU
-Apteronotus magdalenensis,Animalia,Apteronotidae,Apteronotus,VU
-Gymnotus henni,Animalia,Gymnotidae,Gymnotus,VU
-Batrachoides manglae,Animalia,Batrachoididae,Batrachoides,VU
-Gambusia nicaraguensis,Animalia,Poeciliidae,Gambusia,VU
-Gambusia lemaitrei,Animalia,Poeciliidae,Gambusia,CR
-Austrofundulus guajira,Animalia,Rivulidae,Austrofundulus,VU
-Hippocampus erectus,Animalia,Syngnathidae,Hippocampus,VU
-Hippocampus ingens,Animalia,Syngnathidae,Hippocampus,VU
-Hippocampus reidi,Animalia,Syngnathidae,Hippocampus,VU
-Joturus pichardi,Animalia,Mugilidae,Joturus,VU
-Mugil incilis,Animalia,Mugilidae,Mugil,VU
-Mugil liza,Animalia,Mugilidae,Mugil,VU
-Caranx hippos,Animalia,Carangidae,Caranx,VU
-Centropomus undecimalis,Animalia,Centropomidae,Centropomus,VU
-Acanthemblemaria stephensi,Animalia,Chaenopsidae,Acanthemblemaria,VU
-Pterophyllum altum,Animalia,Cichlidae,Pterophyllum,VU
-Eugerres plumieri,Animalia,Gerreidae,Eugerres,VU
-Tigrigobius nesiotes,Animalia,Gobiidae,Tigrigobius,VU
-Anisotremus moricandi,Animalia,Haemulidae,Anisotremus,VU
-Makaira nigricans,Animalia,Istiophoridae,Makaira,VU
-Halichoeres malpelo,Animalia,Labridae,Halichoeres,VU
-Lachnolaimus maximus,Animalia,Labridae,Lachnolaimus,EN
-Lutjanus analis,Animalia,Lutjanidae,Lutjanus,VU
-Lutjanus cyanopterus,Animalia,Lutjanidae,Lutjanus,VU
-Stegastes beebei,Animalia,Pomacentridae,Stegastes,VU
-Scarus coelestinus,Animalia,Scaridae,Scarus,EN
-Scarus coeruleus,Animalia,Scaridae,Scarus,EN
-Scarus guacamaia,Animalia,Scaridae,Scarus,EN
-Cynoscion phoxocephalus,Animalia,Sciaenidae,Cynoscion,VU
-Thunnus obesus,Animalia,Scombridae,Thunnus,VU
-Epinephelus cifuentesi,Animalia,Serranidae,Epinephelus,VU
-Epinephelus itajara,Animalia,Serranidae,Epinephelus,CR
-Epinephelus striatus,Animalia,Serranidae,Epinephelus,CR
-Mycteroperca bonaci,Animalia,Serranidae,Mycteroperca,VU
-Mycteroperca cidi,Animalia,Serranidae,Mycteroperca,VU
-Mycteroperca olfax,Animalia,Serranidae,Mycteroperca,VU
-Mycteroperca venenosa,Animalia,Serranidae,Mycteroperca,VU
-Axoclinus rubinoffi,Animalia,Tripterygiidae,Axoclinus,VU
-Lepidonectes bimaculatus,Animalia,Tripterygiidae,Lepidonectes,VU
-Balistes vetula,Animalia,Balistidae,Balistes,EN
-Bolitoglossa capitana,Animalia,Plethodontidae,Bolitoglossa,CR
-Bolitoglossa guaneae,Animalia,Plethodontidae,Bolitoglossa,VU
-Bolitoglossa hiemalis,Animalia,Plethodontidae,Bolitoglossa,VU
-Bolitoglossa hypacra,Animalia,Plethodontidae,Bolitoglossa,EN
-Bolitoglossa leandrae,Animalia,Plethodontidae,Bolitoglossa,CR
-Bolitoglossa pandi,Animalia,Plethodontidae,Bolitoglossa,EN
-Bolitoglossa tamaense,Animalia,Plethodontidae,Bolitoglossa,EN
-Bolitoglossa tatamae,Animalia,Plethodontidae,Bolitoglossa,EN
-Bolitoglossa yariguiensis,Animalia,Plethodontidae,Bolitoglossa,EN
-Hyloxalus cepedai,Animalia,Dendrobatidae,Hyloxalus,VU
-Allobates ignotus,Animalia,Aromobatidae,Allobates,EN
-Allobates juanii,Animalia,Aromobatidae,Allobates,EN
-Hyloxalus picachos,Animalia,Dendrobatidae,Hyloxalus,EN
-Allobates ranoides,Animalia,Aromobatidae,Allobates,CR
-Atelopus angelito,Animalia,Bufonidae,Atelopus,CR
-Atelopus ardila,Animalia,Bufonidae,Atelopus,CR
-Atelopus arsyecue,Animalia,Bufonidae,Atelopus,CR
-Atelopus carrikeri,Animalia,Bufonidae,Atelopus,EN
-Atelopus chocoensis,Animalia,Bufonidae,Atelopus,CR
-Atelopus ebenoides,Animalia,Bufonidae,Atelopus,CR
-Atelopus elegans,Animalia,Bufonidae,Atelopus,EN
-Atelopus eusebianus,Animalia,Bufonidae,Atelopus,CR
-Atelopus famelicus,Animalia,Bufonidae,Atelopus,CR
-Atelopus farci,Animalia,Bufonidae,Atelopus,CR
-Atelopus gigas,Animalia,Bufonidae,Atelopus,CR
-Atelopus glyphus,Animalia,Bufonidae,Atelopus,CR
-Atelopus laetissimus,Animalia,Bufonidae,Atelopus,EN
-Atelopus longibrachius,Animalia,Bufonidae,Atelopus,EN
-Atelopus lozanoi,Animalia,Bufonidae,Atelopus,EN
-Atelopus marinkellei,Animalia,Bufonidae,Atelopus,EN
-Atelopus minutulus,Animalia,Bufonidae,Atelopus,CR
-Atelopus mittermeieri,Animalia,Bufonidae,Atelopus,EN
-Atelopus monohernandezii,Animalia,Bufonidae,Atelopus,CR
-Atelopus muisca,Animalia,Bufonidae,Atelopus,CR
-Atelopus nahumae,Animalia,Bufonidae,Atelopus,EN
-Atelopus nicefori,Animalia,Bufonidae,Atelopus,CR
-Atelopus nocturnus,Animalia,Bufonidae,Atelopus,CR
-Atelopus pastuso,Animalia,Bufonidae,Atelopus,CR
-Atelopus pedimarmoratus,Animalia,Bufonidae,Atelopus,CR
-Atelopus petriruizi,Animalia,Bufonidae,Atelopus,CR
-Atelopus pictiventris,Animalia,Bufonidae,Atelopus,CR
-Atelopus quimbaya,Animalia,Bufonidae,Atelopus,CR
-Atelopus sanjosei,Animalia,Bufonidae,Atelopus,CR
-Atelopus sernai,Animalia,Bufonidae,Atelopus,CR
-Atelopus simulatus,Animalia,Bufonidae,Atelopus,CR
-Atelopus sonsonensis,Animalia,Bufonidae,Atelopus,CR
-Atelopus subornatus,Animalia,Bufonidae,Atelopus,CR
-Osornophryne percrassa,Animalia,Bufonidae,Osornophryne,VU
-Osornophryne talipes,Animalia,Bufonidae,Osornophryne,VU
-Rhaebo andinophrynoides,Animalia,Bufonidae,Rhaebo,VU
-Rhaebo atelopoides,Animalia,Bufonidae,Rhaebo,CR
-Rhaebo blombergi,Animalia,Bufonidae,Rhaebo,CR
-Rhaebo colomai,Animalia,Bufonidae,Rhaebo,EN
-Rhinella acrolopha,Animalia,Bufonidae,Rhinella,EN
-Rhinella cristinae,Animalia,Bufonidae,Rhinella,EN
-Rhinella lindae,Animalia,Bufonidae,Rhinella,EN
-Rhinella macrorhina,Animalia,Bufonidae,Rhinella,VU
-Rhinella nicefori,Animalia,Bufonidae,Rhinella,EN
-Rhinella rostrata,Animalia,Bufonidae,Rhinella,CR
-Rhinella ruizi,Animalia,Bufonidae,Rhinella,VU
-Rhinella tenrec,Animalia,Bufonidae,Rhinella,EN
-Centrolene sanchezi,Animalia,Centrolenidae,Centrolene,EN
-Centrolene ballux,Animalia,Centrolenidae,Centrolene,EN
-Centrolene geckoidea,Animalia,Centrolenidae,Centrolene,CR
-Centrolene heloderma,Animalia,Centrolenidae,Centrolene,VU
-Centrolene huilense,Animalia,Centrolenidae,Centrolene,EN
-Centrolene medemi,Animalia,Centrolenidae,Centrolene,EN
-Centrolene petrophilum,Animalia,Centrolenidae,Centrolene,EN
-Centrolene quindianum,Animalia,Centrolenidae,Centrolene,VU
-Centrolene lynchi,Animalia,Centrolenidae,Centrolene,EN
-Centrolene solitaria,Animalia,Centrolenidae,Centrolene,EN
-Nymphargus balionota,Animalia,Centrolenidae,Nymphargus,VU
-Cochranella litoralis,Animalia,Centrolenidae,Cochranella,VU
-Nymphargus megistus,Animalia,Centrolenidae,Nymphargus,EN
-Cochranella xanthocheridia,Animalia,Centrolenidae,Cochranella,VU
-Hyalinobatrachium esmeralda,Animalia,Centrolenidae,Hyalinobatrachium,EN
-Ikakogi tayrona,Animalia,Centrolenidae,Ikakogi,VU
-Nymphargus armatus,Animalia,Centrolenidae,Nymphargus,CR
-Nymphargus caucanus,Animalia,Centrolenidae,Nymphargus,EN
-Nymphargus cristinae,Animalia,Centrolenidae,Nymphargus,EN
-Nymphargus garciae,Animalia,Centrolenidae,Nymphargus,VU
-Nymphargus luminosus,Animalia,Centrolenidae,Nymphargus,EN
-Nymphargus luteopunctatus,Animalia,Centrolenidae,Nymphargus,EN
-Nymphargus megacheirus,Animalia,Centrolenidae,Nymphargus,EN
-Nymphargus prasinus,Animalia,Centrolenidae,Nymphargus,VU
-Nymphargus rosada,Animalia,Centrolenidae,Nymphargus,VU
-Nymphargus ruizi,Animalia,Centrolenidae,Nymphargus,VU
-Rulyrana adiazeta,Animalia,Centrolenidae,Rulyrana,VU
-Sachatamia electrops,Animalia,Centrolenidae,Sachatamia,EN
-Sachatamia punctulata,Animalia,Centrolenidae,Sachatamia,VU
-Atopophrynus syntomopus,Animalia,Strabomantidae,Atopophrynus,CR
-Geobatrachus walkeri,Animalia,Strabomantidae,Geobatrachus,EN
-Niceforonia adenobrachia,Animalia,Strabomantidae,Niceforonia,EN
-Niceforonia brunnea,Animalia,Strabomantidae,Niceforonia,EN
-Niceforonia dolops,Animalia,Strabomantidae,Niceforonia,VU
-Niceforonia latens,Animalia,Strabomantidae,Niceforonia,VU
-Niceforonia nana,Animalia,Strabomantidae,Niceforonia,VU
-Pristimantis actinolaimus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis acutirostris,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis aemulatus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis affinis,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis alalocophus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis albericoi,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis angustilineatus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis anolirex,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis apiculatus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis aurantiguttatus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis bacchus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis batrachites,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis bellona,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis bernali,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis bicolor,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis cacao,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis capitonis,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis caprifer,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis carlossanchezi,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis carmelitae,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis carranguerorum,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis celator,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis chrysops,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis colomai,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis colonensis,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis corniger,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis cristinae,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis cuentasi,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis degener,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis deinops,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis delicatus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis diaphonus,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis diogenes,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis dorado,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis dorsopictus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis duellmani,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis duende,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis elegans,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis eremitus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis eriphus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis fallax,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis gladiator,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis gracilis,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis grandiceps,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis hectus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis helvolus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis hernandezi,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis hybotragus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis jaimei,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis johannesdei,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis jorgevelosai,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis juanchoi,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis kelephus,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis lasalleorum,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis laticlavius,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis lemur,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis leopardus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis leucopus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis lichenoides,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis loustes,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis lutitus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis maculosus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis mars,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis merostictus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis mnionaetes,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis molybrignus,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis myops,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis ocellatus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis parectatus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis phalarus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis phragmipleuron,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis platychilus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis polemistes,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis polychrus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis ptochus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis pugnax,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis quantus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis quinquagesimus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis racemus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis reclusas,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis renjiforum,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis repens,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis rivasi,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis rosadoi,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis ruedai,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis ruthveni,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis satagius,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis scoloblepharus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis scolodiscus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis signifer,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis silverstonei,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis simoteriscus,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis siopelus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis spilogaster,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis suetus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis sulculus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis supernatis,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis susaguae,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis tamsitti,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis torrenticola,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis tribulosus,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis uisae,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis veletis,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis viridicans,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis viridis,Animalia,Strabomantidae,Pristimantis,EN
-Pristimantis xeniolum,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis xestus,Animalia,Strabomantidae,Pristimantis,VU
-Pristimantis xylochobates,Animalia,Strabomantidae,Pristimantis,CR
-Pristimantis zoilae,Animalia,Strabomantidae,Pristimantis,EN
-Strabomantis anatipes,Animalia,Strabomantidae,Strabomantis,VU
-Strabomantis bufoniformis,Animalia,Strabomantidae,Strabomantis,EN
-Strabomantis cadenai,Animalia,Strabomantidae,Strabomantis,CR
-Strabomantis cheiroplethus,Animalia,Strabomantidae,Strabomantis,EN
-Strabomantis cornutus,Animalia,Strabomantidae,Strabomantis,VU
-Strabomantis ingeri,Animalia,Strabomantidae,Strabomantis,VU
-Strabomantis necerus,Animalia,Strabomantidae,Strabomantis,CR
-Strabomantis necopinus,Animalia,Strabomantidae,Strabomantis,VU
-Strabomantis ruizi,Animalia,Strabomantidae,Strabomantis,EN
-Tachiramantis douglasi,Animalia,Strabomantidae,Tachiramantis,VU
-Tachiramantis lentiginosus,Animalia,Strabomantidae,Tachiramantis,EN
-Andinobates bombetes,Animalia,Dendrobatidae,Andinobates,VU
-Andinobates cassidyhornae,Animalia,Dendrobatidae,Andinobates,VU
-Andinobates daleswansoni,Animalia,Dendrobatidae,Andinobates,EN
-Andinobates dorisswansonae,Animalia,Dendrobatidae,Andinobates,VU
-Andinobates opisthomelas,Animalia,Dendrobatidae,Andinobates,VU
-Andinobates tolimense,Animalia,Dendrobatidae,Andinobates,VU
-Andinobates victimatus,Animalia,Dendrobatidae,Andinobates,EN
-Andinobates viridis,Animalia,Dendrobatidae,Andinobates,CR
-Andinobates virolinensis,Animalia,Dendrobatidae,Andinobates,VU
-Colostethus agilis,Animalia,Dendrobatidae,Colostethus,EN
-Colostethus imbricolus,Animalia,Dendrobatidae,Colostethus,EN
-Colostethus latinasus,Animalia,Dendrobatidae,Colostethus,CR
-Colostethus mertensi,Animalia,Dendrobatidae,Colostethus,VU
-Colostethus thorntoni,Animalia,Dendrobatidae,Colostethus,VU
-Colostethus ucumari,Animalia,Dendrobatidae,Colostethus,EN
-Ectopoglossus atopoglossus,Animalia,Dendrobatidae,Ectopoglossus,CR
-Ectopoglossus lacrimosus,Animalia,Dendrobatidae,Ectopoglossus,VU
-Hyloxalus abditaurantius,Animalia,Dendrobatidae,Hyloxalus,CR
-Hyloxalus chocoensis,Animalia,Dendrobatidae,Hyloxalus,EN
-Hyloxalus edwardsi,Animalia,Dendrobatidae,Hyloxalus,CR
-Hyloxalus fascianigrus,Animalia,Dendrobatidae,Hyloxalus,VU
-Hyloxalus pinguis,Animalia,Dendrobatidae,Hyloxalus,EN
-Hyloxalus ramosi,Animalia,Dendrobatidae,Hyloxalus,EN
-Hyloxalus ruizi,Animalia,Dendrobatidae,Hyloxalus,CR
-Hyloxalus vergeli,Animalia,Dendrobatidae,Hyloxalus,VU
-Leucostethus ramirezi,Animalia,Dendrobatidae,Leucostethus,EN
-Oophaga anchicayensis,Animalia,Dendrobatidae,Oophaga,EN
-Oophaga andresi,Animalia,Dendrobatidae,Oophaga,EN
-Oophaga histrionica,Animalia,Dendrobatidae,Oophaga,CR
-Oophaga lehmanni,Animalia,Dendrobatidae,Oophaga,CR
-Oophaga occultator,Animalia,Dendrobatidae,Oophaga,CR
-Oophaga solanensis,Animalia,Dendrobatidae,Oophaga,VU
-Paruwrobates andinus,Animalia,Dendrobatidae,Paruwrobates,CR
-Phyllobates bicolor,Animalia,Dendrobatidae,Phyllobates,EN
-Phyllobates terribilis,Animalia,Dendrobatidae,Phyllobates,EN
-Silverstoneia dalyi,Animalia,Dendrobatidae,Silverstoneia,EN
-Silverstoneia erasmios,Animalia,Dendrobatidae,Silverstoneia,EN
-Silverstoneia nubicola,Animalia,Dendrobatidae,Silverstoneia,VU
-Silverstoneia punctiventris,Animalia,Dendrobatidae,Silverstoneia,EN
-Diasporus anthrax,Animalia,Eleutherodactylidae,Diasporus,VU
-Cryptobatrachus boulengeri,Animalia,Hemiphractidae,Cryptobatrachus,VU
-Cryptobatrachus pedroruizi,Animalia,Hemiphractidae,Cryptobatrachus,EN
-Cryptobatrachus ruthveni,Animalia,Hemiphractidae,Cryptobatrachus,EN
-Gastrotheca angustifrons,Animalia,Hemiphractidae,Gastrotheca,CR
-Gastrotheca antomia,Animalia,Hemiphractidae,Gastrotheca,CR
-Gastrotheca aureomaculata,Animalia,Hemiphractidae,Gastrotheca,EN
-Gastrotheca bufona,Animalia,Hemiphractidae,Gastrotheca,VU
-Gastrotheca cornuta,Animalia,Hemiphractidae,Gastrotheca,EN
-Gastrotheca dendronastes,Animalia,Hemiphractidae,Gastrotheca,EN
-Gastrotheca espeletia,Animalia,Hemiphractidae,Gastrotheca,EN
-Gastrotheca helenae,Animalia,Hemiphractidae,Gastrotheca,EN
-Gastrotheca orophylax,Animalia,Hemiphractidae,Gastrotheca,VU
-Gastrotheca trachyceps,Animalia,Hemiphractidae,Gastrotheca,EN
-Hemiphractus johnsoni,Animalia,Hemiphractidae,Hemiphractus,EN
-Hyloscirtus japreria,Animalia,Hylidae,Hyloscirtus,EN
-Hyloscirtus antioquia,Animalia,Hylidae,Hyloscirtus,VU
-Hyloscirtus callipeza,Animalia,Hylidae,Hyloscirtus,VU
-Hyloscirtus caucanus,Animalia,Hylidae,Hyloscirtus,EN
-Hyloscirtus denticulentus,Animalia,Hylidae,Hyloscirtus,VU
-Hyloscirtus lynchi,Animalia,Hylidae,Hyloscirtus,CR
-Hyloscirtus pantostictus,Animalia,Hylidae,Hyloscirtus,CR
-Hyloscirtus piceigularis,Animalia,Hylidae,Hyloscirtus,EN
-Hyloscirtus platydactylus,Animalia,Hylidae,Hyloscirtus,VU
-Hyloscirtus psarolaimus,Animalia,Hylidae,Hyloscirtus,VU
-Hyloscirtus sarampiona,Animalia,Hylidae,Hyloscirtus,EN
-Hyloscirtus simmonsi,Animalia,Hylidae,Hyloscirtus,VU
-Hyloscirtus tigrinus,Animalia,Hylidae,Hyloscirtus,EN
-Hyloscirtus torrenticola,Animalia,Hylidae,Hyloscirtus,VU
-Epicrionops columbianus,Animalia,Rhinatrematidae,Epicrionops,EN
-Epicrionops parkeri,Animalia,Rhinatrematidae,Epicrionops,VU
-Anolis calimae,Animalia,Dactyloidae,Anolis,EN
-Anolis inderenae,Animalia,Dactyloidae,Anolis,CR
-Anolis ruizii,Animalia,Dactyloidae,Anolis,EN
-Atractus nicefori,Animalia,Colubridae,Atractus,VU
-Atractus orcesi,Animalia,Colubridae,Atractus,VU
-Atractus punctiventris,Animalia,Colubridae,Atractus,EN
-Coniophanes andresensis,Animalia,Colubridae,Coniophanes,CR
-Dendrophidion boshelli,Animalia,Colubridae,Dendrophidion,CR
-Saphenophis sneiderni,Animalia,Colubridae,Saphenophis,EN
-Synophis plectovertebralis,Animalia,Colubridae,Synophis,CR
-Micrurus medemi,Animalia,Elapidae,Micrurus,EN
-Micrurus sangilensis,Animalia,Elapidae,Micrurus,VU
-Alopoglossus danieli,Animalia,Alopoglossidae,Alopoglossus,CR
-Anadia antioquensis,Animalia,Gymnophthalmidae,Anadia,VU
-Anadia bogotensis,Animalia,Gymnophthalmidae,Anadia,VU
-Anadia pamplonensis,Animalia,Gymnophthalmidae,Anadia,EN
-Andinosaura laevis,Animalia,Gymnophthalmidae,Andinosaura,VU
-Riama columbiana,Animalia,Gymnophthalmidae,Riama,EN
-Riama simotera,Animalia,Gymnophthalmidae,Riama,EN
-Enyalioides oshaughnessyi,Animalia,Hoplocercidae,Enyalioides,VU
-Enyalioides annularis,Animalia,Hoplocercidae,Enyalioides,VU
-Enyalioides groi,Animalia,Hoplocercidae,Enyalioides,EN
-Aristelliger georgeensis,Animalia,Sphaerodactylidae,Aristelliger,VU
-Lepidoblepharis miyatai,Animalia,Sphaerodactylidae,Lepidoblepharis,EN
-Lepidoblepharis williamsi,Animalia,Sphaerodactylidae,Lepidoblepharis,EN
-Bothrocophias campbelli,Animalia,Viperidae,Bothrocophias,VU
-Mesoclemmys dahli,Animalia,Chelidae,Mesoclemmys,EN
-Caretta caretta,Animalia,Cheloniidae,Caretta,CR
-Chelonia mydas,Animalia,Cheloniidae,Chelonia,EN
-Eretmochelys imbricata,Animalia,Cheloniidae,Eretmochelys,CR
-Lepidochelys olivacea,Animalia,Cheloniidae,Lepidochelys,VU
-Dermochelys coriacea,Animalia,Dermochelyidae,Dermochelys,CR
-Rhinoclemmys diademata,Animalia,Geoemydidae,Rhinoclemmys,EN
-Kinosternon dunni,Animalia,Kinosternidae,Kinosternon,VU
-Podocnemis erythrocephala,Animalia,Podocnemididae,Podocnemis,VU
-Podocnemis expansa,Animalia,Podocnemididae,Podocnemis,CR
-Podocnemis lewyana,Animalia,Podocnemididae,Podocnemis,CR
-Podocnemis unifilis,Animalia,Podocnemididae,Podocnemis,EN
-Chelonoidis carbonarius,Animalia,Testudinidae,Chelonoidis,VU
-Melanosuchus niger,Animalia,Alligatoridae,Melanosuchus,VU
-Crocodylus acutus,Animalia,Crocodylidae,Crocodylus,EN
-Crocodylus intermedius,Animalia,Crocodylidae,Crocodylus,CR
-Crypturellus kerriae,Animalia,Tinamidae,Crypturellus,VU
-Tinamus osgoodi,Animalia,Tinamidae,Tinamus,EN
-Anas georgica,Animalia,Anatidae,Anas,VU
-Netta erythrophthalma,Animalia,Anatidae,Netta,CR
-Oressochen jubatus,Animalia,Anatidae,Oressochen,VU
-Oxyura jamaicensis,Animalia,Anatidae,Oxyura,EN
-Sarkidiornis sylvicola,Animalia,Anatidae,Sarkidiornis,EN
-Spatula cyanoptera,Animalia,Anatidae,Spatula,EN
-Chauna chavaria,Animalia,Anhimidae,Chauna,VU
-Crax alberti,Animalia,Cracidae,Crax,CR
-Crax daubentoni,Animalia,Cracidae,Crax,EN
-Crax globulosa,Animalia,Cracidae,Crax,EN
-Crax rubra,Animalia,Cracidae,Crax,VU
-Pauxi pauxi,Animalia,Cracidae,Pauxi,EN
-Penelope ortoni,Animalia,Cracidae,Penelope,VU
-Penelope perspicax,Animalia,Cracidae,Penelope,EN
-Odontophorus dialeucos,Animalia,Odontophoridae,Odontophorus,EN
-Odontophorus melanonotus,Animalia,Odontophoridae,Odontophorus,EN
-Odontophorus strophium,Animalia,Odontophoridae,Odontophorus,EN
-Podiceps occipitalis,Animalia,Podicipedidae,Podiceps,CR
-Phoenicopterus ruber,Animalia,Phoenicopteridae,Phoenicopterus,EN
-Sula granti,Animalia,Sulidae,Sula,VU
-Sula leucogaster,Animalia,Sulidae,Sula,EN
-Egretta rufescens,Animalia,Ardeidae,Egretta,VU
-Vultur gryphus,Animalia,Cathartidae,Vultur,CR
-Buteogallus solitarius,Animalia,Accipitridae,Buteogallus,CR
-Circus cinereus,Animalia,Accipitridae,Circus,EN
-Spizaetus isidori,Animalia,Accipitridae,Spizaetus,EN
-Porphyriops melanops,Animalia,Rallidae,Porphyriops,EN
-Rallus semiplumbeus,Animalia,Rallidae,Rallus,EN
-Creagrus furcatus,Animalia,Laridae,Creagrus,EN
-Leptotila conoveri,Animalia,Columbidae,Leptotila,VU
-Leptotila jamaicensis,Animalia,Columbidae,Leptotila,CR
-Zentrygon goldmani,Animalia,Columbidae,Zentrygon,VU
-Neomorphus radiolosus,Animalia,Cuculidae,Neomorphus,EN
-Glaucidium nubicola,Animalia,Strigidae,Glaucidium,VU
-Anthocephala berlepschi,Animalia,Trochilidae,Anthocephala,VU
-Anthocephala floriceps,Animalia,Trochilidae,Anthocephala,VU
-Campylopterus phainopeplus,Animalia,Trochilidae,Campylopterus,VU
-Chrysuronia lilliae,Animalia,Trochilidae,Chrysuronia,EN
-Coeligena orina,Animalia,Trochilidae,Coeligena,EN
-Eriocnemis godini,Animalia,Trochilidae,Eriocnemis,CR
-Eriocnemis isabellae,Animalia,Trochilidae,Eriocnemis,CR
-Eriocnemis mirabilis,Animalia,Trochilidae,Eriocnemis,EN
-Goldmania bella,Animalia,Trochilidae,Goldmania,VU
-Oxypogon cyanolaemus,Animalia,Trochilidae,Oxypogon,EN
-Oxypogon stubelii,Animalia,Trochilidae,Oxypogon,EN
-Saucerottia castaneiventris,Animalia,Trochilidae,Saucerottia,EN
-Galbula pastazae,Animalia,Galbulidae,Galbula,VU
-Capito hypoleucus,Animalia,Capitonidae,Capito,EN
-Capito squamatus,Animalia,Capitonidae,Capito,VU
-Veniliornis callonotus,Animalia,Picidae,Veniliornis,EN
-Campephilus gayaquilensis,Animalia,Picidae,Campephilus,EN
-Andigena hypoglauca,Animalia,Ramphastidae,Andigena,VU
-Andigena laminirostris,Animalia,Ramphastidae,Andigena,EN
-Micrastur plumbeus,Animalia,Falconidae,Micrastur,EN
-Ara ambiguus,Animalia,Psittacidae,Ara,EN
-Ara militaris,Animalia,Psittacidae,Ara,VU
-Bolborhynchus ferrugineifrons,Animalia,Psittacidae,Bolborhynchus,VU
-Hapalopsittaca amazonina,Animalia,Psittacidae,Hapalopsittaca,VU
-Hapalopsittaca fuertesi,Animalia,Psittacidae,Hapalopsittaca,CR
-Leptosittaca branickii,Animalia,Psittacidae,Leptosittaca,VU
-Ognorhynchus icterotis,Animalia,Psittacidae,Ognorhynchus,EN
-Pionus fuscus,Animalia,Psittacidae,Pionus,EN
-Pyrrhura calliptera,Animalia,Psittacidae,Pyrrhura,VU
-Pyrrhura viridicata,Animalia,Psittacidae,Pyrrhura,EN
-Touit stictopterus,Animalia,Psittacidae,Touit,VU
-Eremophila alpestris,Animalia,Alaudidae,Eremophila,EN
-Cardinalis phoeniceus,Animalia,Cardinalidae,Cardinalis,VU
-Cyanolyca pulchra,Animalia,Corvidae,Cyanolyca,VU
-Ampelion rufaxilla,Animalia,Cotingidae,Ampelion,VU
-Cephalopterus penduliger,Animalia,Cotingidae,Cephalopterus,EN
-Doliornis remseni,Animalia,Cotingidae,Doliornis,EN
-Lipaugus weberi,Animalia,Cotingidae,Lipaugus,CR
-Pyroderus scutatus,Animalia,Cotingidae,Pyroderus,VU
-Ammodramus savannarum,Animalia,Passerellidae,Ammodramus,EN
-Arremon schlegeli,Animalia,Passerellidae,Arremon,VU
-Atlapetes blancae,Animalia,Passerellidae,Atlapetes,CR
-Atlapetes flaviceps,Animalia,Passerellidae,Atlapetes,VU
-Atlapetes fuscoolivaceus,Animalia,Passerellidae,Atlapetes,VU
-Bangsia flavovirens,Animalia,Thraupidae,Bangsia,VU
-Chlorospingus inornatus,Animalia,Passerellidae,Chlorospingus,VU
-Spinus cucullatus,Animalia,Fringillidae,Spinus,EN
-Asthenes perijana,Animalia,Furnariidae,Asthenes,EN
-Clibanornis rufipectus,Animalia,Furnariidae,Clibanornis,VU
-Margarornis bellulus,Animalia,Furnariidae,Margarornis,VU
-Grallaria alleni,Animalia,Grallariidae,Grallaria,EN
-Grallaria bangsi,Animalia,Grallariidae,Grallaria,VU
-Grallaria gigantea,Animalia,Grallariidae,Grallaria,VU
-Grallaria kaestneri,Animalia,Grallariidae,Grallaria,EN
-Grallaria milleri,Animalia,Grallariidae,Grallaria,EN
-Grallaria rufocinerea,Animalia,Grallariidae,Grallaria,VU
-Grallaria urraoensis,Animalia,Grallariidae,Grallaria,EN
-Hypopyrrhus pyrohypogaster,Animalia,Icteridae,Hypopyrrhus,VU
-Icterus icterus,Animalia,Icteridae,Icterus,VU
-Icterus leucopteryx,Animalia,Icteridae,Icterus,CR
-Macroagelaius subalaris,Animalia,Icteridae,Macroagelaius,EN
-Psarocolius cassini,Animalia,Icteridae,Psarocolius,EN
-Basileuterus ignotus,Animalia,Parulidae,Basileuterus,EN
-Myiothlypis basilica,Animalia,Parulidae,Myiothlypis,EN
-Myiothlypis conspicillata,Animalia,Parulidae,Myiothlypis,VU
-Setophaga cerulea,Animalia,Parulidae,Setophaga,VU
-Chloropipo flavicapilla,Animalia,Pipridae,Chloropipo,VU
-Scytalopus canus,Animalia,Rhinocryptidae,Scytalopus,EN
-Scytalopus panamensis,Animalia,Rhinocryptidae,Scytalopus,VU
-Scytalopus perijanus,Animalia,Rhinocryptidae,Scytalopus,VU
-Scytalopus rodriguezi,Animalia,Rhinocryptidae,Scytalopus,VU
-Scytalopus sanctaemartae,Animalia,Rhinocryptidae,Scytalopus,VU
-Scytalopus stilesi,Animalia,Rhinocryptidae,Scytalopus,EN
-Clytoctantes alixii,Animalia,Thamnophilidae,Clytoctantes,VU
-Dysithamnus occidentalis,Animalia,Thamnophilidae,Dysithamnus,VU
-Xenornis setifrons,Animalia,Thamnophilidae,Xenornis,VU
-Bangsia aureocincta,Animalia,Thraupidae,Bangsia,VU
-Bangsia melanochlamys,Animalia,Thraupidae,Bangsia,VU
-Chlorochrysa nitidissima,Animalia,Thraupidae,Chlorochrysa,VU
-Creurgops verticalis,Animalia,Thraupidae,Creurgops,VU
-Dacnis berlepschi,Animalia,Thraupidae,Dacnis,EN
-Dacnis hartlaubi,Animalia,Thraupidae,Dacnis,VU
-Diglossa gloriosissima,Animalia,Thraupidae,Diglossa,VU
-Saltator cinctus,Animalia,Thraupidae,Saltator,VU
-Tangara fucosa,Animalia,Thraupidae,Tangara,VU
-Tephrophilus wetmorei,Animalia,Thraupidae,Tephrophilus,VU
-Cistothorus apolinari,Animalia,Troglodytidae,Cistothorus,CR
-Henicorhina negreti,Animalia,Troglodytidae,Henicorhina,VU
-Thryophilus nicefori,Animalia,Troglodytidae,Thryophilus,CR
-Thryophilus sernai,Animalia,Troglodytidae,Thryophilus,EN
-Troglodytes monticola,Animalia,Troglodytidae,Troglodytes,EN
-Myadestes coloratus,Animalia,Turdidae,Myadestes,VU
-Attila torridus,Animalia,Tyrannidae,Attila,VU
-Muscisaxicola maculirostris,Animalia,Tyrannidae,Muscisaxicola,EN
-Myiotheretes pernix,Animalia,Tyrannidae,Myiotheretes,EN
-Phylloscartes lanyoni,Animalia,Tyrannidae,Phylloscartes,EN
-Polystictus pectoralis,Animalia,Tyrannidae,Polystictus,VU
-Pseudocolopteryx acutipennis,Animalia,Tyrannidae,Pseudocolopteryx,CR
-Vireo approximans,Animalia,Vireonidae,Vireo,VU
-Vireo caribaeus,Animalia,Vireonidae,Vireo,VU
-Vireo masteri,Animalia,Vireonidae,Vireo,VU
-Marmosops handleyi,Animalia,Didelphidae,Marmosops,CR
-Caenolestes convelatus,Animalia,Caenolestidae,Caenolestes,VU
-Saccopteryx antioquensis,Animalia,Emballonuridae,Saccopteryx,EN
-Lonchorhina marinkellei,Animalia,Phyllostomidae,Lonchorhina,VU
-Trichechus inunguis,Animalia,Trichechidae,Trichechus,EN
-Trichechus manatus,Animalia,Trichechidae,Trichechus,EN
-Lycalopex culpaeus,Animalia,Canidae,Lycalopex,VU
-Leopardus tigrinus,Animalia,Felidae,Leopardus,VU
-Panthera onca,Animalia,Felidae,Panthera,VU
-Lontra longicaudis,Animalia,Mustelidae,Lontra,VU
-Pteronura brasiliensis,Animalia,Mustelidae,Pteronura,EN
-Tremarctos ornatus,Animalia,Ursidae,Tremarctos,VU
-Tapirus pinchaque,Animalia,Tapiridae,Tapirus,EN
-Balaenoptera borealis,Animalia,Balaenopteridae,Balaenoptera,EN
-Balaenoptera musculus,Animalia,Balaenopteridae,Balaenoptera,EN
-Balaenoptera physalus,Animalia,Balaenopteridae,Balaenoptera,EN
-Megaptera novaeangliae,Animalia,Balaenopteridae,Megaptera,VU
-Sotalia fluviatilis,Animalia,Delphinidae,Sotalia,EN
-Inia geoffrensis,Animalia,Iniidae,Inia,EN
-Physeter macrocephalus,Animalia,Physeteridae,Physeter,VU
-Aotus brumbacki,Animalia,Aotidae,Aotus,VU
-Aotus griseimembra,Animalia,Aotidae,Aotus,VU
-Aotus lemurinus,Animalia,Aotidae,Aotus,VU
-Aotus zonalis,Animalia,Aotidae,Aotus,VU
-Ateles hybridus,Animalia,Atelidae,Ateles,CR
-Callimico goeldii,Animalia,Callitrichidae,Callimico,VU
-Saguinus leucopus,Animalia,Callitrichidae,Saguinus,VU
-Saguinus oedipus,Animalia,Callitrichidae,Saguinus,CR
-Cebus malitiosus,Animalia,Cebidae,Cebus,EN
-Cebus versicolor,Animalia,Cebidae,Cebus,EN
-Cheracebus medemi,Animalia,Pitheciidae,Cheracebus,VU
-Pithecia milleri,Animalia,Pitheciidae,Pithecia,VU
-Plecturocebus caquetensis,Animalia,Pitheciidae,Plecturocebus,CR
-Plecturocebus discolor,Animalia,Pitheciidae,Plecturocebus,VU
-Plecturocebus ornatus,Animalia,Pitheciidae,Plecturocebus,VU
-Thomasomys bombycinus,Animalia,Cricetidae,Thomasomys,VU
-Thomasomys monochromos,Animalia,Cricetidae,Thomasomys,VU
-Santamartamys rufodorsalis,Animalia,Echimyidae,Santamartamys,CR
-Dinomys branickii,Animalia,Dinomyidae,Dinomys,VU
-Coendou vestitus,Animalia,Erethizontidae,Coendou,VU
-Lepanthes golondrina,Plantae,Orchidaceae,Lepanthes,EN
-Miconia jentaculorum,Plantae,Melastomataceae,Miconia,CR
-Pitcairnia exserta,Plantae,Bromeliaceae,Pitcairnia,VU
-Salvia cuatrecasasiana,Plantae,Lamiaceae,Salvia,EN
-Alouatta palliata,Animalia,Atelidae,Alouatta,VU
-Anotomys leander,Animalia,Cricetidae,Anotomys,EN
-Aotus nancymaae,Animalia,Aotidae,Aotus,EN
-Ateles belzebuth,Animalia,Atelidae,Ateles,EN
-Ateles fusciceps,Animalia,Atelidae,Ateles,CR
-Bassaricyon neblina,Animalia,Procyonidae,Bassaricyon,VU
-Cabassous unicinctus,Animalia,Chlamyphoridae,Cabassous,VU
-Cebuella pygmaea,Animalia,Callitrichidae,Cebuella,VU
-Cebus capucinus,Animalia,Cebidae,Cebus,VU
-Chilonatalus micropus,Animalia,Natalidae,Chilonatalus,EN
-Dasypus sabanicola,Animalia,Dasypodidae,Dasypus,VU
-Gracilinanus dryas,Animalia,Didelphidae,Gracilinanus,EN
-Hydrochoerus isthmius,Animalia,Caviidae,Hydrochoerus,VU
-Lagothrix lagothricha,Animalia,Atelidae,Lagothrix,VU
-Leptonycteris curasoae,Animalia,Phyllostomidae,Leptonycteris,VU
-Lonchorhina orinocensis,Animalia,Phyllostomidae,Lonchorhina,VU
-Marmosa xerophila,Animalia,Didelphidae,Marmosa,EN
-Mazama rufina,Animalia,Cervidae,Mazama,VU
-Neogale felipei,Animalia,Mustelidae,Neogale,VU
-Myrmecophaga tridactyla,Animalia,Myrmecophagidae,Myrmecophaga,VU
-Priodontes maximus,Animalia,Chlamyphoridae,Priodontes,VU
-Pudu mephistophiles,Animalia,Cervidae,Pudu,EN
-Sotalia guianensis,Animalia,Delphinidae,Sotalia,VU
-Tapirus bairdii,Animalia,Tapiridae,Tapirus,EN
-Tapirus terrestris,Animalia,Tapiridae,Tapirus,VU
-Tayassu pecari,Animalia,Tayassuidae,Tayassu,EN
-Thomasomys hylophilus,Animalia,Cricetidae,Thomasomys,EN
-Neoplatymops mattogrossensis,Animalia,Molossidae,Neoplatymops,EN
-Natalus mexicanus,Animalia,Natalidae,Natalus,EN
-Cheracebus lucifer,Animalia,Pitheciidae,Cheracebus,VU
-Gustavia nana subsp. nana,Plantae,Lecythidaceae,Gustavia,VU
-Gustavia speciosa subsp. occidentalis,Plantae,Lecythidaceae,Gustavia,EN
-Salvia amethystina subsp. sumapacis,Plantae,Lamiaceae,Salvia,EN
-Salvia amethystina subsp. vetasiana,Plantae,Lamiaceae,Salvia,EN
-Salvia aratocensis subsp. suratensis,Plantae,Lamiaceae,Salvia,EN
-Salvia camarifolia subsp. camarifolia,Plantae,Lamiaceae,Salvia,EN
-Salvia camarifolia subsp. ibiricensis,Plantae,Lamiaceae,Salvia,EN
-Salvia cyanocephala subsp. cyanocephala,Plantae,Lamiaceae,Salvia,CR
-Salvia cyanocephala subsp. macrostigmantha,Plantae,Lamiaceae,Salvia,VU
-Salvia pauciserrata subsp. lasiocalicina,Plantae,Lamiaceae,Salvia,VU
-Salvia erythrostoma subsp. erythrostoma,Plantae,Lamiaceae,Salvia,EN
-Salvia erythrostoma subsp. isabelina,Plantae,Lamiaceae,Salvia,VU
-Salvia gachantivana subsp. gachantivana,Plantae,Lamiaceae,Salvia,EN
-Salvia melaleuca subsp. melaleuca,Plantae,Lamiaceae,Salvia,VU
-Salvia melaleuca subsp. totensis,Plantae,Lamiaceae,Salvia,VU
-Salvia orthostachys subsp. orthostachys,Plantae,Lamiaceae,Salvia,VU
-Salvia orthostachys subsp. soatensis,Plantae,Lamiaceae,Salvia,VU
-Salvia pauciserrata subsp. derasa,Plantae,Lamiaceae,Salvia,VU
-Salvia pauciserrata subsp. erythrocalicina,Plantae,Lamiaceae,Salvia,VU
-Salvia pauciserrata subsp. pauciserrata,Plantae,Lamiaceae,Salvia,VU
-Salvia rubescens subsp. colombiana,Plantae,Lamiaceae,Salvia,VU
-Salvia rubescens subsp. dolichothrix,Plantae,Lamiaceae,Salvia,VU
-Salvia rufula subsp. paezorum,Plantae,Lamiaceae,Salvia,EN
-Salvia sphacelioides subsp. anaglypha,Plantae,Lamiaceae,Salvia,VU
-Salvia sphacelioides subsp. paxfluminensis,Plantae,Lamiaceae,Salvia,EN
-Salvia sphacelioides subsp. sphacelioides,Plantae,Lamiaceae,Salvia,VU
-Salvia sphacelioides subsp. trianae,Plantae,Lamiaceae,Salvia,CR
-Bactris gasipaes var. chichagui,Plantae,Arecaceae,Bactris,VU
-Pterourus cacicus cacicus,Animalia,Papilionidae,Pterourus,EN
-Trachemys venusta callirostris,Animalia,Emydidae,Trachemys,VU
-Kinosternon scorpioides albogulare,Animalia,Kinosternidae,Kinosternon,VU
-Crypturellus obsoletus castaneus,Animalia,Tinamidae,Crypturellus,CR
-Molothrus aeneus armenti,Animalia,Icteridae,Molothrus,VU
-Odocoileus virginianus tropicalis,Animalia,Cervidae,Odocoileus,CR
-Myrmecophaga tridactyla artata,Animalia,Myrmecophagidae,Myrmecophaga,VU
-Tapirus terrestris colombianus,Animalia,Tapiridae,Tapirus,CR
-Alouatta palliata aequatorialis,Animalia,Atelidae,Alouatta,VU
-Ateles fusciceps rufiventris,Animalia,Atelidae,Ateles,EN
+nombre_cientifico,genero,familia,categoria,fuente
+Acoelorraphe wrightii,Acoelorraphe,Arecaceae,VU,Res. 0126/2024 MADS
+Aiphanes acaulis,Aiphanes,Arecaceae,EN,Res. 0126/2024 MADS
+Aiphanes buenaventurae,Aiphanes,Arecaceae,EN,Res. 0126/2024 MADS
+Aiphanes duquei,Aiphanes,Arecaceae,EN,Res. 0126/2024 MADS
+Aiphanes gelatinosa,Aiphanes,Arecaceae,EN,Res. 0126/2024 MADS
+Aiphanes graminifolia,Aiphanes,Arecaceae,CR,Res. 0126/2024 MADS
+Aiphanes killipii,Aiphanes,Arecaceae,CR,Res. 0126/2024 MADS
+Aiphanes leiostachys,Aiphanes,Arecaceae,CR,Res. 0126/2024 MADS
+Aiphanes lindeniana,Aiphanes,Arecaceae,EN,Res. 0126/2024 MADS
+Aiphanes parvifolia,Aiphanes,Arecaceae,EN,Res. 0126/2024 MADS
+Aiphanes pilaris,Aiphanes,Arecaceae,CR,Res. 0126/2024 MADS
+Alsophila esmeraldensis,Alsophila,Cyatheaceae,VU,Res. 0126/2024 MADS
+Alsophila imrayana,Alsophila,Cyatheaceae,VU,Res. 0126/2024 MADS
+Alsophila incana,Alsophila,Cyatheaceae,VU,Res. 0126/2024 MADS
+Alsophila paucifolia,Alsophila,Cyatheaceae,VU,Res. 0126/2024 MADS
+Alsophila rupestris,Alsophila,Cyatheaceae,CR,Res. 0126/2024 MADS
+Aniba novo-granatensis,Aniba,Lauraceae,CR,Res. 0126/2024 MADS
+Aniba perutilis,Aniba,Lauraceae,CR,Res. 0126/2024 MADS
+Aniba rosaeodora,Aniba,Lauraceae,CR,Res. 0126/2024 MADS
+Annona rufinervis,Annona,Annonaceae,EN,Res. 0126/2024 MADS
+Anomobryum clavicaule,Anomobryum,Bryaceae,VU,Res. 0126/2024 MADS
+Aspidosperma polyneuron,Aspidosperma,Apocynaceae,EN,Res. 0126/2024 MADS
+Astrocaryum malybo,Astrocaryum,Arecaceae,EN,Res. 0126/2024 MADS
+Astrocaryum triandrum,Astrocaryum,Arecaceae,EN,Res. 0126/2024 MADS
+Attalea amygdalina,Attalea,Arecaceae,EN,Res. 0126/2024 MADS
+Attalea cohune,Attalea,Arecaceae,EN,Res. 0126/2024 MADS
+Attalea colenda,Attalea,Arecaceae,EN,Res. 0126/2024 MADS
+Attalea iguadummat,Attalea,Arecaceae,VU,Res. 0126/2024 MADS
+Attalea nucifera,Attalea,Arecaceae,VU,Res. 0126/2024 MADS
+Bactris gasipaes var. chichagui,Bactris,Arecaceae,VU,Res. 0126/2024 MADS
+Bertholletia excelsa,Bertholletia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Brownea santanderensis,Brownea,Fabaceae,EN,Res. 0126/2024 MADS
+Browneopsis sanintiae,Browneopsis,Fabaceae,CR,Res. 0126/2024 MADS
+Bryum sordidum,Bryum,Bryaceae,EN,Res. 0126/2024 MADS
+Bulnesia arborea,Bulnesia,Zygophyllaceae,EN,Res. 0126/2024 MADS
+Calyptrochaeta nutans,Calyptrochaeta,Daltoniaceae,EN,Res. 0126/2024 MADS
+Cariniana pyriformis,Cariniana,Lecythidaceae,CR,Res. 0126/2024 MADS
+Caryocar amygdaliferum,Caryocar,Caryocaraceae,VU,Res. 0126/2024 MADS
+Cavanillesia chicamochae,Cavanillesia,Malvaceae,EN,Res. 0126/2024 MADS
+Cedrela odorata,Cedrela,Meliaceae,EN,Res. 0126/2024 MADS
+Ceiba samauma,Ceiba,Malvaceae,VU,Res. 0126/2024 MADS
+Ceroxylon alpinum,Ceroxylon,Arecaceae,EN,Res. 0126/2024 MADS
+Ceroxylon ceriferum,Ceroxylon,Arecaceae,EN,Res. 0126/2024 MADS
+Ceroxylon parvifrons,Ceroxylon,Arecaceae,VU,Res. 0126/2024 MADS
+Ceroxylon quindiuense,Ceroxylon,Arecaceae,EN,Res. 0126/2024 MADS
+Ceroxylon sasaimae,Ceroxylon,Arecaceae,EN,Res. 0126/2024 MADS
+Ceroxylon ventricosum,Ceroxylon,Arecaceae,EN,Res. 0126/2024 MADS
+Ceroxylon vogelianum,Ceroxylon,Arecaceae,VU,Res. 0126/2024 MADS
+Chloroleucon sempervivum,Chloroleucon,Fabaceae,EN,Res. 0126/2024 MADS
+Chrysophyllum euryphyllum,Chrysophyllum,Sapotaceae,EN,Res. 0126/2024 MADS
+Clathrotropis brunnea,Clathrotropis,Fabaceae,EN,Res. 0126/2024 MADS
+Colombobalanus excelsa,Colombobalanus,Fagaceae,VU,Res. 0126/2024 MADS
+Cordia fuertesii,Cordia,Cordiaceae,EN,Res. 0126/2024 MADS
+Cordia killipiana,Cordia,Cordiaceae,EN,Res. 0126/2024 MADS
+Cordia ramirezii,Cordia,Cordiaceae,CR,Res. 0126/2024 MADS
+Couroupita nicaraguarensis,Couroupita,Lecythidaceae,VU,Res. 0126/2024 MADS
+Cyathea acutidens,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea aemula,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea antioquensis,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea arborea,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea boconensis,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea callejasii,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea cardenasii,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea cervantesiana,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea clandestina,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea coloradoana,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea eggersii,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea giraldoi,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea gracilis,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea guentheriana,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea haughtii,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea kalbreyeri,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea kessleriana,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea lindigii,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea longipetiolulata,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea minuta,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea nodulifera,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea oblonga,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea obnoxia,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea pacis,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea pholidota,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea pilozana,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea pinnuloides,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea prosopioides,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea renjifoi,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea retanae,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea rodriguezii,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea singularis,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea straminea,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea tejedoris,Cyathea,Cyatheaceae,VU,Res. 0126/2024 MADS
+Cyathea toroi,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea uleana,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea uregoana,Cyathea,Cyatheaceae,EN,Res. 0126/2024 MADS
+Cyathea varians,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyathea werffii,Cyathea,Cyatheaceae,CR,Res. 0126/2024 MADS
+Cyrto-hypnum arzobispoae,Cyrto-hypnum,Thuidiaceae,VU,Res. 0126/2024 MADS
+Dacryodes colombiana,Dacryodes,Burseraceae,EN,Res. 0126/2024 MADS
+Dacryodes hydriflora,Dacryodes,Burseraceae,EN,Res. 0126/2024 MADS
+Dicksonia lehnertiana,Dicksonia,Dicksoniaceae,EN,Res. 0126/2024 MADS
+Dicksonia stuebelii,Dicksonia,Dicksoniaceae,CR,Res. 0126/2024 MADS
+Dicranella muralis,Dicranella,Dicranaceae,VU,Res. 0126/2024 MADS
+Dicranella pusilla,Dicranella,Dicranaceae,VU,Res. 0126/2024 MADS
+Didymodon lindigii,Didymodon,Pottiaceae,VU,Res. 0126/2024 MADS
+Dipteryx oleifera,Dipteryx,Fabaceae,VU,Res. 0126/2024 MADS
+Duguetia colombiana,Duguetia,Annonaceae,VU,Res. 0126/2024 MADS
+Elaeis oleifera,Elaeis,Arecaceae,EN,Res. 0126/2024 MADS
+Eschweilera bogotensis,Eschweilera,Lecythidaceae,VU,Res. 0126/2024 MADS
+Eschweilera cabrerana,Eschweilera,Lecythidaceae,EN,Res. 0126/2024 MADS
+Eschweilera integricalyx,Eschweilera,Lecythidaceae,VU,Res. 0126/2024 MADS
+Eschweilera neei,Eschweilera,Lecythidaceae,VU,Res. 0126/2024 MADS
+Eschweilera pachyderma,Eschweilera,Lecythidaceae,VU,Res. 0126/2024 MADS
+Eschweilera rimbachii,Eschweilera,Lecythidaceae,VU,Res. 0126/2024 MADS
+Eurhynchium semitortum,Eurhynchium,Brachytheciaceae,VU,Res. 0126/2024 MADS
+Guaiacum officinale,Guaiacum,Zygophyllaceae,CR,Res. 0126/2024 MADS
+Gustavia angustifolia,Gustavia,Lecythidaceae,EN,Res. 0126/2024 MADS
+Gustavia dubia,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia excelsa,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia foliosa,Gustavia,Lecythidaceae,EN,Res. 0126/2024 MADS
+Gustavia gentryi,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia gracillima,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia grandibracteata,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia latifolia,Gustavia,Lecythidaceae,EN,Res. 0126/2024 MADS
+Gustavia longifuniculata,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia nana subsp. nana,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia petiolata,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia romeroi,Gustavia,Lecythidaceae,VU,Res. 0126/2024 MADS
+Gustavia speciosa subsp. occidentalis,Gustavia,Lecythidaceae,EN,Res. 0126/2024 MADS
+Handroanthus coralibe,Handroanthus,Bignoniaceae,VU,Res. 0126/2024 MADS
+Huberodendron patinoi,Huberodendron,Malvaceae,VU,Res. 0126/2024 MADS
+Humiriastrum procerum,Humiriastrum,Humiriaceae,CR,Res. 0126/2024 MADS
+Juglans neotropica,Juglans,Juglandaceae,EN,Res. 0126/2024 MADS
+Lacmellea abbreviata,Lacmellea,Apocynaceae,VU,Res. 0126/2024 MADS
+Lecythis mesophylla,Lecythis,Lecythidaceae,VU,Res. 0126/2024 MADS
+Lecythis tuyrana,Lecythis,Lecythidaceae,VU,Res. 0126/2024 MADS
+Lepidopilum wallisii,Lepidopilum,Pilotrichaceae,CR,Res. 0126/2024 MADS
+Leskeodon paisa,Leskeodon,Daltoniaceae,CR,Res. 0126/2024 MADS
+Libidibia ebano,Libidibia,Fabaceae,VU,Res. 0126/2024 MADS
+Lonchocarpus antioquiensis,Lonchocarpus,Fabaceae,CR,Res. 0126/2024 MADS
+Macromitrium tocaremae,Macromitrium,Orthotrichaceae,VU,Res. 0126/2024 MADS
+Magnolia arcabucoana,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia argyrothricha,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia calimaensis,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia calophylla,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia cararensis,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia caricaefragrans,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia cespedesii,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia chimantensis,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia chocoensis,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia colombiana,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia coronata,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia espinalii,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia georgii,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia gilbertoi,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia guatapensis,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia henaoi,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia hernandezii,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia jardinensis,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia katiorum,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia lenticellata,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia mahechae,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia narinensis,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia neomagnifolia,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia polyhypsophylla,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia rimachii,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia sambuensis,Magnolia,Magnoliaceae,VU,Res. 0126/2024 MADS
+Magnolia santanderiana,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia silvioi,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia striatifolia,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia urraoensis,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Magnolia virolinensis,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia wolfii,Magnolia,Magnoliaceae,CR,Res. 0126/2024 MADS
+Magnolia yarumalensis,Magnolia,Magnoliaceae,EN,Res. 0126/2024 MADS
+Malouetia cuatrecasatis,Malouetia,Apocynaceae,EN,Res. 0126/2024 MADS
+Mayna pubescens,Mayna,Achariaceae,EN,Res. 0126/2024 MADS
+Mayna suaveolens,Mayna,Achariaceae,EN,Res. 0126/2024 MADS
+Mora oleifera,Mora,Fabaceae,EN,Res. 0126/2024 MADS
+Muellera burkartii,Muellera,Fabaceae,EN,Res. 0126/2024 MADS
+Ocotea antioquiensis,Ocotea,Lauraceae,CR,Res. 0126/2024 MADS
+Ocotea cuatrecasasii,Ocotea,Lauraceae,CR,Res. 0126/2024 MADS
+Ocotea pedicellata,Ocotea,Lauraceae,VU,Res. 0126/2024 MADS
+Ocotea umbrina,Ocotea,Lauraceae,EN,Res. 0126/2024 MADS
+Ormosia cuatrecasasii,Ormosia,Fabaceae,VU,Res. 0126/2024 MADS
+Ormosia revoluta,Ormosia,Fabaceae,VU,Res. 0126/2024 MADS
+Oxandra oblongifolia,Oxandra,Annonaceae,CR,Res. 0126/2024 MADS
+Pachira quinata,Pachira,Malvaceae,EN,Res. 0126/2024 MADS
+Peltogyne purpurea,Peltogyne,Fabaceae,VU,Res. 0126/2024 MADS
+Persea chrysophylla,Persea,Lauraceae,VU,Res. 0126/2024 MADS
+Phytelephas tumacana,Phytelephas,Arecaceae,EN,Res. 0126/2024 MADS
+Pleuridium lindigianum,Pleuridium,Ditrichaceae,EN,Res. 0126/2024 MADS
+Podocarpus guatemalensis,Podocarpus,Podocarpaceae,VU,Res. 0126/2024 MADS
+Podocarpus oleifolius,Podocarpus,Podocarpaceae,VU,Res. 0126/2024 MADS
+Prioria copaifera,Prioria,Fabaceae,EN,Res. 0126/2024 MADS
+Prumnopitys harmsiana,Prumnopitys,Podocarpaceae,VU,Res. 0126/2024 MADS
+Prumnopitys montana,Prumnopitys,Podocarpaceae,VU,Res. 0126/2024 MADS
+Quercus humboldtii,Quercus,Fagaceae,VU,Res. 0126/2024 MADS
+Roystonea oleracea,Roystonea,Arecaceae,CR,Res. 0126/2024 MADS
+Schizymenium pectinatum,Schizymenium,Miniaceae,VU,Res. 0126/2024 MADS
+Sphagnum angustifolium,Sphagnum,Sphagnaceae,EN,Res. 0126/2024 MADS
+Sphagnum antioquiense,Sphagnum,Sphagnaceae,CR,Res. 0126/2024 MADS
+Sphagnum boomii,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum boyacanum,Sphagnum,Sphagnaceae,CR,Res. 0126/2024 MADS
+Sphagnum capillaceum,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum cleefii,Sphagnum,Sphagnaceae,CR,Res. 0126/2024 MADS
+Sphagnum curvatulum,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum diblastoides,Sphagnum,Sphagnaceae,CR,Res. 0126/2024 MADS
+Sphagnum falcatulum,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum imperforatum,Sphagnum,Sphagnaceae,CR,Res. 0126/2024 MADS
+Sphagnum laxirameum,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum lewisii,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum ornatum,Sphagnum,Sphagnaceae,CR,Res. 0126/2024 MADS
+Sphagnum platyphyllum,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum pylaesii,Sphagnum,Sphagnaceae,EN,Res. 0126/2024 MADS
+Sphagnum rotundatum,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum santanderense,Sphagnum,Sphagnaceae,CR,Res. 0126/2024 MADS
+Sphagnum sonsonense,Sphagnum,Sphagnaceae,EN,Res. 0126/2024 MADS
+Sphagnum squarrosum,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Sphagnum sumapazense,Sphagnum,Sphagnaceae,VU,Res. 0126/2024 MADS
+Swartzia amabale,Swartzia,Fabaceae,EN,Res. 0126/2024 MADS
+Swartzia magdalenae,Swartzia,Fabaceae,CR,Res. 0126/2024 MADS
+Swartzia mucronifera,Swartzia,Fabaceae,VU,Res. 0126/2024 MADS
+Swartzia radiale,Swartzia,Fabaceae,EN,Res. 0126/2024 MADS
+Swietenia macrophylla,Swietenia,Meliaceae,CR,Res. 0126/2024 MADS
+Syagrus sancona,Syagrus,Arecaceae,VU,Res. 0126/2024 MADS
+Tayloria altorum,Tayloria,Splachnaceae,CR,Res. 0126/2024 MADS
+Trichilia carinata,Trichilia,Meliaceae,EN,Res. 0126/2024 MADS
+Trichilia oligofoliolata,Trichilia,Meliaceae,EN,Res. 0126/2024 MADS
+Trichosteleum mastopomatoides,Trichosteleum,Sematophyllaceae,CR,Res. 0126/2024 MADS
+Unonopsis megalophylla,Unonopsis,Annonaceae,VU,Res. 0126/2024 MADS
+Vochysia antioquiae,Vochysia,Vochysiaceae,EN,Res. 0126/2024 MADS
+Vochysia artantha,Vochysia,Vochysiaceae,EN,Res. 0126/2024 MADS
+Vochysia magna,Vochysia,Vochysiaceae,EN,Res. 0126/2024 MADS
+Vochysia pacifica,Vochysia,Vochysiaceae,EN,Res. 0126/2024 MADS
+Zamia amplifolia,Zamia,Zamiaceae,EN,Res. 0126/2024 MADS
+Zamia disodon,Zamia,Zamiaceae,EN,Res. 0126/2024 MADS
+Zamia encephalartoides,Zamia,Zamiaceae,EN,Res. 0126/2024 MADS
+Zamia huilensis,Zamia,Zamiaceae,EN,Res. 0126/2024 MADS
+Zamia incognita,Zamia,Zamiaceae,EN,Res. 0126/2024 MADS
+Zamia melanorrhachis,Zamia,Zamiaceae,EN,Res. 0126/2024 MADS
+Zamia montana,Zamia,Zamiaceae,CR,Res. 0126/2024 MADS
+Zamia oligodonta,Zamia,Zamiaceae,CR,Res. 0126/2024 MADS
+Zamia pyrophylla,Zamia,Zamiaceae,CR,Res. 0126/2024 MADS
+Zamia restrepoi,Zamia,Zamiaceae,CR,Res. 0126/2024 MADS
+Zamia wallisii,Zamia,Zamiaceae,CR,Res. 0126/2024 MADS
+Zanthoxylum gentryi,Zanthoxylum,Rutaceae,VU,Res. 0126/2024 MADS
