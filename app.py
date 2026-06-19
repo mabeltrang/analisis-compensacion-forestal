@@ -485,6 +485,8 @@ with st.sidebar:
         help="Para cruce con vedas regionales"
     )
 
+
+
     st.markdown("---")
     st.markdown("""
 **Estructura KMZ:**
@@ -830,6 +832,57 @@ with tab2:
                         use_container_width=True, hide_index=True
                     )
                     st.markdown("---")
+
+        # ── Desglose criterio A ──────────────────────────────────────────
+        with st.expander("🌿 Desglose Criterio A — Grado de transformación por cobertura", expanded=False):
+            st.markdown(
+                r"**Fórmula:** valor A fijo por tipo de cobertura según Tabla 3, Res. 0305/2026.  "
+                "Coberturas transformadas → A=0; coberturas naturales → A>0 (hasta 1.0 para bosque denso)."
+            )
+            filas_a = []
+            for cob, d in fcafu_por_cobertura.items():
+                filas_a.append({
+                    "Cobertura":    cob,
+                    "N ind.":       d.get('N', 0),
+                    "Valor A":      round(d.get('A', 0), 3),
+                    "Grado transf.": "Natural" if d.get('A', 0) > 0 else "Transformado",
+                    "Aporte a FCAFU": f"+{round(d.get('A',0),3)}"
+                })
+            st.dataframe(pd.DataFrame(filas_a), use_container_width=True, hide_index=True)
+            st.caption(
+                "Fuente: Tabla 3 (Resolución 0305/2026 MADS). "
+                "Para coberturas transformadas (pastos, cultivos, urbano) A=0 — "
+                "el factor de ajuste viene exclusivamente de B y C."
+            )
+
+        # ── Desglose criterio C ──────────────────────────────────────────
+        with st.expander("🔢 Desglose Criterio C — Diversidad (S/N) por cobertura", expanded=False):
+            st.markdown(
+                r"**Fórmula:** $C = f\!\left(\dfrac{S}{N}\right)$  "
+                "donde **S** = riqueza de especies y **N** = total de individuos inventariados."
+            )
+            filas_c = []
+            for cob, d in fcafu_por_cobertura.items():
+                n  = d.get('N', 0)
+                s  = d.get('S', 0)
+                sn = round(d.get('SN', s/n if n else 0), 4)
+                c  = round(d.get('C', 0), 3)
+                filas_c.append({
+                    "Cobertura":   cob,
+                    "N ind.":      n,
+                    "S spp.":      s,
+                    "S/N":         sn,
+                    "Rango S/N":   f"[{round((sn//0.1)*0.1,1):.1f} – {round((sn//0.1)*0.1+0.1,1):.1f})",
+                    "Valor C":     c,
+                    "Aporte a FCAFU": f"+{c}",
+                })
+            st.dataframe(pd.DataFrame(filas_c), use_container_width=True, hide_index=True)
+            st.caption(
+                "Fuente: Tabla de rangos S/N (Resolución 0305/2026 MADS). "
+                "Mayor diversidad relativa → mayor C → mayor FCAFU. "
+                "S/N=1 (todos distintos) fuerza C=1.0."
+            )
+
     else:
         st.warning(
             "⚠️ El inventario no generó cálculos FCAFU. "
