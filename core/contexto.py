@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Módulo de contexto geográfico.
-Cruza el polígono de impacto con assets de GEE para obtener:
-  - Municipio, Departamento
+Cruza el polígono de impacto con assets locales y GEE para obtener:
+  - Municipio, Departamento  ← local (data/municipios_colombia.fgb.gz)
   - BIOMA-IAvH
   - Zona Hidrográfica (ZH), Subzona (SZH)
   - Áreas por cobertura (IDEAM)
@@ -10,19 +10,84 @@ Cruza el polígono de impacto con assets de GEE para obtener:
 """
 import ee
 import time
+import gzip
+import os
+import tempfile
+import geopandas as gpd
 from shapely.geometry import mapping
-from shapely.ops import transform
+from shapely.ops import transform, unary_union
 from config import settings
 
 HANSEN_DATASET           = 'UMD/hansen/global_forest_change_2025_v1_13'
 HANSEN_ANIOS_OBSERVACION = 25
 TREECOVER_UMBRAL         = 30
 
+# Ruta al archivo de municipios local (relativa a la raíz del repo)
+_DIR_REPO    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_MUNICIPIOS_PATH = os.path.join(_DIR_REPO, 'data', 'municipios_colombia.fgb.gz')
+
+_municipios_gdf = None   # cache en memoria
+
+
+def _cargar_municipios():
+    """Carga el GeoDataFrame de municipios desde disco (con caché)."""
+    global _municipios_gdf
+    if _municipios_gdf is not None:
+        return _municipios_gdf
+
+    if not os.path.exists(_MUNICIPIOS_PATH):
+        raise FileNotFoundError(
+            f"No se encontró el archivo de municipios en {_MUNICIPIOS_PATH}. "
+            "Asegúrate de que data/municipios_colombia.fgb.gz esté en el repo."
+        )
+
+    # Descomprimir a archivo temporal y leer con geopandas
+    with gzip.open(_MUNICIPIOS_PATH, 'rb') as f_in:
+        tmp = tempfile.NamedTemporaryFile(suffix='.fgb', delete=False)
+        tmp.write(f_in.read())
+        tmp.close()
+
+    try:
+        _municipios_gdf = gpd.read_file(tmp.name)
+    finally:
+        os.unlink(tmp.name)
+
+    return _municipios_gdf
+
+
+def _detectar_municipio_local(gdf_impacto):
+    """
+    Detecta municipio y departamento haciendo intersección local.
+    Devuelve (municipio, departamento) del municipio con mayor área de
+    intersección con el polígono de impacto.
+    """
+    muns = _cargar_municipios()
+
+    # Unión del polígono de impacto
+    impacto_union = unary_union(gdf_impacto.geometry)
+
+    # Filtrar solo municipios que toquen el bbox del impacto (rápido)
+    bbox = impacto_union.bounds   # (minx, miny, maxx, maxy)
+    candidatos = muns.cx[bbox[0]:bbox[2], bbox[1]:bbox[3]].copy()
+
+    if candidatos.empty:
+        return 'Desconocido', 'Desconocido'
+
+    # Área de intersección de cada candidato con el polígono de impacto
+    candidatos = candidatos.copy()
+    candidatos['area_interseccion'] = candidatos.geometry.apply(
+        lambda g: g.intersection(impacto_union).area
+    )
+
+    mejor = candidatos.sort_values('area_interseccion', ascending=False).iloc[0]
+    return mejor['municipio'], mejor['departamento']
+
 
 def obtener_contexto_impacto(gdf):
     """
     Obtiene contexto geográfico completo del polígono de impacto.
-    Usa el mínimo de llamadas .getInfo() posible para evitar Too Many Requests.
+    - Municipio/Depto: detección local (data/municipios_colombia.fgb.gz)
+    - ZH/SZH/Bioma/Coberturas/Hansen: GEE
     """
     # ─── Preparar geometría ────────────────────────────────────────
     if gdf.crs is None:
@@ -34,6 +99,9 @@ def obtener_contexto_impacto(gdf):
         return transform(lambda x, y, z=None: (x, y), geom)
     gdf['geometry'] = gdf['geometry'].apply(strip_z)
 
+    # ─── Municipio/Depto — detección local ────────────────────────
+    municipio, departamento = _detectar_municipio_local(gdf)
+
     features = []
     for _, row in gdf.iterrows():
         geom = row.geometry
@@ -43,23 +111,12 @@ def obtener_contexto_impacto(gdf):
     fc      = ee.FeatureCollection(features)
     ee_geom = fc.geometry()
 
-    # ─── Assets ───────────────────────────────────────────────────
+    # ─── Assets GEE ───────────────────────────────────────────────
     municipios  = ee.FeatureCollection(settings.GEE_ASSETS['municipios'])
     zh_col      = ee.FeatureCollection(settings.GEE_ASSETS['zh'])
     ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
 
-    # ─── Municipio: el que tenga MAYOR área de intersección con el polígono
-    # filterBounds().first() es no-determinístico cuando el polígono cruza
-    # límites municipales — se selecciona por área para evitar falsos positivos.
-    mun_candidatos = municipios.filterBounds(ee_geom).map(
-        lambda f: f.set(
-            'area_interseccion',
-            f.geometry().intersection(ee_geom, ee.ErrorMargin(1)).area()
-        )
-    )
-    mun_first = mun_candidatos.sort('area_interseccion', False).first()
-
-    # ─── ZH/SZH: igual — mayor intersección
+    # ─── ZH/SZH: mayor intersección ───────────────────────────────
     zh_candidatos = zh_col.filterBounds(ee_geom).map(
         lambda f: f.set(
             'area_interseccion',
@@ -78,11 +135,8 @@ def obtener_contexto_impacto(gdf):
         )
     )
 
-    # ─── LLAMADA 1 — contexto geográfico completo en un solo getInfo
-    # Municipio + Depto + ZH + SZH + Bioma + Coberturas
+    # ─── LLAMADA 1 — ZH + SZH + Bioma + Coberturas ────────────────
     ctx_dict = ee.Dictionary({
-        'municipio':  mun_first.get('ADM2_NAME'),
-        'depto':      mun_first.get('ADM1_NAME'),
         'nom_zh':     zh_first.get('nom_zh'),
         'nom_szh':    zh_first.get('nom_szh'),
         'biomas':     eco_impacto.reduceColumns(
@@ -97,11 +151,8 @@ def obtener_contexto_impacto(gdf):
     time.sleep(1)
     ctx_info = ctx_dict.getInfo()
 
-    # ─── Parsear resultados ────────────────────────────────────────
-    municipio    = ctx_info.get('municipio', 'Desconocido')
-    departamento = ctx_info.get('depto', 'Desconocido')
-    nom_zh       = ctx_info.get('nom_zh', 'Desconocido')
-    nom_szh      = ctx_info.get('nom_szh', 'Desconocido')
+    nom_zh  = ctx_info.get('nom_zh',  'Desconocido')
+    nom_szh = ctx_info.get('nom_szh', 'Desconocido')
 
     biomas_hist     = ctx_info.get('biomas') or {}
     bioma_principal = (
@@ -113,43 +164,36 @@ def obtener_contexto_impacto(gdf):
     for group in (ctx_info.get('coberturas') or []):
         areas_cobertura[group['COBERTURA']] = group['sum']
 
-    # ─── LLAMADA 2 — geometría del municipio para Hansen ──────────
+    # ─── Geometría del municipio para Hansen — desde GEE ──────────
+    # Usamos el nombre correcto (detectado localmente) para filtrar en GEE
     time.sleep(1)
     municipio_geom = municipios.filter(
         ee.Filter.eq('ADM2_NAME', municipio)
     ).first().geometry()
 
-    # ─── LLAMADA 3 — geometría de la SZH para Hansen ──────────────
-    # Usa first() porque cada SZH es un solo feature en el asset de ZH
+    # ─── LLAMADA 2 — geometría de la SZH ──────────────────────────
     time.sleep(1)
     szh_geom = zh_col.filter(
         ee.Filter.eq('nom_szh', nom_szh)
     ).first().geometry()
 
-    # ─── LLAMADA 4 — geometría de la ZH para Hansen ───────────────
-    # Una ZH puede tener múltiples features (varias SZH) → dissolve
+    # ─── LLAMADA 3 — geometría de la ZH ───────────────────────────
     time.sleep(1)
     zh_geom = zh_col.filter(
         ee.Filter.eq('nom_zh', nom_zh)
     ).geometry().dissolve(1)
 
-    # ─── LLAMADA 5 — Hansen BAU por municipio ─────────────────────
+    # ─── LLAMADA 4 — Hansen BAU por municipio ─────────────────────
     time.sleep(1)
-    tasa_bau_mun, fuente_bau_mun = _calcular_tasa_bau(
-        municipio_geom, municipio
-    )
+    tasa_bau_mun, fuente_bau_mun = _calcular_tasa_bau(municipio_geom, municipio)
 
-    # ─── LLAMADA 6 — Hansen BAU por SZH ───────────────────────────
+    # ─── LLAMADA 5 — Hansen BAU por SZH ───────────────────────────
     time.sleep(1)
-    tasa_bau_szh, fuente_bau_szh = _calcular_tasa_bau(
-        szh_geom, f"SZH {nom_szh}"
-    )
+    tasa_bau_szh, fuente_bau_szh = _calcular_tasa_bau(szh_geom, f"SZH {nom_szh}")
 
-    # ─── LLAMADA 7 — Hansen BAU por ZH ────────────────────────────
+    # ─── LLAMADA 6 — Hansen BAU por ZH ────────────────────────────
     time.sleep(1)
-    tasa_bau_zh, fuente_bau_zh = _calcular_tasa_bau(
-        zh_geom, f"ZH {nom_zh}"
-    )
+    tasa_bau_zh, fuente_bau_zh = _calcular_tasa_bau(zh_geom, f"ZH {nom_zh}")
 
     return {
         'municipio':            municipio,
@@ -158,13 +202,10 @@ def obtener_contexto_impacto(gdf):
         'szh':                  nom_szh,
         'bioma_principal':      bioma_principal,
         'areas_cobertura':      areas_cobertura,
-        # Tasa BAU por municipio (R1, R4)
         'tasa_bau':             tasa_bau_mun,
         'tasa_bau_fuente':      fuente_bau_mun,
-        # Tasa BAU por SZH (R2, R5)
         'tasa_bau_szh':         tasa_bau_szh,
         'tasa_bau_szh_fuente':  fuente_bau_szh,
-        # Tasa BAU por ZH (R3, R6)
         'tasa_bau_zh':          tasa_bau_zh,
         'tasa_bau_zh_fuente':   fuente_bau_zh,
     }
@@ -173,11 +214,6 @@ def obtener_contexto_impacto(gdf):
 def _calcular_tasa_bau(geom, nombre):
     """
     Calcula tasa BAU con Hansen GFC sobre cualquier geometría de GEE.
-    Consolida los dos reduceRegion en una sola llamada getInfo.
-
-    Args:
-        geom:   ee.Geometry — puede ser municipio, SZH o ZH
-        nombre: str — nombre descriptivo para el mensaje de fuente/error
     """
     try:
         hansen      = ee.Image(HANSEN_DATASET)
@@ -187,7 +223,6 @@ def _calcular_tasa_bau(geom, nombre):
         perdida     = loss.And(bosque_2000)
         area_px_ha  = ee.Image.pixelArea().divide(10000)
 
-        # Dos reducers en una sola imagen multibanda → 1 getInfo
         combined = (
             bosque_2000.multiply(area_px_ha).rename('bosque')
             .addBands(perdida.multiply(area_px_ha).rename('perdida'))
