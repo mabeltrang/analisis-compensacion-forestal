@@ -13,7 +13,7 @@ GEE_ASSETS = {
     "reaa":        "projects/ndvi-restauracion/assets/reaa_colombia",
     "hansen":      "UMD/hansen/global_forest_change_2023_v1_11",
     "sentinel":    "COPERNICUS/S2_SR_HARMONIZED",
-    "municipios":  "FAO/GAUL/2015/level2",
+    "municipios":  "projects/ndvi-restauracion/assets/Municipios_Abril_2026_shp",
     "sinap":       "WCMC/WDPA/current/polygons",
 }
 
