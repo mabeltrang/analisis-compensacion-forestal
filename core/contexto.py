@@ -48,8 +48,25 @@ def obtener_contexto_impacto(gdf):
     zh_col      = ee.FeatureCollection(settings.GEE_ASSETS['zh'])
     ecosistemas = ee.FeatureCollection(settings.GEE_ASSETS['ecosistemas'])
 
-    mun_first = municipios.filterBounds(ee_geom).first()
-    zh_first  = zh_col.filterBounds(ee_geom).first()
+    # ─── Municipio: el que tenga MAYOR área de intersección con el polígono
+    # filterBounds().first() es no-determinístico cuando el polígono cruza
+    # límites municipales — se selecciona por área para evitar falsos positivos.
+    mun_candidatos = municipios.filterBounds(ee_geom).map(
+        lambda f: f.set(
+            'area_interseccion',
+            f.geometry().intersection(ee_geom, ee.ErrorMargin(1)).area()
+        )
+    )
+    mun_first = mun_candidatos.sort('area_interseccion', False).first()
+
+    # ─── ZH/SZH: igual — mayor intersección
+    zh_candidatos = zh_col.filterBounds(ee_geom).map(
+        lambda f: f.set(
+            'area_interseccion',
+            f.geometry().intersection(ee_geom, ee.ErrorMargin(1)).area()
+        )
+    )
+    zh_first = zh_candidatos.sort('area_interseccion', False).first()
 
     # ─── Ecosistemas recortados al área de impacto ─────────────────
     eco_impacto = ecosistemas.filterBounds(ee_geom).map(
