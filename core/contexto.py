@@ -22,9 +22,18 @@ HANSEN_DATASET           = 'UMD/hansen/global_forest_change_2025_v1_13'
 HANSEN_ANIOS_OBSERVACION = 25
 TREECOVER_UMBRAL         = 30
 
-# Ruta al archivo de municipios local (relativa a la raíz del repo)
-_DIR_REPO    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_MUNICIPIOS_PATH = os.path.join(_DIR_REPO, 'data', 'municipios_colombia.fgb.gz')
+# Ruta al archivo de municipios — se busca en este orden:
+#   1. raíz del repo, sin comprimir  (municipios_colombia.fgb)
+#   2. raíz del repo, comprimido     (municipios_colombia.fgb.gz)
+#   3. carpeta data/, sin comprimir  (data/municipios_colombia.fgb)
+#   4. carpeta data/, comprimido     (data/municipios_colombia.fgb.gz)
+_DIR_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_CANDIDATOS_PATH = [
+    (os.path.join(_DIR_REPO, 'municipios_colombia.fgb'),    False),
+    (os.path.join(_DIR_REPO, 'municipios_colombia.fgb.gz'), True),
+    (os.path.join(_DIR_REPO, 'data', 'municipios_colombia.fgb'),    False),
+    (os.path.join(_DIR_REPO, 'data', 'municipios_colombia.fgb.gz'), True),
+]
 
 _municipios_gdf = None   # cache en memoria
 
@@ -35,22 +44,29 @@ def _cargar_municipios():
     if _municipios_gdf is not None:
         return _municipios_gdf
 
-    if not os.path.exists(_MUNICIPIOS_PATH):
+    ruta, comprimido = None, False
+    for path, gz in _CANDIDATOS_PATH:
+        if os.path.exists(path):
+            ruta, comprimido = path, gz
+            break
+
+    if ruta is None:
         raise FileNotFoundError(
-            f"No se encontró el archivo de municipios en {_MUNICIPIOS_PATH}. "
-            "Asegúrate de que data/municipios_colombia.fgb.gz esté en el repo."
+            "No se encontró municipios_colombia.fgb(.gz) en la raíz ni en data/. "
+            "Descarga el archivo desde el repo y colócalo en la raíz del proyecto."
         )
 
-    # Descomprimir a archivo temporal y leer con geopandas
-    with gzip.open(_MUNICIPIOS_PATH, 'rb') as f_in:
-        tmp = tempfile.NamedTemporaryFile(suffix='.fgb', delete=False)
-        tmp.write(f_in.read())
-        tmp.close()
-
-    try:
-        _municipios_gdf = gpd.read_file(tmp.name)
-    finally:
-        os.unlink(tmp.name)
+    if comprimido:
+        with gzip.open(ruta, 'rb') as f_in:
+            tmp = tempfile.NamedTemporaryFile(suffix='.fgb', delete=False)
+            tmp.write(f_in.read())
+            tmp.close()
+        try:
+            _municipios_gdf = gpd.read_file(tmp.name)
+        finally:
+            os.unlink(tmp.name)
+    else:
+        _municipios_gdf = gpd.read_file(ruta)
 
     return _municipios_gdf
 
@@ -165,11 +181,18 @@ def obtener_contexto_impacto(gdf):
         areas_cobertura[group['COBERTURA']] = group['sum']
 
     # ─── Geometría del municipio para Hansen — desde GEE ──────────
-    # Usamos el nombre correcto (detectado localmente) para filtrar en GEE
+    # El asset Municipios_Abril_2026_shp usa campo 'MpNombre' (IGAC/DANE)
+    # en lugar de 'ADM2_NAME' (FAO/GAUL). Se intenta MpNombre primero;
+    # si el asset fuera reemplazado por FAO/GAUL, cambiar a 'ADM2_NAME'.
     time.sleep(1)
-    municipio_geom = municipios.filter(
-        ee.Filter.eq('ADM2_NAME', municipio)
-    ).first().geometry()
+    municipio_fc = municipios.filter(ee.Filter.eq('MpNombre', municipio))
+    # Fallback: si no hay match con MpNombre, intentar ADM2_NAME
+    municipio_geom = ee.Algorithms.If(
+        municipio_fc.size().gt(0),
+        municipio_fc.first().geometry(),
+        municipios.filter(ee.Filter.eq('ADM2_NAME', municipio)).first().geometry()
+    )
+    municipio_geom = ee.Geometry(municipio_geom)
 
     # ─── LLAMADA 2 — geometría de la SZH ──────────────────────────
     time.sleep(1)
