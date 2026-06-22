@@ -221,6 +221,38 @@ VEDAS_REGIONALES = {
             {"nombre_comun": "Caparrapí", "sci_fragmentos": ["ocotea caparrapi"]},
         ]
     },
+    "CAS": {
+        "norma": "Acuerdo CAS No. 386-19 del 19 de diciembre de 2019",
+        "tipo": "indefinida",
+        "nota": (
+            "Veda permanente al aprovechamiento en la jurisdicción de la CAS. "
+            "Incluye especies maderables, coníferas nativas, magnolias, robles y palmas."
+        ),
+        "spp": [
+            {"nombre_comun": "Cedro caoba", "sci_fragmentos": ["swietenia macrophylla"]},
+            {"nombre_comun": "Yumbe / Pateguara / Panela quemada",
+             "sci_fragmentos": ["caryodaphnopsis cogolloi"]},
+            {"nombre_comun": "Comino crespo", "sci_fragmentos": ["aniba perutilis"]},
+            {"nombre_comun": "Abarco", "sci_fragmentos": ["cariniana pyriformis"]},
+            {"nombre_comun": "Chagüi", "sci_fragmentos": ["caryocar amygdaliferum"]},
+            {"nombre_comun": "Sapán", "sci_fragmentos": ["clathrotropis brunnea"]},
+            {"nombre_comun": "Marfil", "sci_fragmentos": ["isidodendron tripterocarpum"]},
+            {"nombre_comun": "Pino silvestre / Chaquiro",
+             "sci_fragmentos": ["podocarpus oleifolius"]},
+            {"nombre_comun": "Pino colombiano",
+             "sci_fragmentos": ["retrophyllum rospigliosii"]},
+            {"nombre_comun": "Pino montañero",
+             "sci_fragmentos": ["prumnopitys montana"]},
+            {"nombre_comun": "Magnolia", "sci_fragmentos": ["magnolia"]},
+            {"nombre_comun": "Roble blanco", "sci_fragmentos": ["quercus humboldtii"]},
+            {"nombre_comun": "Roble negro", "sci_fragmentos": ["colombobalanus excelsa"]},
+            {"nombre_comun": "Palma de cera",
+             "sci_fragmentos": ["ceroxylon quindiuense", "ceroxylon quindíuense"]},
+            {"nombre_comun": "Palma de Jender", "sci_fragmentos": ["wettinia hirsuta"]},
+            {"nombre_comun": "Palma de ramo", "sci_fragmentos": ["ceroxylon vogelianum"]},
+            {"nombre_comun": "Palma boba", "sci_fragmentos": ["cyathea hirsuta"]},
+        ]
+    },
     "CRA": {
         "norma": "Res. 0025/1996 CRA",
         "tipo": "indefinida",
