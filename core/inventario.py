@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 """
 inventario.py — Procesamiento del inventario forestal Unergy
@@ -100,13 +101,15 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     # ── Tablas de referencia ─────────────────────────────────────────────────
     coberturas_a       = pd.read_csv(os.path.join(settings.CONFIG_DIR, "coberturas_a.csv"))
     especies_amenazadas = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
+    # Normalizar columnas: quitar tildes, minúsculas, reemplazar espacios por guión bajo
+    especies_amenazadas.columns = [_norm(c).replace(' ', '_') for c in especies_amenazadas.columns]
     especies_amenazadas.columns = [_norm(c) for c in especies_amenazadas.columns]
     tabla_c            = pd.read_csv(os.path.join(settings.CONFIG_DIR, "tabla_c.csv"))
 
     # ── Índices de amenaza ───────────────────────────────────────────────────
     # 1. Exacto: nombre_cientifico → categoria (CR/EN/VU/LC)
     amenaza_exact = {
-        _norm(r['nombre_cientifico']): r['categoria']
+        _norm(r['nombre_cientifico']): r['categoria_de_amenaza']
         for _, r in especies_amenazadas.iterrows()
     }
 
@@ -115,7 +118,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     amenaza_genero = defaultdict(lambda: 'LC')
     for _, r in especies_amenazadas.iterrows():
         genero     = _norm(r['nombre_cientifico']).split()[0]
-        cat_nueva  = r['categoria']
+        cat_nueva  = r['categoria_de_amenaza']
         cat_actual = amenaza_genero[genero]
         if CAT_ORDER.get(cat_nueva, 0) > CAT_ORDER.get(cat_actual, 0):
             amenaza_genero[genero] = cat_nueva
