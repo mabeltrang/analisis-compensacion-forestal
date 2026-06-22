@@ -44,7 +44,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     for i, row in df_raw.iterrows():
         row_str = [str(x).lower() for x in row.values]
         if any('cobertura' in s for s in row_str) or \
-           any('nombre cientifico' in s for s in row_str):
+           any('nombre cientifico' in s or 'nombre_cientifico' in s for s in row_str):
             header_row = i
             break
 
@@ -53,10 +53,15 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
 
     # ── Mapeo de columnas ────────────────────────────────────────────────────
     col_map = {
-        'nombre cientifico': ['nombre cientifico', 'sp', 'especie'],
-        'dap_m':   ['dap a (m)', 'dap a en metros', 'dap a (metros)', 'dap'],
-        'cobertura': ['cobertura', 'cobertura_id', 'tipo_cobertura'],
-        'ab_total': ['ab t (m2)', 'ab t en metros cuadrados', 'area basal total'],
+        'nombre cientifico': [
+            'nombre cientifico', 'nombre_cientifico',
+            'nombre cientifico ', 'nombre_cientifico ',
+            'nombre', 'sp', 'especie', 'species',
+            'nombre sp', 'nombre_sp',
+        ],
+        'dap_m':   ['dap a (m)', 'dap a en metros', 'dap a (metros)', 'dap', 'dap_m', 'dap (m)'],
+        'cobertura': ['cobertura', 'cobertura_id', 'tipo_cobertura', 'tipo cobertura'],
+        'ab_total': ['ab t (m2)', 'ab t en metros cuadrados', 'area basal total', 'ab_total', 'ab t'],
     }
 
     final_cols = {}
@@ -67,8 +72,9 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
                 break
         if key not in final_cols and key != 'ab_total':
             raise ValueError(
-                f"No se encontró columna equivalente a: {key} "
-                f"(buscadas: {options})"
+                f"No se encontró columna '{key}' en el inventario. "
+                f"Buscadas: {options}. "
+                f"Columnas disponibles: {list(df.columns)}"
             )
 
     # ── Limpieza ─────────────────────────────────────────────────────────────
