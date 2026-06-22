@@ -100,6 +100,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     # ── Tablas de referencia ─────────────────────────────────────────────────
     coberturas_a       = pd.read_csv(os.path.join(settings.CONFIG_DIR, "coberturas_a.csv"))
     especies_amenazadas = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
+    especies_amenazadas.columns = [_norm(c) for c in especies_amenazadas.columns]
     tabla_c            = pd.read_csv(os.path.join(settings.CONFIG_DIR, "tabla_c.csv"))
 
     # ── Índices de amenaza ───────────────────────────────────────────────────
