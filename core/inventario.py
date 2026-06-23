@@ -3,18 +3,20 @@
 inventario.py — Procesamiento del inventario forestal Unergy
 Manual 2026 (Res. 0305/2026 MADS)
 
-Cambios v7:
-- Criterio B corregido: VU=0.4, EN=0.6, CR=1.0  (Tabla 4 del Manual 2026)
-  NT ya NO aplica al criterio B (no está en Tabla 4 ni en Res. 0126/2024).
-- Nuevo: criterio B_cites usando equivalencias CITES internas de Unergy
-  (Apéndice I=0.6, II=0.4). Se calcula en paralelo como escenario alternativo.
-- Cada cobertura retorna 'B_oficial' y 'B_cites', y dos FCAFU:
-  'FCAFU' (oficial) y 'FCAFU_cites' (con CITES).
+Escenarios de Criterio B:
+  - B_oficial : solo Res. 0126/2024 MADS  (CR=1.0, EN=0.6, VU=0.4)
+  - B_cites   : max(B_oficial, equivalencia CITES)  — escenario Unergy
+  - B_uicn    : max(B_oficial, categoría UICN)      — escenario Unergy
+
+Matching de especies:
+  1. Especie exacta en especies_amenazadas_co.csv
+  2. Nombre indeterminado (sp./spp.) → peor categoría del género
+  3. Especie determinada sin match   → LC (sin penalización)
 """
 
+import os
 import pandas as pd
 import numpy as np
-import os
 from collections import defaultdict
 from . import utils
 from config import settings
@@ -30,10 +32,20 @@ def _norm(s):
     return s.lower().strip()
 
 
+_SP_SUFIJOS = {'sp', 'sp.', 'spp', 'spp.', 'sp1', 'sp2', 'sp3'}
+
+
+def _es_indeterminado(nombre_norm: str) -> bool:
+    """True si el nombre es género + sufijo sp/spp (indeterminado)."""
+    partes = nombre_norm.strip().split()
+    return len(partes) == 2 and partes[1].lower() in _SP_SUFIJOS
+
+
 def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str = ""):
     """
     Procesa el inventario forestal estándar de Unergy.
-    Calcula N, S, SN, A, B_oficial, B_cites, C, FCAFU y FCAFU_cites por cobertura.
+    Calcula N, S, SN, A, B_oficial, B_cites, B_uicn, C,
+    FCAFU, FCAFU_cites y FCAFU_uicn por cobertura.
 
     Retorna dict: { cobertura: { ...métricas... } }
     """
@@ -59,9 +71,9 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             'nombre', 'sp', 'especie', 'species',
             'nombre sp', 'nombre_sp',
         ],
-        'dap_m':   ['dap a (m)', 'dap a en metros', 'dap a (metros)', 'dap', 'dap_m', 'dap (m)'],
+        'dap_m':     ['dap a (m)', 'dap a en metros', 'dap a (metros)', 'dap', 'dap_m', 'dap (m)'],
         'cobertura': ['cobertura', 'cobertura_id', 'tipo_cobertura', 'tipo cobertura'],
-        'ab_total': ['ab t (m2)', 'ab t en metros cuadrados', 'area basal total', 'ab_total', 'ab t'],
+        'ab_total':  ['ab t (m2)', 'ab t en metros cuadrados', 'area basal total', 'ab_total', 'ab t'],
     }
 
     final_cols = {}
@@ -97,96 +109,102 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     if df_filtrado.empty:
         return {}
 
-    # ── Tablas de referencia ─────────────────────────────────────────────────
-    coberturas_a       = pd.read_csv(os.path.join(settings.CONFIG_DIR, "coberturas_a.csv"))
-    especies_amenazadas = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
-    # Normalizar columnas: quitar tildes, minúsculas, reemplazar espacios por guión bajo
-    especies_amenazadas.columns = [_norm(c).replace(' ', '_') for c in especies_amenazadas.columns]
-    especies_amenazadas.columns = [_norm(c) for c in especies_amenazadas.columns]
-    tabla_c            = pd.read_csv(os.path.join(settings.CONFIG_DIR, "tabla_c.csv"))
+    # ── Cargar tablas de referencia ──────────────────────────────────────────
+    coberturas_a = pd.read_csv(os.path.join(settings.CONFIG_DIR, "coberturas_a.csv"))
+    tabla_c      = pd.read_csv(os.path.join(settings.CONFIG_DIR, "tabla_c.csv"))
 
-    # ── Índices de amenaza ───────────────────────────────────────────────────
-    # 1. Exacto: nombre_cientifico → categoria (CR/EN/VU/LC)
+    ea = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
+    ea.columns = [_norm(c).replace(' ', '_') for c in ea.columns]
+    ea.columns = [_norm(c) for c in ea.columns]
+
+    # ── Índice MADS (Res. 0126/2024) ─────────────────────────────────────────
     amenaza_exact = {
         _norm(r['nombre_cientifico']): r['categoria_de_amenaza']
-        for _, r in especies_amenazadas.iterrows()
+        for _, r in ea.iterrows()
     }
-
-    # 2. Por género → categoría más alta del género
+    # Fallback de género (solo para sp. indeterminados)
     CAT_ORDER = {'CR': 4, 'EN': 3, 'VU': 2, 'NT': 1, 'LC': 0}
     amenaza_genero = defaultdict(lambda: 'LC')
-    for _, r in especies_amenazadas.iterrows():
-        genero     = _norm(r['nombre_cientifico']).split()[0]
+    for _, r in ea.iterrows():
+        gen = _norm(r['nombre_cientifico']).split()[0]
         cat_nueva  = r['categoria_de_amenaza']
-        cat_actual = amenaza_genero[genero]
-        if CAT_ORDER.get(cat_nueva, 0) > CAT_ORDER.get(cat_actual, 0):
-            amenaza_genero[genero] = cat_nueva
+        if CAT_ORDER.get(cat_nueva, 0) > CAT_ORDER.get(amenaza_genero[gen], 0):
+            amenaza_genero[gen] = cat_nueva
 
-    # 3. CITES: nombre_cientifico → apéndice ('I', 'II', 'III', None)
-    #    Leemos desde el CSV si existe columna 'cites', si no → None para todos
+    # ── Índice CITES ──────────────────────────────────────────────────────────
     cites_exact = {}
-    if 'cites' in especies_amenazadas.columns:
-        for _, r in especies_amenazadas.iterrows():
+    if 'cites' in ea.columns:
+        for _, r in ea.iterrows():
             ap = str(r.get('cites', '')).strip().upper()
             if ap in ('I', 'II', 'III'):
                 cites_exact[_norm(r['nombre_cientifico'])] = ap
 
-    # Patrones de nombre indeterminado a nivel de género
-    _SP_SUFIJOS = {'sp', 'sp.', 'spp', 'spp.', 'sp1', 'sp2', 'sp3'}
+    # ── Índice UICN ───────────────────────────────────────────────────────────
+    uicn_exact = {}
+    if 'uicn' in ea.columns:
+        for _, r in ea.iterrows():
+            cat = str(r.get('uicn', '')).strip().upper()
+            if cat in ('CR', 'EN', 'VU', 'NT', 'LC', 'DD'):
+                uicn_exact[_norm(r['nombre_cientifico'])] = cat
 
-    def _es_indeterminado(nombre_norm: str) -> bool:
-        """True si el nombre es solo género + sufijo sp/spp (indeterminado)."""
-        partes = nombre_norm.strip().split()
-        return len(partes) == 2 and partes[1].lower() in _SP_SUFIJOS
+    # ── Función de lookup unificada ───────────────────────────────────────────
+    def _lookup(nombre_sci):
+        """
+        Retorna (cat_mads, cites_ap, cat_uicn) para un nombre científico.
 
-    def _lookup_amenaza(nombre_sci):
-        """Retorna (categoria_res0126, apendice_cites).
-
-        Reglas de matching:
-        1. Match exacto en Res. 0126/2024  → usa esa categoría
-        2. Nombre indeterminado (ej. "Cordia sp.") → fallback al peor del género
-        3. Especie determinada sin match     → LC (no penalizar por homónimos)
+        Matching:
+          1. Especie exacta en CSV
+          2. Nombre indeterminado → peor del género (solo MADS)
+          3. Determinada sin match → LC / None
         """
         n = _norm(nombre_sci)
-        # Categoría amenaza oficial
-        if n in amenaza_exact:
-            cat = amenaza_exact[n]
-        elif _es_indeterminado(n):
-            # Solo aquí usamos el fallback de género
-            genero = n.split()[0]
-            cat = amenaza_genero[genero] if amenaza_genero[genero] != 'LC' else 'LC'
-        else:
-            # Especie determinada no encontrada en Res. 0126/2024 → LC
-            cat = 'LC'
 
-        # Apéndice CITES
+        # MADS
+        if n in amenaza_exact:
+            cat_mads = amenaza_exact[n]
+        elif _es_indeterminado(n):
+            gen = n.split()[0]
+            cat_mads = amenaza_genero[gen] if amenaza_genero[gen] != 'LC' else 'LC'
+        else:
+            cat_mads = 'LC'
+
+        # CITES (solo especie exacta — ya resuelto en el CSV)
         cites_ap = cites_exact.get(n, None)
 
-        return cat, cites_ap
+        # UICN (solo especie exacta)
+        cat_uicn = uicn_exact.get(n, None)
 
-    df_filtrado[['categoria_amenaza', 'cites_apendice']] = df_filtrado[
-        'Nombre cientifico'
-    ].apply(lambda x: pd.Series(_lookup_amenaza(x)))
+        return cat_mads, cites_ap, cat_uicn
 
-    # Valores numéricos
-    # B oficial: solo CR/EN/VU según Tabla 4 Manual 2026 (NT=0)
-    df_filtrado['valor_b_oficial'] = (
-        df_filtrado['categoria_amenaza']
-        .map(settings.AMENAZA_VALORES)
-        .fillna(0.0)
+    df_filtrado[['categoria_amenaza', 'cites_apendice', 'categoria_uicn']] = (
+        df_filtrado['Nombre cientifico']
+        .apply(lambda x: pd.Series(_lookup(x)))
     )
 
-    # B cites: si hay apéndice CITES Y el valor CITES > valor oficial → usar CITES
-    # Si no tiene apéndice, mantener el valor oficial
-    def _valor_b_cites(row):
-        v_oficial = row['valor_b_oficial']
-        ap        = row['cites_apendice']
-        if ap is None or str(ap) == 'nan':
-            return v_oficial
-        v_cites = settings.CITES_VALORES.get(ap, 0.0)
-        return max(v_oficial, v_cites)   # no bajar si ya tiene categoría mayor
+    # ── Valores numéricos B ───────────────────────────────────────────────────
+    # B oficial (MADS)
+    df_filtrado['valor_b_oficial'] = (
+        df_filtrado['categoria_amenaza'].map(settings.AMENAZA_VALORES).fillna(0.0)
+    )
 
-    df_filtrado['valor_b_cites'] = df_filtrado.apply(_valor_b_cites, axis=1)
+    # B CITES: max(B_oficial, valor CITES)
+    def _b_cites(row):
+        v = row['valor_b_oficial']
+        ap = row['cites_apendice']
+        if ap and str(ap) not in ('nan', 'None'):
+            v = max(v, settings.CITES_VALORES.get(str(ap).strip(), 0.0))
+        return v
+
+    # B UICN: max(B_oficial, valor UICN)
+    def _b_uicn(row):
+        v = row['valor_b_oficial']
+        cat = row['categoria_uicn']
+        if cat and str(cat) not in ('nan', 'None'):
+            v = max(v, settings.UICN_VALORES.get(str(cat).strip(), 0.0))
+        return v
+
+    df_filtrado['valor_b_cites'] = df_filtrado.apply(_b_cites, axis=1)
+    df_filtrado['valor_b_uicn']  = df_filtrado.apply(_b_uicn,  axis=1)
 
     # ── Agrupación por cobertura ──────────────────────────────────────────────
     resultados = {}
@@ -200,11 +218,10 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
         val_a = coberturas_a[coberturas_a['cobertura'] == cob]['valor_a'].values
         a = float(val_a[0]) if len(val_a) > 0 else 0.0
 
-        # Criterio B — oficial (Tabla 4 Manual 2026)
+        # Criterio B — tres escenarios
         b_oficial = float(group['valor_b_oficial'].sum() / n) if n > 0 else 0.0
-
-        # Criterio B — con CITES (equiparación interna Unergy)
-        b_cites   = float(group['valor_b_cites'].sum() / n) if n > 0 else 0.0
+        b_cites   = float(group['valor_b_cites'].sum()   / n) if n > 0 else 0.0
+        b_uicn    = float(group['valor_b_uicn'].sum()    / n) if n > 0 else 0.0
 
         # Criterio C
         c_row = tabla_c[(tabla_c['sn_min'] <= sn) & (tabla_c['sn_max'] > sn)]
@@ -212,40 +229,51 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             float(c_row['valor_c'].values[0]) if not c_row.empty else 0.1
         )
 
-        # FCAFU
+        # FCAFU — tres escenarios
         fcafu_oficial = 1 + a + b_oficial + c
         fcafu_cites   = 1 + a + b_cites   + c
+        fcafu_uicn    = 1 + a + b_uicn    + c
 
-        # ── Desglose especies amenazadas ─────────────────────────────────────
+        # ── Desglose especies con estatus ────────────────────────────────────
         amenazadas = []
-        mask_amenazadas = (
+        mask = (
             (group['categoria_amenaza'] != 'LC') |
-            (group['cites_apendice'].notna() & (group['cites_apendice'] != 'nan'))
+            (group['cites_apendice'].notna() & (group['cites_apendice'].astype(str) != 'nan')) |
+            (group['categoria_uicn'].notna()   & (group['categoria_uicn'].astype(str).isin(['CR','EN','VU','NT'])))
         )
-        amenazadas_group = group[mask_amenazadas].copy()
+        for sp_sci, sp_grp in group[mask].groupby('Nombre cientifico'):
+            n_sp     = len(sp_grp)
+            cat_mads = sp_grp['categoria_amenaza'].iloc[0]
+            cites_sp = sp_grp['cites_apendice'].iloc[0]
+            cat_uicn = sp_grp['categoria_uicn'].iloc[0]
+            v_ofic   = float(sp_grp['valor_b_oficial'].iloc[0])
+            v_cites  = float(sp_grp['valor_b_cites'].iloc[0])
+            v_uicn   = float(sp_grp['valor_b_uicn'].iloc[0])
 
-        for sp_sci, sp_grp in amenazadas_group.groupby('Nombre cientifico'):
-            n_sp      = len(sp_grp)
-            cat_sp    = sp_grp['categoria_amenaza'].iloc[0]
-            cites_sp  = sp_grp['cites_apendice'].iloc[0]
-            v_oficial = float(sp_grp['valor_b_oficial'].iloc[0])
-            v_cites   = float(sp_grp['valor_b_cites'].iloc[0])
+            def _clean(x):
+                return x if (x and str(x) not in ('nan','None')) else '—'
+
             amenazadas.append({
-                'nombre_cientifico':  sp_sci,
-                'categoria_amenaza':  cat_sp,
-                'cites_apendice':     cites_sp if (cites_sp and str(cites_sp) != 'nan') else '—',
-                'n_individuos':       n_sp,
-                'valor_b_oficial':    v_oficial,
-                'valor_b_cites':      v_cites,
-                'aporte_b_oficial':   round(v_oficial * n_sp / n, 4) if n > 0 else 0.0,
-                'aporte_b_cites':     round(v_cites   * n_sp / n, 4) if n > 0 else 0.0,
+                'nombre_cientifico': sp_sci,
+                'cat_mads':          cat_mads,
+                'cat_uicn':          _clean(cat_uicn),
+                'cites_apendice':    _clean(cites_sp),
+                'n_individuos':      n_sp,
+                # Valores B por escenario
+                'valor_b_oficial':   v_ofic,
+                'valor_b_cites':     v_cites,
+                'valor_b_uicn':      v_uicn,
+                # Aporte al B de la cobertura
+                'aporte_b_oficial':  round(v_ofic  * n_sp / n, 4) if n > 0 else 0.0,
+                'aporte_b_cites':    round(v_cites  * n_sp / n, 4) if n > 0 else 0.0,
+                'aporte_b_uicn':     round(v_uicn   * n_sp / n, 4) if n > 0 else 0.0,
             })
 
         # ── Vedas ────────────────────────────────────────────────────────────
-        vedas_detectadas     = []
-        n_ind_veda_nacional  = 0
-        n_ind_veda_regional  = 0
-        n_ind_veda_ambas     = 0
+        vedas_detectadas    = []
+        n_ind_veda_nacional = 0
+        n_ind_veda_regional = 0
+        n_ind_veda_ambas    = 0
 
         for sp_sci, sp_group in group.groupby('Nombre cientifico'):
             n_sp   = len(sp_group)
@@ -277,17 +305,23 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             )
 
         resultados[cob] = {
-            'N':              n,
-            'S':              s,
-            'SN':             sn,
-            'A':              a,
-            'B':              b_oficial,    # alias para compatibilidad
-            'B_oficial':      b_oficial,
-            'B_cites':        b_cites,
-            'C':              c,
-            'FCAFU':          fcafu_oficial,
-            'FCAFU_cites':    fcafu_cites,
-            'amenazadas':     amenazadas,
+            # Conteos
+            'N':   n,
+            'S':   s,
+            'SN':  sn,
+            # Criterios
+            'A':         a,
+            'B':         b_oficial,    # alias compatibilidad
+            'B_oficial': b_oficial,
+            'B_cites':   b_cites,
+            'B_uicn':    b_uicn,
+            'C':         c,
+            # FCAFU — tres escenarios
+            'FCAFU':        fcafu_oficial,
+            'FCAFU_cites':  fcafu_cites,
+            'FCAFU_uicn':   fcafu_uicn,
+            # Desglose
+            'amenazadas':       amenazadas,
             'area_basal_total': area_basal,
             # Vedas
             'hay_veda':            len(vedas_detectadas) > 0,
