@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 """
 inventario.py — Procesamiento del inventario forestal Unergy
@@ -132,15 +131,33 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             if ap in ('I', 'II', 'III'):
                 cites_exact[_norm(r['nombre_cientifico'])] = ap
 
+    # Patrones de nombre indeterminado a nivel de género
+    _SP_SUFIJOS = {'sp', 'sp.', 'spp', 'spp.', 'sp1', 'sp2', 'sp3'}
+
+    def _es_indeterminado(nombre_norm: str) -> bool:
+        """True si el nombre es solo género + sufijo sp/spp (indeterminado)."""
+        partes = nombre_norm.strip().split()
+        return len(partes) == 2 and partes[1].lower() in _SP_SUFIJOS
+
     def _lookup_amenaza(nombre_sci):
-        """Retorna (categoria_res0126, apendice_cites)."""
+        """Retorna (categoria_res0126, apendice_cites).
+
+        Reglas de matching:
+        1. Match exacto en Res. 0126/2024  → usa esa categoría
+        2. Nombre indeterminado (ej. "Cordia sp.") → fallback al peor del género
+        3. Especie determinada sin match     → LC (no penalizar por homónimos)
+        """
         n = _norm(nombre_sci)
         # Categoría amenaza oficial
         if n in amenaza_exact:
             cat = amenaza_exact[n]
+        elif _es_indeterminado(n):
+            # Solo aquí usamos el fallback de género
+            genero = n.split()[0]
+            cat = amenaza_genero[genero] if amenaza_genero[genero] != 'LC' else 'LC'
         else:
-            genero = n.split()[0] if n else ''
-            cat = amenaza_genero[genero] if (genero and amenaza_genero[genero] != 'LC') else 'LC'
+            # Especie determinada no encontrada en Res. 0126/2024 → LC
+            cat = 'LC'
 
         # Apéndice CITES
         cites_ap = cites_exact.get(n, None)
