@@ -616,6 +616,17 @@ with st.spinner("Calculando ATC por rango (escenario con UICN)..."):
         st.warning(f"⚠️ No se pudo calcular ATC con UICN: {e}")
         atc_resultados_uicn = atc_resultados
 
+# ATC escenario máximo: max(MADS, CITES, UICN) por individuo → FCAFU_max
+with st.spinner("Calculando ATC por rango (escenario máximo)..."):
+    try:
+        fcafu_max_tmp = {}
+        for cob, d in fcafu_por_cobertura.items():
+            fcafu_max_tmp[cob] = {**d, 'FCAFU': d.get('FCAFU_max', d['FCAFU'])}
+        atc_resultados_max = atc.calcular_atc_por_rangos(fcafu_max_tmp, ctx)
+    except Exception as e:
+        st.warning(f"⚠️ No se pudo calcular ATC máximo: {e}")
+        atc_resultados_max = atc_resultados
+
 st.success("✅ Procesamiento completo")
 
 # Tasas BAU
@@ -766,9 +777,11 @@ with tab2:
             b_of   = round(d.get('B_oficial', d.get('B', 0)), 4)
             b_ci   = round(d.get('B_cites', b_of), 4)
             b_ui   = round(d.get('B_uicn',  b_of), 4)
+            b_mx   = round(d.get('B_max',   max(b_of, b_ci, b_ui)), 4)
             f_of   = round(d.get('FCAFU', 0), 3)
             f_ci   = round(d.get('FCAFU_cites', f_of), 3)
             f_ui   = round(d.get('FCAFU_uicn',  f_of), 3)
+            f_mx   = round(d.get('FCAFU_max',   max(f_of, f_ci, f_ui)), 3)
             filas_fcafu.append({
                 "Cobertura":          cob,
                 "N":                  d.get('N', 0),
@@ -777,10 +790,12 @@ with tab2:
                 "B oficial":          b_of,
                 "B con CITES":        b_ci,
                 "B con UICN":         b_ui,
+                "B máximo":           b_mx,
                 "C":                  round(d.get('C', 0), 3),
                 "FCAFU oficial":      f_of,
                 "FCAFU con CITES":    f_ci,
                 "FCAFU con UICN":     f_ui,
+                "FCAFU máximo":       f_mx,
             })
         df_fcafu = pd.DataFrame(filas_fcafu)
         st.dataframe(df_fcafu, use_container_width=True, hide_index=True)
@@ -829,6 +844,7 @@ with tab2:
                         v_of   = sp.get('valor_b_oficial', 0.0)
                         v_ci   = sp.get('valor_b_cites',   v_of)
                         v_ui   = sp.get('valor_b_uicn',    v_of)
+                        v_mx   = sp.get('valor_b_max',     max(v_of, v_ci, v_ui))
                         ap     = sp.get('cites_apendice',  '—')
                         cat    = sp.get('categoria_amenaza','—')
                         cat_ui = sp.get('cat_uicn',        '—')
@@ -840,10 +856,12 @@ with tab2:
                             'v oficial':         v_of,
                             'v con CITES':       v_ci,
                             'v con UICN':        v_ui,
+                            'v máximo':          v_mx,
                             'N ind.':            n_sp,
                             'Aporte B oficial':  sp.get('aporte_b_oficial', round(v_of*n_sp/N,4) if N else 0),
                             'Aporte B CITES':    sp.get('aporte_b_cites',   round(v_ci*n_sp/N,4) if N else 0),
                             'Aporte B UICN':     sp.get('aporte_b_uicn',    round(v_ui*n_sp/N,4) if N else 0),
+                            'Aporte B máximo':   sp.get('aporte_b_max',     round(v_mx*n_sp/N,4) if N else 0),
                         })
                     st.dataframe(
                         pd.DataFrame(rows_b),
@@ -915,8 +933,8 @@ with tab3:
     _section("Área Total a Compensar (ATC) por Rango", "📐")
     st.markdown(
         "**Fórmula:** `ATC = Σ (área_cobertura × (FCAFU + factor_rango))`  "
-        "Se presentan tres escenarios: **oficial** (solo Res. 0126/2024), "
-        "**con CITES** (equiparación interna Unergy) y **con UICN** (Red List global)."
+        "Se presentan cuatro escenarios: **oficial** (solo Res. 0126/2024), "
+        "**con CITES**, **con UICN** y **máximo** (mayor valor entre los tres por individuo)."
     )
 
     if atc_resultados:
@@ -926,14 +944,17 @@ with tab3:
             atc_of = round(data['atc_total'], 3)
             atc_ci = round(atc_resultados_cites.get(rango_id, data)['atc_total'], 3)
             atc_ui = round(atc_resultados_uicn.get(rango_id, data)['atc_total'], 3)
+            atc_mx = round(atc_resultados_max.get(rango_id, data)['atc_total'], 3)
             filas_atc.append({
-                "Rango":              rango_id,
-                "Factor adicional":   data['factor_adicional'],
-                "ATC oficial (ha)":   atc_of,
-                "ATC con CITES (ha)": atc_ci,
-                "ATC con UICN (ha)":  atc_ui,
-                "Δ CITES (ha)":       f"+{round(atc_ci-atc_of,3)}" if atc_ci > atc_of else str(round(atc_ci-atc_of,3)),
-                "Δ UICN (ha)":        f"+{round(atc_ui-atc_of,3)}" if atc_ui > atc_of else str(round(atc_ui-atc_of,3)),
+                "Rango":               rango_id,
+                "Factor adicional":    data['factor_adicional'],
+                "ATC oficial (ha)":    atc_of,
+                "ATC con CITES (ha)":  atc_ci,
+                "ATC con UICN (ha)":   atc_ui,
+                "ATC máximo (ha)":     atc_mx,
+                "Δ CITES (ha)":        f"+{round(atc_ci-atc_of,3)}" if atc_ci > atc_of else str(round(atc_ci-atc_of,3)),
+                "Δ UICN (ha)":         f"+{round(atc_ui-atc_of,3)}" if atc_ui > atc_of else str(round(atc_ui-atc_of,3)),
+                "Δ máximo (ha)":       f"+{round(atc_mx-atc_of,3)}" if atc_mx > atc_of else str(round(atc_mx-atc_of,3)),
             })
         st.dataframe(
             pd.DataFrame(filas_atc),
@@ -941,7 +962,10 @@ with tab3:
         )
 
         st.markdown("---")
-        sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Escenario Oficial", "🔬 Escenario con CITES", "🌍 Escenario con UICN"])
+        sub_tab1, sub_tab2, sub_tab3, sub_tab4 = st.tabs([
+            "📋 Escenario Oficial", "🔬 Escenario con CITES",
+            "🌍 Escenario con UICN", "⚡ Escenario Máximo"
+        ])
 
         with sub_tab1:
             st.caption("Criterio B: solo Res. 0126/2024 (CR=1.0 · EN=0.6 · VU=0.4)")
@@ -951,42 +975,37 @@ with tab3:
                     f"(factor +{data['factor_adicional']})"
                 ):
                     if data.get('detalles'):
-                        st.dataframe(
-                            pd.DataFrame(data['detalles']),
-                            use_container_width=True, hide_index=True
-                        )
+                        st.dataframe(pd.DataFrame(data['detalles']), use_container_width=True, hide_index=True)
 
         with sub_tab2:
-            st.caption(
-                "Criterio B: Res. 0126/2024 + CITES (Apéndice I=0.6 · II=0.4)  "
-                "⚠️ Equiparación interna Unergy — sin normativa directa"
-            )
+            st.caption("Criterio B: Res. 0126/2024 + CITES (Apéndice I=0.6 · II=0.4)  ⚠️ Equiparación interna Unergy")
             for rango_id, data in atc_resultados_cites.items():
                 with st.expander(
                     f"{rango_id} — ATC = {round(data['atc_total'],3)} ha  "
                     f"(factor +{data['factor_adicional']})"
                 ):
                     if data.get('detalles'):
-                        st.dataframe(
-                            pd.DataFrame(data['detalles']),
-                            use_container_width=True, hide_index=True
-                        )
+                        st.dataframe(pd.DataFrame(data['detalles']), use_container_width=True, hide_index=True)
 
         with sub_tab3:
-            st.caption(
-                "Criterio B: Res. 0126/2024 + UICN Red List (CR=1.0 · EN=0.6 · VU=0.4)  "
-                "⚠️ Equiparación interna Unergy — sin normativa directa"
-            )
+            st.caption("Criterio B: Res. 0126/2024 + UICN Red List (CR=1.0 · EN=0.6 · VU=0.4)  ⚠️ Equiparación interna Unergy")
             for rango_id, data in atc_resultados_uicn.items():
                 with st.expander(
                     f"{rango_id} — ATC = {round(data['atc_total'],3)} ha  "
                     f"(factor +{data['factor_adicional']})"
                 ):
                     if data.get('detalles'):
-                        st.dataframe(
-                            pd.DataFrame(data['detalles']),
-                            use_container_width=True, hide_index=True
-                        )
+                        st.dataframe(pd.DataFrame(data['detalles']), use_container_width=True, hide_index=True)
+
+        with sub_tab4:
+            st.caption("Criterio B: max(MADS, CITES, UICN) por individuo — escenario más conservador  ⚠️ Equiparación interna Unergy")
+            for rango_id, data in atc_resultados_max.items():
+                with st.expander(
+                    f"{rango_id} — ATC = {round(data['atc_total'],3)} ha  "
+                    f"(factor +{data['factor_adicional']})"
+                ):
+                    if data.get('detalles'):
+                        st.dataframe(pd.DataFrame(data['detalles']), use_container_width=True, hide_index=True)
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -1110,7 +1129,7 @@ with tab5:
     _section("Descarga de Resultados", "📥")
 
     def _build_excel(ctx, fcafu_por_cobertura,
-                     atc_resultados, atc_resultados_cites, atc_resultados_uicn,
+                     atc_resultados, atc_resultados_cites, atc_resultados_uicn, atc_resultados_max,
                      TASA_BAU, tasa_bau_szh, tasa_bau_zh,
                      TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR,
                      K_RESTAURAR, HORIZONTES, area_impacto_ha):
@@ -1147,10 +1166,12 @@ with tab5:
                     "B oficial":        round(d.get("B_oficial", d.get("B",0)), 4),
                     "B con CITES":      round(d.get("B_cites",   d.get("B",0)), 4),
                     "B con UICN":       round(d.get("B_uicn",    d.get("B",0)), 4),
+                    "B máximo":         round(d.get("B_max",     d.get("B",0)), 4),
                     "C":                d["C"],
                     "FCAFU oficial":    round(d["FCAFU"], 4),
                     "FCAFU con CITES":  round(d.get("FCAFU_cites", d["FCAFU"]), 4),
                     "FCAFU con UICN":   round(d.get("FCAFU_uicn",  d["FCAFU"]), 4),
+                    "FCAFU máximo":     round(d.get("FCAFU_max",   d["FCAFU"]), 4),
                     "AB total (m²)":    round(d.get("area_basal_total",0), 4),
                 })
             pd.DataFrame(rows_f).to_excel(writer, sheet_name="FCAFU", index=False)
@@ -1162,12 +1183,9 @@ with tab5:
                     "Rango": rid,
                     "Factor adicional": data.get("factor_adicional",""),
                     "ATC oficial (ha)": round(data["atc_total"], 4),
-                    "ATC con CITES (ha)": round(
-                        atc_resultados_cites.get(rid, data)["atc_total"], 4
-                    ),
-                    "ATC con UICN (ha)": round(
-                        atc_resultados_uicn.get(rid, data)["atc_total"], 4
-                    ),
+                    "ATC con CITES (ha)": round(atc_resultados_cites.get(rid, data)["atc_total"], 4),
+                    "ATC con UICN (ha)":  round(atc_resultados_uicn.get(rid, data)["atc_total"], 4),
+                    "ATC máximo (ha)":    round(atc_resultados_max.get(rid, data)["atc_total"], 4),
                 })
             pd.DataFrame(rows_a).to_excel(writer, sheet_name="ATC_por_Rango", index=False)
 
@@ -1229,7 +1247,12 @@ with tab5:
                         "v oficial":        sp.get("valor_b_oficial", 0),
                         "v con CITES":      sp.get("valor_b_cites",   0),
                         "v con UICN":       sp.get("valor_b_uicn",    0),
+                        "v máximo":         sp.get("valor_b_max",     0),
                         "N individuos":     sp.get("n_individuos", 0),
+                        "Aporte B oficial": sp.get("aporte_b_oficial", 0),
+                        "Aporte B CITES":   sp.get("aporte_b_cites",   0),
+                        "Aporte B UICN":    sp.get("aporte_b_uicn",    0),
+                        "Aporte B máximo":  sp.get("aporte_b_max",     0),
                     })
             if rows_sp:
                 pd.DataFrame(rows_sp).to_excel(
@@ -1243,7 +1266,7 @@ with tab5:
         nombre_mun  = ctx.get("municipio","proyecto").replace(" ","_")
         excel_bytes = _build_excel(
             ctx, fcafu_por_cobertura,
-            atc_resultados, atc_resultados_cites, atc_resultados_uicn,
+            atc_resultados, atc_resultados_cites, atc_resultados_uicn, atc_resultados_max,
             TASA_BAU, tasa_bau_szh, tasa_bau_zh,
             TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR,
             K_RESTAURAR, HORIZONTES, area_impacto_ha
