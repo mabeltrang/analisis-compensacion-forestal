@@ -9,12 +9,14 @@ Escenarios de Criterio B:
   - B_uicn    : max(B_oficial, categoría UICN)      — escenario Unergy
 
 Matching de especies:
-  1. Especie exacta en especies_amenazadas_co.csv
-  2. Nombre indeterminado (sp./spp.) → peor categoría del género
-  3. Especie determinada sin match   → LC (sin penalización)
+  1. Especie exacta en cada fuente
+  2. Nombre indeterminado (sp./spp.) → peor categoría del género (MADS y CITES)
+  3. Especie determinada sin match   → LC / None
 """
 
 import os
+import csv
+import unicodedata
 import pandas as pd
 import numpy as np
 from collections import defaultdict
@@ -25,7 +27,6 @@ from config.vedas import consultar_veda
 
 def _norm(s):
     """Normaliza string: sin tildes, minúsculas, sin espacios extra."""
-    import unicodedata
     s = str(s)
     s = ''.join(c for c in unicodedata.normalize('NFD', s)
                 if unicodedata.category(c) != 'Mn')
@@ -39,6 +40,121 @@ def _es_indeterminado(nombre_norm: str) -> bool:
     """True si el nombre es género + sufijo sp/spp (indeterminado)."""
     partes = nombre_norm.strip().split()
     return len(partes) == 2 and partes[1].lower() in _SP_SUFIJOS
+
+
+# ── Mapa de categorías UICN (texto completo → código) ────────────────────────
+_UICN_MAP = {
+    'critically endangered':              'CR',
+    'endangered':                         'EN',
+    'vulnerable':                         'VU',
+    'near threatened':                    'NT',
+    'lower risk/near threatened':         'NT',
+    'lower risk/conservation dependent':  'LC',
+    'lower risk/least concern':           'LC',
+    'least concern':                      'LC',
+    'data deficient':                     'DD',
+    'extinct in the wild':                'EW',
+    'extinct':                            'EX',
+}
+
+# Orden de restricción para elegir el más restrictivo ante duplicados
+_CAT_ORDER  = {'CR': 6, 'EN': 5, 'VU': 4, 'NT': 3, 'LC': 2, 'DD': 1, 'EW': 7, 'EX': 8}
+_CITES_ORD  = {'I': 0, 'II': 1, 'III': 2}
+
+
+def _cargar_indices(car: str = ""):
+    """
+    Carga los tres índices de amenaza desde sus archivos fuente separados.
+
+    MADS  → config/especies_amenazadas_co.csv   (Res. 0126/2024)
+    CITES → config/Listado_CITES.csv            (Genus+Species separados)
+    UICN  → config/Listado_UICN.csv             (scientificName binomial)
+
+    Retorna
+    -------
+    amenaza_exact  : {nombre_norm: cat_mads}
+    amenaza_genero : {genero_norm: cat_mads}   # fallback sp. indeterminados
+    cites_exact    : {nombre_norm: apendice}
+    cites_genero   : {genero_norm: apendice}   # fallback si no hay especie propia
+    uicn_exact     : {binomial_norm: cat_uicn}
+    """
+    # ── MADS ─────────────────────────────────────────────────────────────────
+    amenaza_exact  = {}
+    amenaza_genero = defaultdict(lambda: 'LC')
+
+    try:
+        ea = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
+        ea.columns = [_norm(c) for c in ea.columns]
+        col_nombre = next((c for c in ea.columns if 'nombre' in c and 'cientifico' in c.replace(' ', '')), None)
+        col_cat    = next((c for c in ea.columns if 'categoria' in c and 'amenaza' in c.replace(' ', '')), None)
+        if col_nombre and col_cat:
+            for _, r in ea.iterrows():
+                nombre = _norm(str(r[col_nombre]))
+                cat    = str(r[col_cat]).strip()
+                if nombre and cat:
+                    amenaza_exact[nombre] = cat
+                    gen = nombre.split()[0]
+                    if _CAT_ORDER.get(cat, 0) > _CAT_ORDER.get(amenaza_genero[gen], 0):
+                        amenaza_genero[gen] = cat
+    except Exception as e:
+        print(f"[inventario] No se pudo cargar MADS CSV: {e}")
+
+    # ── CITES ─────────────────────────────────────────────────────────────────
+    # Listado_CITES.csv tiene Genus y Species en columnas separadas.
+    # RankName: SPECIES/SUBSPECIES → índice exacto; GENUS → fallback de género.
+    # CurrentListing puede ser 'I/II' → se toma el más restrictivo.
+    cites_exact  = {}
+    cites_genero = {}
+
+    try:
+        with open(os.path.join(settings.CONFIG_DIR, "Listado_CITES.csv"),
+                  newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rank    = row.get('RankName', '').strip().upper()
+                genus   = _norm(row.get('Genus',   ''))
+                species = _norm(row.get('Species', ''))
+                listing = row.get('CurrentListing', '').strip()
+
+                # Extraer el apéndice más restrictivo (ej. 'I/II' → 'I')
+                partes = [p.strip() for p in listing.replace('NC', '').split('/')
+                          if p.strip() in _CITES_ORD]
+                if not partes:
+                    continue
+                ap = sorted(partes, key=lambda x: _CITES_ORD[x])[0]
+
+                if rank in ('SPECIES', 'SUBSPECIES') and genus and species:
+                    nombre = f"{genus} {species}"
+                    if nombre not in cites_exact or _CITES_ORD[ap] < _CITES_ORD[cites_exact[nombre]]:
+                        cites_exact[nombre] = ap
+                elif rank == 'GENUS' and genus:
+                    if genus not in cites_genero or _CITES_ORD[ap] < _CITES_ORD[cites_genero[genus]]:
+                        cites_genero[genus] = ap
+    except Exception as e:
+        print(f"[inventario] No se pudo cargar CITES CSV: {e}")
+
+    # ── UICN ──────────────────────────────────────────────────────────────────
+    # Listado_UICN.csv: scientificName es binomial directo (dos palabras).
+    # Si hay múltiples evaluaciones del mismo binomial, gana la más reciente
+    # (último registro en el archivo).
+    uicn_exact = {}
+
+    try:
+        with open(os.path.join(settings.CONFIG_DIR, "Listado_UICN.csv"),
+                  newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                nombre_raw = row.get('scientificName', '').strip()
+                cat_raw    = _norm(row.get('redlistCategory', ''))
+                cat        = _UICN_MAP.get(cat_raw)
+                if nombre_raw and cat:
+                    # Solo binomial (primeras 2 palabras)
+                    binomial = ' '.join(_norm(nombre_raw).split()[:2])
+                    uicn_exact[binomial] = cat   # último gana (más reciente)
+    except Exception as e:
+        print(f"[inventario] No se pudo cargar UICN CSV: {e}")
+
+    return amenaza_exact, amenaza_genero, cites_exact, cites_genero, uicn_exact
 
 
 def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str = ""):
@@ -113,66 +229,40 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     coberturas_a = pd.read_csv(os.path.join(settings.CONFIG_DIR, "coberturas_a.csv"))
     tabla_c      = pd.read_csv(os.path.join(settings.CONFIG_DIR, "tabla_c.csv"))
 
-    ea = pd.read_csv(os.path.join(settings.CONFIG_DIR, "especies_amenazadas_co.csv"))
-    ea.columns = [_norm(c).replace(' ', '_') for c in ea.columns]
-    ea.columns = [_norm(c) for c in ea.columns]
-
-    # ── Índice MADS (Res. 0126/2024) ─────────────────────────────────────────
-    amenaza_exact = {
-        _norm(r['nombre_cientifico']): r['categoria_de_amenaza']
-        for _, r in ea.iterrows()
-    }
-    # Fallback de género (solo para sp. indeterminados)
-    CAT_ORDER = {'CR': 4, 'EN': 3, 'VU': 2, 'NT': 1, 'LC': 0}
-    amenaza_genero = defaultdict(lambda: 'LC')
-    for _, r in ea.iterrows():
-        gen = _norm(r['nombre_cientifico']).split()[0]
-        cat_nueva  = r['categoria_de_amenaza']
-        if CAT_ORDER.get(cat_nueva, 0) > CAT_ORDER.get(amenaza_genero[gen], 0):
-            amenaza_genero[gen] = cat_nueva
-
-    # ── Índice CITES ──────────────────────────────────────────────────────────
-    cites_exact = {}
-    if 'cites' in ea.columns:
-        for _, r in ea.iterrows():
-            ap = str(r.get('cites', '')).strip().upper()
-            if ap in ('I', 'II', 'III'):
-                cites_exact[_norm(r['nombre_cientifico'])] = ap
-
-    # ── Índice UICN ───────────────────────────────────────────────────────────
-    uicn_exact = {}
-    if 'uicn' in ea.columns:
-        for _, r in ea.iterrows():
-            cat = str(r.get('uicn', '')).strip().upper()
-            if cat in ('CR', 'EN', 'VU', 'NT', 'LC', 'DD'):
-                uicn_exact[_norm(r['nombre_cientifico'])] = cat
+    # ── Cargar índices MADS / CITES / UICN desde archivos separados ──────────
+    amenaza_exact, amenaza_genero, cites_exact, cites_genero, uicn_exact = \
+        _cargar_indices(car=car)
 
     # ── Función de lookup unificada ───────────────────────────────────────────
     def _lookup(nombre_sci):
         """
         Retorna (cat_mads, cites_ap, cat_uicn) para un nombre científico.
 
-        Matching:
-          1. Especie exacta en CSV
-          2. Nombre indeterminado → peor del género (solo MADS)
-          3. Determinada sin match → LC / None
+        MADS  : exacto → fallback género solo para sp./spp.
+        CITES : exacto → fallback género (hereda listado del género CITES)
+        UICN  : exacto binomial
         """
-        n = _norm(nombre_sci)
+        n     = _norm(nombre_sci)
+        gen   = n.split()[0] if n.split() else ''
+        indet = _es_indeterminado(n)
 
         # MADS
         if n in amenaza_exact:
             cat_mads = amenaza_exact[n]
-        elif _es_indeterminado(n):
-            gen = n.split()[0]
-            cat_mads = amenaza_genero[gen] if amenaza_genero[gen] != 'LC' else 'LC'
+        elif indet:
+            cat_mads = amenaza_genero[gen]
         else:
             cat_mads = 'LC'
 
-        # CITES (solo especie exacta — ya resuelto en el CSV)
-        cites_ap = cites_exact.get(n, None)
+        # CITES: especie exacta primero, luego fallback de género
+        if n in cites_exact:
+            cites_ap = cites_exact[n]
+        else:
+            cites_ap = cites_genero.get(gen, None)
 
-        # UICN (solo especie exacta)
-        cat_uicn = uicn_exact.get(n, None)
+        # UICN: solo binomial exacto
+        binomial = ' '.join(n.split()[:2])
+        cat_uicn = uicn_exact.get(binomial, None)
 
         return cat_mads, cites_ap, cat_uicn
 
@@ -189,7 +279,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
 
     # B CITES: max(B_oficial, valor CITES)
     def _b_cites(row):
-        v = row['valor_b_oficial']
+        v  = row['valor_b_oficial']
         ap = row['cites_apendice']
         if ap and str(ap) not in ('nan', 'None'):
             v = max(v, settings.CITES_VALORES.get(str(ap).strip(), 0.0))
@@ -197,7 +287,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
 
     # B UICN: max(B_oficial, valor UICN)
     def _b_uicn(row):
-        v = row['valor_b_oficial']
+        v   = row['valor_b_oficial']
         cat = row['categoria_uicn']
         if cat and str(cat) not in ('nan', 'None'):
             v = max(v, settings.UICN_VALORES.get(str(cat).strip(), 0.0))
@@ -251,7 +341,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             v_uicn   = float(sp_grp['valor_b_uicn'].iloc[0])
 
             def _clean(x):
-                return x if (x and str(x) not in ('nan','None')) else '—'
+                return x if (x and str(x) not in ('nan', 'None')) else '—'
 
             amenazadas.append({
                 'nombre_cientifico': sp_sci,
