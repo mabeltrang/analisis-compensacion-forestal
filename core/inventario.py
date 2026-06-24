@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 """
 inventario.py — Procesamiento del inventario forestal Unergy
