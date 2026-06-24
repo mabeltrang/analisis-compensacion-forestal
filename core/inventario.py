@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 """
 inventario.py — Procesamiento del inventario forestal Unergy
@@ -297,6 +296,9 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     df_filtrado['valor_b_cites'] = df_filtrado.apply(_b_cites, axis=1)
     df_filtrado['valor_b_uicn']  = df_filtrado.apply(_b_uicn,  axis=1)
 
+    # B max: el mayor de los tres escenarios por individuo
+    df_filtrado['valor_b_max'] = df_filtrado[['valor_b_oficial','valor_b_cites','valor_b_uicn']].max(axis=1)
+
     # ── Agrupación por cobertura ──────────────────────────────────────────────
     resultados = {}
 
@@ -309,10 +311,11 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
         val_a = coberturas_a[coberturas_a['cobertura'] == cob]['valor_a'].values
         a = float(val_a[0]) if len(val_a) > 0 else 0.0
 
-        # Criterio B — tres escenarios
+        # Criterio B — tres escenarios + máximo
         b_oficial = float(group['valor_b_oficial'].sum() / n) if n > 0 else 0.0
         b_cites   = float(group['valor_b_cites'].sum()   / n) if n > 0 else 0.0
         b_uicn    = float(group['valor_b_uicn'].sum()    / n) if n > 0 else 0.0
+        b_max     = float(group['valor_b_max'].sum()     / n) if n > 0 else 0.0
 
         # Criterio C
         c_row = tabla_c[(tabla_c['sn_min'] <= sn) & (tabla_c['sn_max'] > sn)]
@@ -320,10 +323,11 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             float(c_row['valor_c'].values[0]) if not c_row.empty else 0.1
         )
 
-        # FCAFU — tres escenarios
+        # FCAFU — tres escenarios + máximo
         fcafu_oficial = 1 + a + b_oficial + c
         fcafu_cites   = 1 + a + b_cites   + c
         fcafu_uicn    = 1 + a + b_uicn    + c
+        fcafu_max     = 1 + a + b_max     + c
 
         # ── Desglose especies con estatus ────────────────────────────────────
         amenazadas = []
@@ -344,9 +348,12 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             def _clean(x):
                 return x if (x and str(x) not in ('nan', 'None')) else '—'
 
+            # valor máximo entre los tres escenarios por individuo
+            v_max = max(v_ofic, v_cites, v_uicn)
+
             amenazadas.append({
                 'nombre_cientifico': sp_sci,
-                'cat_mads':          cat_mads,
+                'categoria_amenaza': cat_mads,       # clave consistente con app.py
                 'cat_uicn':          _clean(cat_uicn),
                 'cites_apendice':    _clean(cites_sp),
                 'n_individuos':      n_sp,
@@ -354,10 +361,12 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
                 'valor_b_oficial':   v_ofic,
                 'valor_b_cites':     v_cites,
                 'valor_b_uicn':      v_uicn,
+                'valor_b_max':       v_max,
                 # Aporte al B de la cobertura
                 'aporte_b_oficial':  round(v_ofic  * n_sp / n, 4) if n > 0 else 0.0,
                 'aporte_b_cites':    round(v_cites  * n_sp / n, 4) if n > 0 else 0.0,
                 'aporte_b_uicn':     round(v_uicn   * n_sp / n, 4) if n > 0 else 0.0,
+                'aporte_b_max':      round(v_max    * n_sp / n, 4) if n > 0 else 0.0,
             })
 
         # ── Vedas ────────────────────────────────────────────────────────────
@@ -406,11 +415,13 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             'B_oficial': b_oficial,
             'B_cites':   b_cites,
             'B_uicn':    b_uicn,
+            'B_max':     b_max,
             'C':         c,
-            # FCAFU — tres escenarios
+            # FCAFU — tres escenarios + máximo
             'FCAFU':        fcafu_oficial,
             'FCAFU_cites':  fcafu_cites,
             'FCAFU_uicn':   fcafu_uicn,
+            'FCAFU_max':    fcafu_max,
             # Desglose
             'amenazadas':       amenazadas,
             'area_basal_total': area_basal,
