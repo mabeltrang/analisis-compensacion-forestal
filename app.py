@@ -238,6 +238,49 @@ st.markdown(f"""
   [data-testid="stMetric"] label {{ color: #5A5A72 !important; font-weight:600; }}
   [data-testid="stMetric"] [data-testid="stMetricValue"] {{ color: {PURPLE_DARK} !important; font-weight:800; }}
 
+  /* ── Tarjetas consulta especies ── */
+  .sp-card {{
+    border: 1.5px solid #B8A9E0;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    background: #FAFAFE;
+  }}
+  .sp-card-name {{
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: {PURPLE_DARK};
+    font-style: italic;
+    margin-bottom: 6px;
+  }}
+  .sp-card-common {{
+    font-size: 0.82rem;
+    color: #5A5A72;
+    font-style: normal;
+    margin-bottom: 8px;
+  }}
+  .sp-badges {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }}
+  .sp-source-label {{
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #5A5A72;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }}
+  .badge-CR  {{ background:#B71C1C; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-EN  {{ background:#E65100; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-VU  {{ background:#F9A825; color:#1A1A2E; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-NT  {{ background:#1565C0; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-LC  {{ background:#2E7D32; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-CITES {{ background:{PURPLE}; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-NL  {{ background:#9E9E9E; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .sp-divider {{ border: none; border-top: 1px solid #E0D9F5; margin: 4px 0 8px 0; }}
+
   /* ── Markdown general: párrafos oscuros, code blocks intactos ── */
   div[data-testid="stMarkdownContainer"] > p {{ color: #1A1A2E; }}
   div[data-testid="stMarkdownContainer"] > ul li {{ color: #1A1A2E; }}
@@ -652,13 +695,14 @@ TASA_BAU    = tasa_bau
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS PRINCIPALES
 # ══════════════════════════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📍 Contexto",
     "🌳 FCAFU",
     "📐 ATC",
     "🌱 Adicionalidad",
     "📥 Exportar",
     "🚫 Vedas",
+    "🔍 Consulta especies",
 ])
 
 
@@ -1317,3 +1361,206 @@ with tab5:
 # ════════════════════════════════════════════════════════════════════════
 with tab6:
     _render_tab_vedas(todas_vedas=todas_vedas, car_proyecto=car_proyecto)
+
+
+# ════════════════════════════════════════════════════════════════════════
+# TAB 7 — CONSULTA DE ESTADO DE AMENAZA POR ESPECIE
+# ════════════════════════════════════════════════════════════════════════
+
+@st.cache_data(show_spinner=False)
+def _cargar_indices_amenaza():
+    """Carga y preprocesa los tres CSV de amenaza para búsqueda rápida."""
+    BASE = os.path.join(os.path.dirname(__file__), "config")
+
+    df_mads = pd.read_csv(os.path.join(BASE, "especies_amenazadas_co.csv"))
+    df_mads["_key"] = df_mads["nombre cientifico"].str.strip().str.lower()
+    mads_idx = df_mads.set_index("_key")
+
+    df_cites = pd.read_csv(os.path.join(BASE, "Listado_CITES.csv"), on_bad_lines="skip")
+    df_cites["_sci"] = (
+        df_cites["Genus"].fillna("").str.strip() + " " +
+        df_cites["Species"].fillna("").str.strip()
+    ).str.strip().str.lower()
+    cites_idx = df_cites[df_cites["Species"].notna()].set_index("_sci")
+
+    df_iucn = pd.read_csv(os.path.join(BASE, "Listado_UICN.csv"))
+    df_iucn["_key"] = df_iucn["scientificName"].str.strip().str.lower()
+    iucn_idx = df_iucn.set_index("_key")
+
+    return mads_idx, cites_idx, iucn_idx
+
+
+_IUCN_ABBR = {
+    "Critically Endangered": "CR",
+    "Endangered": "EN",
+    "Vulnerable": "VU",
+    "Near Threatened": "NT",
+    "Least Concern": "LC",
+    "Data Deficient": "DD",
+    "Extinct": "EX",
+    "Extinct in the Wild": "EW",
+}
+
+
+def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx):
+    key = nombre.strip().lower()
+
+    mads_cat = "No listado"
+    mads_nombre_comun = ""
+    mads_familia = ""
+    if key in mads_idx.index:
+        row = mads_idx.loc[key]
+        if isinstance(row, pd.DataFrame):
+            row = row.iloc[0]
+        mads_cat = str(row.get("Categoría de amenaza", "")).strip() or "No listado"
+        mads_nombre_comun = str(row.get("Nombre común", "")).strip()
+        mads_familia = str(row.get("Familia", "")).strip()
+
+    cites_apendice = "No listado"
+    if key in cites_idx.index:
+        row = cites_idx.loc[key]
+        if isinstance(row, pd.DataFrame):
+            row = row.iloc[0]
+        ap = str(row.get("CurrentListing", "")).strip()
+        cites_apendice = f"Apéndice {ap}" if ap else "No listado"
+
+    iucn_cat = "No evaluado"
+    if key in iucn_idx.index:
+        row = iucn_idx.loc[key]
+        if isinstance(row, pd.DataFrame):
+            row = row.iloc[0]
+        cat_full = str(row.get("redlistCategory", "")).strip()
+        iucn_cat = _IUCN_ABBR.get(cat_full, cat_full) or "No evaluado"
+
+    return {
+        "nombre": nombre.strip(),
+        "mads": mads_cat,
+        "cites": cites_apendice,
+        "iucn": iucn_cat,
+        "nombre_comun": mads_nombre_comun,
+        "familia": mads_familia,
+    }
+
+
+def _badge_html(texto, fuente=None):
+    t = str(texto).strip()
+    _cls_map = {
+        "CR": "badge-CR", "EN": "badge-EN", "VU": "badge-VU",
+        "NT": "badge-NT", "LC": "badge-LC",
+    }
+    if t in _cls_map:
+        cls = _cls_map[t]
+    elif "Apéndice" in t:
+        cls = "badge-CITES"
+    else:
+        cls = "badge-NL"
+    label = f"<span class='sp-source-label'>{fuente}: </span>" if fuente else ""
+    return f"{label}<span class='{cls}'>{t}</span>"
+
+
+with tab7:
+    _section("Consulta de Estado de Amenaza por Especie", "🔍")
+    st.markdown(
+        "Ingresa una lista de especies (una por línea) para consultar su categoría de amenaza "
+        "según **MADS** (Res. 0126/2024), **CITES** (Apéndices) e **IUCN** (Lista Roja global). "
+        "No se requiere inventario cargado."
+    )
+
+    col_input, col_opts = st.columns([3, 1])
+    with col_input:
+        lista_raw = st.text_area(
+            "Nombres científicos (uno por línea)",
+            placeholder="Cedrela odorata\nSwietenia macrophylla\nCattleya trianae\nQuercus humboldtii",
+            height=180,
+            key="consulta_especies_input",
+        )
+    with col_opts:
+        st.markdown("#### Fuentes")
+        mostrar_mads  = st.checkbox("MADS (Col)", value=True, key="ch_mads")
+        mostrar_cites = st.checkbox("CITES", value=True, key="ch_cites")
+        mostrar_iucn  = st.checkbox("IUCN", value=True, key="ch_iucn")
+        solo_amenazadas = st.checkbox("Solo amenazadas", value=False, key="ch_solo_am",
+                                      help="Oculta especies sin categoría en ninguna fuente")
+
+    if st.button("🔍 Consultar", key="btn_consulta_sp", type="primary"):
+        nombres = [n.strip() for n in lista_raw.splitlines() if n.strip()]
+        if not nombres:
+            st.warning("Ingresa al menos un nombre de especie.")
+        else:
+            with st.spinner(f"Consultando {len(nombres)} especies..."):
+                mads_idx, cites_idx, iucn_idx = _cargar_indices_amenaza()
+                resultados = [_consultar_amenaza_sp(n, mads_idx, cites_idx, iucn_idx) for n in nombres]
+
+            if solo_amenazadas:
+                resultados = [
+                    r for r in resultados
+                    if r["mads"] in {"CR","EN","VU","NT"}
+                    or "Apéndice" in r["cites"]
+                    or r["iucn"] in {"CR","EN","VU","NT"}
+                ]
+
+            if not resultados:
+                st.info("Ninguna especie figura con categoría de amenaza en las fuentes consultadas.")
+            else:
+                n_cr  = sum(1 for r in resultados if r["mads"]=="CR" or r["iucn"]=="CR")
+                n_en  = sum(1 for r in resultados if r["mads"]=="EN" or r["iucn"]=="EN")
+                n_vu  = sum(1 for r in resultados if r["mads"]=="VU" or r["iucn"]=="VU")
+                n_cit = sum(1 for r in resultados if "Apéndice" in r["cites"])
+
+                mc1, mc2, mc3, mc4, mc5 = st.columns(5)
+                mc1.metric("Consultadas", len(resultados))
+                mc2.metric("🔴 CR", n_cr)
+                mc3.metric("🟠 EN", n_en)
+                mc4.metric("🟡 VU", n_vu)
+                mc5.metric("🟣 CITES", n_cit)
+
+                st.markdown("---")
+
+                for r in resultados:
+                    nombre_comun_html = ""
+                    if r["nombre_comun"] or r["familia"]:
+                        partes = []
+                        if r["nombre_comun"]: partes.append(r["nombre_comun"])
+                        if r["familia"]: partes.append(f"<i>{r['familia']}</i>")
+                        nombre_comun_html = f"<div class='sp-card-common'>{' &nbsp;·&nbsp; '.join(partes)}</div>"
+
+                    badges_html = "<div class='sp-badges'>"
+                    if mostrar_mads:
+                        badges_html += _badge_html(r["mads"], "MADS") + "&nbsp;"
+                    if mostrar_cites:
+                        badges_html += _badge_html(r["cites"], "CITES") + "&nbsp;"
+                    if mostrar_iucn:
+                        badges_html += _badge_html(r["iucn"], "IUCN") + "&nbsp;"
+                    badges_html += "</div>"
+
+                    st.markdown(f"""
+                    <div class='sp-card'>
+                      <div class='sp-card-name'>{r["nombre"]}</div>
+                      {nombre_comun_html}
+                      <hr class='sp-divider'/>
+                      {badges_html}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                st.markdown("---")
+                with st.expander("📋 Ver tabla completa / exportar"):
+                    df_res = pd.DataFrame([{
+                        "Nombre científico": r["nombre"],
+                        "Nombre común": r["nombre_comun"],
+                        "Familia": r["familia"],
+                        "MADS (Res. 0126/2024)": r["mads"],
+                        "CITES": r["cites"],
+                        "IUCN": r["iucn"],
+                    } for r in resultados])
+                    st.dataframe(df_res, use_container_width=True, hide_index=True)
+
+                    buf = io.BytesIO()
+                    with pd.ExcelWriter(buf, engine="openpyxl") as xw:
+                        df_res.to_excel(xw, index=False, sheet_name="Consulta amenaza")
+                    st.download_button(
+                        "⬇️ Descargar Excel",
+                        data=buf.getvalue(),
+                        file_name="consulta_amenaza_especies.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key="dl_consulta_sp",
+                    )
