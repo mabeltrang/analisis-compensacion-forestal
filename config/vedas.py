@@ -6,6 +6,10 @@ Fuentes:
   - CORPOCESAR: Res. 0035 del 28 de enero de 2026 (veda temporal)
   - CDMB, CORANTIOQUIA, CORPOURABA, CORTOLIMA, CARDER, CVC, CORPOCALDAS, CRA:
     inventario MADS/Dirección General Ecosistemas
+  - CORPOBOYACÁ, CARSUCRE: sin veda forestal regional propia identificada
+    (búsqueda jul/2026 en normatividad publicada de cada corporación); aplican
+    únicamente las vedas nacionales (ver VEDAS_NACIONALES). Si se conoce el acto
+    administrativo específico, actualizar el campo "spp" y quitar "solo_nacional".
 """
 
 import unicodedata
@@ -85,6 +89,13 @@ VEDAS_NACIONALES = [
 
 # ─────────────────────────────────────────────────────────────────────────────
 # VEDAS REGIONALES — indexadas por código de CAR
+#
+# Campo "solo_nacional" (opcional, bool): cuando es True, indica que la CAR
+# NO tiene una resolución de veda forestal regional propia identificada.
+# En ese caso, consultar_veda() no busca coincidencias en "spp" (vacío) sino
+# que, si la especie ya está en veda nacional, refleja esa veda nacional
+# también como obligación aplicable en la jurisdicción de esta CAR (para que
+# el resultado no aparezca como "sin veda" al seleccionar esta CAR).
 # ─────────────────────────────────────────────────────────────────────────────
 VEDAS_REGIONALES = {
     "CORPOCESAR": {
@@ -263,6 +274,30 @@ VEDAS_REGIONALES = {
             {"nombre_comun": "Mangle salado", "sci_fragmentos": ["avicennia nitida"]},
         ]
     },
+    "CORPOBOYACA": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPOBOYACÁ "
+                 "que establezca veda forestal regional. En su jurisdicción aplican "
+                 "las vedas nacionales vigentes (Res. 0316/1974 INDERENA, Ley 61/1985, "
+                 "Res. 1602/1995 + 020/1996 MADS). Si se conoce una resolución "
+                 "específica de CORPOBOYACÁ, actualizar este registro."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CARSUCRE": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CARSUCRE "
+                 "que establezca veda forestal regional. En su jurisdicción "
+                 "(incluye manglares del Golfo de Morrosquillo) aplican las vedas "
+                 "nacionales vigentes, en particular la veda nacional de mangles "
+                 "(Res. 1602/1995 + 020/1996 MADS) y demás vedas nacionales de "
+                 "flora arbórea. Si se conoce una resolución específica de "
+                 "CARSUCRE, actualizar este registro."),
+        "spp": [],
+        "solo_nacional": True,
+    },
 }
 
 
@@ -296,22 +331,17 @@ def consultar_veda(nombre_cientifico: str, nombre_comun: str = "",
     en_nac = False
     info_nac = None
     for v in VEDAS_NACIONALES:
-        if any(_normalizar(f) in texto or texto in _normalizar(f)
-               or any(_normalizar(f) in _normalizar(k)
-                      for k in [nombre_cientifico, nombre_comun])
-               for f in v["sci_fragmentos"]):
-            # Matching más preciso: al menos un fragmento está en el texto
-            match = False
-            for frag in v["sci_fragmentos"]:
-                frag_n = _normalizar(frag)
-                if frag_n in texto:
-                    match = True
-                    break
-            if match:
-                en_nac = True
-                info_nac = {"norma": v["norma"], "nota": v["nota"],
-                             "nombre_comun": v["nombre_comun"]}
+        match = False
+        for frag in v["sci_fragmentos"]:
+            frag_n = _normalizar(frag)
+            if frag_n in texto:
+                match = True
                 break
+        if match:
+            en_nac = True
+            info_nac = {"norma": v["norma"], "nota": v["nota"],
+                         "nombre_comun": v["nombre_comun"]}
+            break
 
     # ── Veda regional ────────────────────────────────────────────────────────
     en_reg = False
@@ -319,25 +349,46 @@ def consultar_veda(nombre_cientifico: str, nombre_comun: str = "",
     car_norm = car.upper().strip() if car else ""
     if car_norm and car_norm in VEDAS_REGIONALES:
         reg = VEDAS_REGIONALES[car_norm]
-        for sp in reg["spp"]:
-            match = False
-            for frag in sp["sci_fragmentos"]:
-                frag_n = _normalizar(frag)
-                if frag_n in texto:
-                    match = True
-                    break
-            if match:
+
+        if reg.get("solo_nacional"):
+            # Esta CAR no tiene veda regional propia: si la especie ya está
+            # en veda nacional, se refleja también aquí para que el resultado
+            # de "consultar por esta CAR" no aparezca como sin veda.
+            if en_nac:
                 en_reg = True
                 info_reg = {
-                    "norma": reg["norma"],
+                    "norma": info_nac["norma"],
                     "nota": reg["nota"],
                     "tipo": reg["tipo"],
-                    "nombre_comun": sp["nombre_comun"]
+                    "nombre_comun": info_nac["nombre_comun"],
                 }
-                break
+        else:
+            for sp in reg["spp"]:
+                match = False
+                for frag in sp["sci_fragmentos"]:
+                    frag_n = _normalizar(frag)
+                    if frag_n in texto:
+                        match = True
+                        break
+                if match:
+                    en_reg = True
+                    info_reg = {
+                        "norma": reg["norma"],
+                        "nota": reg["nota"],
+                        "tipo": reg["tipo"],
+                        "nombre_comun": sp["nombre_comun"]
+                    }
+                    break
 
     # ── Nivel y alerta ───────────────────────────────────────────────────────
-    if en_nac and en_reg:
+    # Cuando la CAR es "solo_nacional", en_nac y en_reg siempre coinciden
+    # (ambos True o ambos False), así que el nivel efectivo es "nacional".
+    car_solo_nacional = (
+        car_norm in VEDAS_REGIONALES
+        and VEDAS_REGIONALES[car_norm].get("solo_nacional", False)
+    )
+
+    if en_nac and en_reg and not car_solo_nacional:
         nivel = "nacional+regional"
         alerta = (
             f"⚠️ VEDA NACIONAL ({info_nac['norma']}) + "
@@ -346,10 +397,17 @@ def consultar_veda(nombre_cientifico: str, nombre_comun: str = "",
         )
     elif en_nac:
         nivel = "nacional"
-        alerta = (
-            f"⚠️ VEDA NACIONAL ({info_nac['norma']}). "
-            f"{info_nac['nota']}"
-        )
+        if car_solo_nacional:
+            alerta = (
+                f"⚠️ VEDA NACIONAL ({info_nac['norma']}). {info_nac['nota']}. "
+                f"Nota: {car_norm} no tiene veda regional propia identificada; "
+                f"aplica esta veda nacional en su jurisdicción."
+            )
+        else:
+            alerta = (
+                f"⚠️ VEDA NACIONAL ({info_nac['norma']}). "
+                f"{info_nac['nota']}"
+            )
     elif en_reg:
         nivel = "regional"
         alerta = (
