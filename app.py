@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 """
 App de Planes de Compensación Biótica — Unergy Energía Digital S.A.S. E.S.P.
@@ -45,6 +44,15 @@ st.markdown(f"""
 
   /* ── Texto base oscuro — SIN tocar code/pre para no romper bloques de código ── */
   .stApp p, .stApp li {{ color: #1A1A2E; }}
+
+  /* ── Fix contraste: cualquier encabezado (###, ####...) sin clase propia ──
+     hereda color oscuro por defecto. Las reglas más específicas de abajo
+     (.unergy-header h1, .section-header h3, sidebar h3, etc.) tienen la
+     MISMA especificidad pero se declaran después, así que siguen ganando
+     y mantienen su color (blanco / morado) sin que esta regla las pise. ── */
+  .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{
+    color: #1A1A2E !important;
+  }}
 
   /* ── Header corporativo ── */
   .unergy-header {{
