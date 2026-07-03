@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 """
 App de Planes de Compensación Biótica — Unergy Energía Digital S.A.S. E.S.P.
@@ -404,44 +405,48 @@ def _render_tab_vedas(todas_vedas, car_proyecto):
         )
         st.markdown("---")
 
-    # ── B: Vedas nacionales ───────────────────────────────────────────────────
-    with st.expander(
-        "🇨🇴 Vedas Nacionales — aplican en todo el territorio nacional",
-        expanded=(todas_vedas is None)
-    ):
-        st.caption(
-            "Fuentes: Res. 0316/1974 INDERENA · Ley 61/1985 · "
-            "Res. 1602/1995 + Res. 020/1996 MADS"
-        )
-        st.markdown("---")
-        for sp in VEDAS_NACIONALES:
-            nombres_sci = " / ".join(f"*{n.capitalize()}*" for n in sp["sci_fragmentos"])
-            st.markdown(
-                f"**{sp['nombre_comun']}** &nbsp;({nombres_sci})  \n"
-                f"<small>📋 {sp['norma']} &nbsp;|&nbsp; {sp['nota']}</small>",
-                unsafe_allow_html=True,
-            )
-            st.markdown("---")
-
-    # ── C: Vedas regionales ───────────────────────────────────────────────────
-    _section("Vedas Regionales por CAR", "🏛️")
-    cars_disponibles = sorted(VEDAS_REGIONALES.keys())
+    # ── C: Vedas nacionales + regionales, unificadas en un solo selector ──────
+    _section("Vedas Nacionales y Regionales", "🏛️")
+    cars_disponibles = ["NACIONAL"] + sorted(VEDAS_REGIONALES.keys())
     default_cars = [car_proyecto] if car_proyecto and car_proyecto in VEDAS_REGIONALES else []
     cars_sel = st.multiselect(
-        "Selecciona una o varias CARs",
+        "Selecciona 'NACIONAL' y/o una o varias CARs",
         options=cars_disponibles,
         default=default_cars,
-        help="Si seleccionaste una CAR en el sidebar, aparece preseleccionada.",
+        help="Si seleccionaste una CAR en el sidebar, aparece preseleccionada. "
+             "Elige 'NACIONAL' para ver las vedas que aplican en todo el país.",
         key="vedas_cars_sel"
     )
     if not cars_sel:
-        st.caption("Selecciona al menos una CAR para ver sus vedas regionales.")
+        st.caption("Selecciona al menos una opción para ver sus vedas.")
     else:
         for car_key in cars_sel:
+            if car_key == "NACIONAL":
+                st.markdown("### 🇨🇴 NACIONAL — 🔴 Veda indefinida (todo el territorio)")
+                st.caption(
+                    "Fuentes: Res. 0316/1974 INDERENA · Ley 61/1985 · "
+                    "Res. 1602/1995 + Res. 020/1996 MADS"
+                )
+                rows_nac = [
+                    {
+                        "Nombre común": sp["nombre_comun"],
+                        "Nombre científico (fragmentos)": "; ".join(
+                            n.capitalize() for n in sp["sci_fragmentos"]
+                        ),
+                        "Norma": sp["norma"],
+                        "Nota": sp["nota"],
+                    }
+                    for sp in VEDAS_NACIONALES
+                ]
+                st.dataframe(pd.DataFrame(rows_nac), use_container_width=True, hide_index=True)
+                st.markdown("---")
+                continue
+
             datos = VEDAS_REGIONALES[car_key]
             tipo_badge = (
                 "🔴 Veda indefinida" if datos.get("tipo") == "indefinida"
-                else "🟡 Veda temporal"
+                else "🟡 Veda temporal" if datos.get("tipo") == "temporal"
+                else "⚪ Sin veda regional propia"
             )
             st.markdown(f"### {car_key} — {tipo_badge}")
             st.markdown(
@@ -459,6 +464,8 @@ def _render_tab_vedas(todas_vedas, car_proyecto):
             ]
             if rows:
                 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            elif datos.get("solo_nacional"):
+                st.caption("👉 Sin especies propias — consulta la fila 'NACIONAL' de arriba.")
             st.markdown("---")
 
     # ── D: Buscador libre ─────────────────────────────────────────────────────
@@ -472,6 +479,8 @@ def _render_tab_vedas(todas_vedas, car_proyecto):
         resultado_nac = consultar_veda(busqueda.strip())
         hits_reg = []
         for ck in cars_disponibles:
+            if ck == "NACIONAL":
+                continue
             r = consultar_veda(busqueda.strip(), car=ck)
             if r["en_veda_regional"] and r.get("veda_regional_info"):
                 info = r["veda_regional_info"].copy()
@@ -495,6 +504,7 @@ def _render_tab_vedas(todas_vedas, car_proyecto):
                 f"✅ **'{busqueda}'** no figura en la base de datos de vedas "
                 "(nacional ni regional). Verifica también con la CAR competente."
             )
+
 # ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("### ⚙️ Configuración")
@@ -523,12 +533,10 @@ with st.sidebar:
             "", "CORPOCESAR", "CORPOGUAJIRA", "CRA", "CORPOBOYACA",
             "CDMB", "CAS", "CORPAMAG", "CORANTIOQUIA", "CORPOURABA",
             "CORTOLIMA", "CARDER", "CVC", "CRC", "CORPOCALDAS",
-            "CAR", "CORPONOR",
+            "CARSUCRE", "CAR", "CORPONOR",
         ],
         help="Para cruce con vedas regionales"
     )
-
-
 
     st.markdown("---")
     st.markdown("""
@@ -542,8 +550,6 @@ with st.sidebar:
 - Cobertura
 - AB t (m2) *(opcional)*
     """)
-
-
 
 # ════════════════════════════════════════════════════════════════════════
 # FUNCIÓN REUTILIZABLE — CONSULTA ESTADO DE AMENAZA
@@ -738,14 +744,6 @@ def _render_tab_consulta(key_suffix=""):
 # ══════════════════════════════════════════════════════════════════════════════
 # PANTALLA DE BIENVENIDA
 # ══════════════════════════════════════════════════════════════════════════════
-
-# ════════════════════════════════════════════════════════════════════════
-# FUNCIÓN REUTILIZABLE — CONSULTA ESTADO DE AMENAZA
-# ════════════════════════════════════════════════════════════════════════
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PANTALLA DE BIENVENIDA
-# ══════════════════════════════════════════════════════════════════════════════
 if not impacto_file or not excel_file:
     _tab_vedas_only = st.tabs(["🚫 Vedas", "🔍 Consulta especies", "ℹ️ Cómo usar"])
     with _tab_vedas_only[0]:
@@ -774,7 +772,6 @@ if not impacto_file or not excel_file:
     </div>
         """, unsafe_allow_html=True)
     st.stop()
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PROCESAMIENTO
@@ -879,16 +876,18 @@ fuente_bau_szh = ctx.get('tasa_bau_szh_fuente', 'Hansen GFC')
 fuente_bau_zh  = ctx.get('tasa_bau_zh_fuente',  'Hansen GFC')
 
 TASA_POR_NIVEL = {
-    "Rango 1": tasa_bau,     "Rango 2": tasa_bau_szh,
-    "Rango 3": tasa_bau_zh,  "Rango 4": tasa_bau,
-    "Rango 5": tasa_bau_szh, "Rango 6": tasa_bau_zh,
+    "Rango 1": tasa_bau,
+    "Rango 2": tasa_bau_szh,
+    "Rango 3": tasa_bau_zh,
+    "Rango 4": tasa_bau,
+    "Rango 5": tasa_bau_szh,
+    "Rango 6": tasa_bau_zh,
 }
 K_RESTAURAR = 0.076
 F_CONSERVAR = 0.85
 F_RESTAURAR = 0.75
 HORIZONTES  = [3, 5, 10, 15]
 TASA_BAU    = tasa_bau
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS PRINCIPALES
@@ -968,6 +967,7 @@ todas_vedas = []
 for cob, d in fcafu_por_cobertura.items():
     for v in d.get('vedas_detectadas', []):
         todas_vedas.append({**v, 'cobertura': cob})
+
 
 # ════════════════════════════════════════════════════════════════════════
 # TAB 2 — FCAFU
@@ -1564,8 +1564,5 @@ with tab6:
 # ════════════════════════════════════════════════════════════════════════
 # TAB 7 — CONSULTA DE ESTADO DE AMENAZA POR ESPECIE
 # ════════════════════════════════════════════════════════════════════════
-
-
-
 with tab7:
     _render_tab_consulta(key_suffix="_tab7")
