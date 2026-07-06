@@ -6,10 +6,23 @@ Fuentes:
   - CORPOCESAR: Res. 0035 del 28 de enero de 2026 (veda temporal)
   - CDMB, CORANTIOQUIA, CORPOURABA, CORTOLIMA, CARDER, CVC, CORPOCALDAS, CRA:
     inventario MADS/Dirección General Ecosistemas
-  - CORPOBOYACÁ, CARSUCRE: sin veda forestal regional propia identificada
-    (búsqueda jul/2026 en normatividad publicada de cada corporación); aplican
-    únicamente las vedas nacionales (ver VEDAS_NACIONALES). Si se conoce el acto
-    administrativo específico, actualizar el campo "spp" y quitar "solo_nacional".
+  - CAR (Cundinamarca): Acuerdo CAR N° 021 de 17 de julio de 2018, Art. 7
+  - CORNARE: Acuerdo 404 de 29 de mayo de 2020 (30 especies forestales
+    carismáticas de la jurisdicción; lista regional completa pendiente de
+    verificar en el texto del acuerdo — se incluyen las especies confirmadas
+    en actos administrativos públicos de Cornare que citan expresamente el
+    Acuerdo 404/2020)
+  - CORPOBOYACÁ, CARSUCRE, CORPORINOQUIA, CORPOGUAJIRA, CORPAMAG, CORPONOR,
+    CVS, CARDIQUE, CSB, CORPOCHIVOR, CORPOGUAVIO, CORMACARENA, CDA,
+    CORPOAMAZONIA, CODECHOCO, CORPONARIÑO, CORALINA, AMVA: sin veda forestal
+    regional propia identificada con lista de especies verificable en fuente
+    pública (búsqueda jul/2026 en normatividad publicada de cada corporación);
+    aplican únicamente las vedas nacionales (ver VEDAS_NACIONALES). Si se
+    conoce el acto administrativo específico de alguna de estas CAR, actualizar
+    el campo "spp" y quitar "solo_nacional". CORPORINOQUIA tiene además la
+    Res. 200.15.07-0193/2007, que suspende temporalmente el trámite de
+    aprovechamientos forestales comerciales en bosque natural (no es una veda
+    de especies puntuales, por lo que no se modela aquí como tal).
 """
 
 import unicodedata
@@ -295,6 +308,189 @@ VEDAS_REGIONALES = {
                  "(Res. 1602/1995 + 020/1996 MADS) y demás vedas nacionales de "
                  "flora arbórea. Si se conoce una resolución específica de "
                  "CARSUCRE, actualizar este registro."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CAR": {
+        "norma": "Acuerdo CAR N° 021 del 17 de julio de 2018 (Art. 7)",
+        "tipo": "indefinida",
+        "nota": ("Régimen de uso, aprovechamiento y protección de la flora silvestre y "
+                 "los bosques naturales en la jurisdicción de la Corporación Autónoma "
+                 "Regional de Cundinamarca. El Art. 7 declara especies vedadas en el "
+                 "territorio CAR (coincidentes con vedas nacionales vigentes)."),
+        "spp": [
+            {"nombre_comun": "Pino colombiano / Pino romerón",
+             "sci_fragmentos": ["podocarpus rospigliosii", "podocarpus montanus",
+                                 "podocarpus oleifolius"]},
+            {"nombre_comun": "Roble andino", "sci_fragmentos": ["quercus humboldtii"]},
+            {"nombre_comun": "Palma de cera", "sci_fragmentos": ["ceroxylon quindiuense"]},
+        ],
+    },
+    "CORNARE": {
+        "norma": "Acuerdo 404 del 29 de mayo de 2020 CORNARE",
+        "tipo": "indefinida",
+        "nota": ("Declara veda para especies forestales carismáticas de la jurisdicción "
+                 "(Oriente antioqueño) — recopila además vedas nacionales vigentes "
+                 "(Res. 0316/1974 INDERENA, Res. 0213/1977 INDERENA para epífitas). "
+                 "El acuerdo cubre 30 especies en total; solo se listan aquí las "
+                 "confirmadas expresamente en actos administrativos públicos de Cornare "
+                 "que citan el Acuerdo 404/2020 — verificar el texto completo del acuerdo "
+                 "para el listado íntegro antes de radicar."),
+        "spp": [
+            {"nombre_comun": "Roble andino", "sci_fragmentos": ["quercus humboldtii"]},
+            {"nombre_comun": "Comino crespo", "sci_fragmentos": ["aniba perutilis"]},
+            {"nombre_comun": "Chaquiro / Pino romerón", "sci_fragmentos": ["podocarpus oleifolius"]},
+            {"nombre_comun": "Caunce", "sci_fragmentos": ["godoya antioquensis", "godoya antioquiensis"]},
+        ],
+    },
+    "CORPORINOQUIA": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPORINOQUIA que "
+                 "establezca veda forestal regional por especie. En su jurisdicción "
+                 "(Meta, Arauca, Casanare, Vichada) aplican las vedas nacionales vigentes. "
+                 "Nota aparte: la Res. 200.15.07-0193/2007 suspende temporalmente el "
+                 "trámite de aprovechamientos forestales comerciales en bosque natural, "
+                 "pero no es una veda de especies puntuales."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORPOGUAJIRA": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPOGUAJIRA que "
+                 "establezca veda forestal regional. Aplican las vedas nacionales "
+                 "vigentes, en particular la veda nacional de mangles en zonas costeras."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORPAMAG": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPAMAG que "
+                 "establezca veda forestal regional. Aplican las vedas nacionales "
+                 "vigentes, en particular la veda nacional de mangles en la Ciénaga "
+                 "Grande de Santa Marta."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORPONOR": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPONOR (Norte de "
+                 "Santander) que establezca veda forestal regional. Aplican las vedas "
+                 "nacionales vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CVS": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CVS (Valles del "
+                 "Sinú y San Jorge, Córdoba) que establezca veda forestal regional. "
+                 "Aplican las vedas nacionales vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CARDIQUE": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CARDIQUE (Bolívar) "
+                 "que establezca veda forestal regional. Aplican las vedas nacionales "
+                 "vigentes, en particular la veda nacional de mangles."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CSB": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CSB (Sur de Bolívar) "
+                 "que establezca veda forestal regional. Aplican las vedas nacionales "
+                 "vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORPOCHIVOR": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPOCHIVOR (Boyacá) "
+                 "que establezca veda forestal regional. Aplican las vedas nacionales "
+                 "vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORPOGUAVIO": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPOGUAVIO "
+                 "(Cundinamarca — Guavio) que establezca veda forestal regional. "
+                 "Aplican las vedas nacionales vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORMACARENA": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORMACARENA (área "
+                 "de manejo especial La Macarena, Meta) que establezca veda forestal "
+                 "regional por especie. Aplican las vedas nacionales vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CDA": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CDA (Guainía, "
+                 "Guaviare, Vaupés) que establezca veda forestal regional. Aplican las "
+                 "vedas nacionales vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORPOAMAZONIA": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPOAMAZONIA "
+                 "(Amazonas, Putumayo, Caquetá) que establezca veda forestal regional. "
+                 "Aplican las vedas nacionales vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CODECHOCO": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CODECHOCÓ (Chocó) "
+                 "que establezca veda forestal regional por especie, más allá de la "
+                 "veda nacional histórica de toda la Costa Pacífica declarada por "
+                 "INDERENA. Aplican las vedas nacionales vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORPONARINO": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORPONARIÑO que "
+                 "establezca veda forestal regional. Aplican las vedas nacionales "
+                 "vigentes."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "CORALINA": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("No se identificó un acto administrativo propio de CORALINA (San "
+                 "Andrés, Providencia y Santa Catalina) que establezca veda forestal "
+                 "regional por especie. Aplican las vedas nacionales vigentes, en "
+                 "particular la veda nacional de mangles."),
+        "spp": [],
+        "solo_nacional": True,
+    },
+    "AMVA": {
+        "norma": "N/A — sin resolución de veda forestal regional propia identificada",
+        "tipo": "sin veda regional propia (aplica veda nacional)",
+        "nota": ("Área Metropolitana del Valle de Aburrá — autoridad ambiental urbana "
+                 "para el suelo urbano de los municipios del Valle de Aburrá. No se "
+                 "identificó veda forestal regional propia por especie; aplican las "
+                 "vedas nacionales vigentes."),
         "spp": [],
         "solo_nacional": True,
     },
