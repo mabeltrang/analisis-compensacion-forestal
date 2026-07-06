@@ -289,6 +289,22 @@ st.markdown(f"""
   .badge-CITES {{ background:{PURPLE}; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
   .badge-NL  {{ background:#9E9E9E; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
   .sp-divider {{ border: none; border-top: 1px solid #E0D9F5; margin: 4px 0 8px 0; }}
+  .sp-veda-line {{
+    margin-top: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+  }}
+  .sp-veda-hit {{
+    background: #FDECEA;
+    color: #B71C1C;
+    border: 1px solid #F5C6C2;
+  }}
+  .sp-veda-none {{
+    background: #EAF6EC;
+    color: #2E7D32;
+    border: 1px solid #C8E6C9;
+  }}
 
   /* ── Markdown general: párrafos oscuros, code blocks intactos ── */
   div[data-testid="stMarkdownContainer"] > p {{ color: #1A1A2E; }}
@@ -352,167 +368,6 @@ def _badge(cat):
     return f'<span class="{cls}">{cat}</span>'
 
 
-def _render_tab_vedas(todas_vedas, car_proyecto):
-    """Contenido completo del tab Vedas. Reutilizable con o sin inventario."""
-    from config.vedas import VEDAS_NACIONALES, VEDAS_REGIONALES, consultar_veda
-
-    _section("Vedas de Flora — Consulta y Cruce con Inventario", "🚫")
-
-    st.info(
-        "Las vedas **no modifican el FCAFU** ni el área de compensación, pero generan "
-        "**obligaciones procedimentales** adicionales ante la CAR (concepto técnico, "
-        "rescate, reubicación, censo 100%). Verifica siempre la norma vigente al momento "
-        "de radicación."
-    )
-
-    # ── A: Cruce con inventario ───────────────────────────────────────────────
-    if todas_vedas is not None:
-        _section("Especies en Veda Detectadas en el Inventario", "📋")
-        if todas_vedas:
-            n_nac = sum(v['n_individuos'] for v in todas_vedas if 'nacional' in v.get('nivel', ''))
-            n_reg = sum(v['n_individuos'] for v in todas_vedas if v.get('nivel') == 'regional')
-            n_spp = len({v['nombre_cientifico'] for v in todas_vedas})
-            col_a, col_b, col_c = st.columns(3)
-            col_a.metric("Especies en veda", n_spp)
-            col_b.metric("Ind. veda nacional", n_nac)
-            col_c.metric("Ind. veda regional", n_reg)
-            st.markdown("---")
-            df_v = pd.DataFrame(todas_vedas)[
-                ['cobertura', 'nombre_cientifico', 'n_individuos', 'nivel', 'norma', 'alerta']
-            ]
-            df_v.columns = ['Cobertura', 'Nombre científico', 'N ind.', 'Nivel', 'Norma', 'Alerta']
-            st.dataframe(df_v, use_container_width=True, hide_index=True)
-            if any('nacional' in v.get('nivel', '') for v in todas_vedas):
-                st.error(
-                    "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
-                    "1. Censo al 100% de individuos fustales de la especie vedada.\n"
-                    "2. Medidas in situ: rescate y reubicación de individuos.\n"
-                    "3. Medidas ex situ: propagación en vivero y siembra en área de compensación.\n"
-                    "4. Shapefile georreferenciado con localización de cada individuo vedado."
-                )
-            if any(v.get('nivel') == 'regional' for v in todas_vedas):
-                car_txt = car_proyecto or "la CAR competente"
-                st.warning(
-                    f"**Obligaciones — veda regional ({car_txt}):**\n"
-                    "1. Solicitud formal ante GIT Forestal de la CAR.\n"
-                    "2. Concepto técnico favorable previo a cualquier intervención.\n"
-                    "3. Justificación de interés público o condición de riesgo.\n"
-                    "4. Medidas de compensación o reposición que determine la CAR."
-                )
-        else:
-            st.success(
-                "✅ Ninguna especie del inventario figura en la base de datos de vedas "
-                f"(nacional ni {car_proyecto or 'regional'}). "
-                "Verifica igualmente con la CAR competente antes de la radicación."
-            )
-        st.markdown("---")
-    else:
-        st.caption(
-            "💡 Carga el KMZ y el inventario forestal para ver el cruce automático "
-            "con las especies inventariadas."
-        )
-        st.markdown("---")
-
-    # ── C: Vedas nacionales + regionales, unificadas en un solo selector ──────
-    _section("Vedas Nacionales y Regionales", "🏛️")
-    cars_disponibles = ["NACIONAL"] + sorted(VEDAS_REGIONALES.keys())
-    default_cars = [car_proyecto] if car_proyecto and car_proyecto in VEDAS_REGIONALES else []
-    cars_sel = st.multiselect(
-        "Selecciona 'NACIONAL' y/o una o varias CARs",
-        options=cars_disponibles,
-        default=default_cars,
-        help="Si seleccionaste una CAR en el sidebar, aparece preseleccionada. "
-             "Elige 'NACIONAL' para ver las vedas que aplican en todo el país.",
-        key="vedas_cars_sel"
-    )
-    if not cars_sel:
-        st.caption("Selecciona al menos una opción para ver sus vedas.")
-    else:
-        for car_key in cars_sel:
-            if car_key == "NACIONAL":
-                st.markdown("### 🇨🇴 NACIONAL — 🔴 Veda indefinida (todo el territorio)")
-                st.caption(
-                    "Fuentes: Res. 0316/1974 INDERENA · Ley 61/1985 · "
-                    "Res. 1602/1995 + Res. 020/1996 MADS"
-                )
-                rows_nac = [
-                    {
-                        "Nombre común": sp["nombre_comun"],
-                        "Nombre científico (fragmentos)": "; ".join(
-                            n.capitalize() for n in sp["sci_fragmentos"]
-                        ),
-                        "Norma": sp["norma"],
-                        "Nota": sp["nota"],
-                    }
-                    for sp in VEDAS_NACIONALES
-                ]
-                st.dataframe(pd.DataFrame(rows_nac), use_container_width=True, hide_index=True)
-                st.markdown("---")
-                continue
-
-            datos = VEDAS_REGIONALES[car_key]
-            tipo_badge = (
-                "🔴 Veda indefinida" if datos.get("tipo") == "indefinida"
-                else "🟡 Veda temporal" if datos.get("tipo") == "temporal"
-                else "⚪ Sin veda regional propia"
-            )
-            st.markdown(f"### {car_key} — {tipo_badge}")
-            st.markdown(
-                f"📋 **Norma:** {datos['norma']}  \n"
-                f"ℹ️ {datos['nota']}"
-            )
-            rows = [
-                {
-                    "Nombre común": sp["nombre_comun"],
-                    "Nombre científico (fragmentos)": "; ".join(
-                        n.capitalize() for n in sp["sci_fragmentos"]
-                    ),
-                }
-                for sp in datos.get("spp", [])
-            ]
-            if rows:
-                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-            elif datos.get("solo_nacional"):
-                st.caption("👉 Sin especies propias — consulta la fila 'NACIONAL' de arriba.")
-            st.markdown("---")
-
-    # ── D: Buscador libre ─────────────────────────────────────────────────────
-    _section("Buscador de Especie", "🔍")
-    busqueda = st.text_input(
-        "Ingresa nombre científico o común para verificar si está en veda",
-        placeholder="ej. Anacardium excelsum · Samán · Ceiba pentandra",
-        key="vedas_busqueda"
-    )
-    if busqueda.strip():
-        resultado_nac = consultar_veda(busqueda.strip())
-        hits_reg = []
-        for ck in cars_disponibles:
-            if ck == "NACIONAL":
-                continue
-            r = consultar_veda(busqueda.strip(), car=ck)
-            if r["en_veda_regional"] and r.get("veda_regional_info"):
-                info = r["veda_regional_info"].copy()
-                info["car"] = ck
-                hits_reg.append(info)
-        if resultado_nac["en_veda_nacional"] or hits_reg:
-            if resultado_nac["en_veda_nacional"]:
-                info = resultado_nac["veda_nacional_info"]
-                st.error(
-                    f"🚫 **Veda NACIONAL** — {info['nombre_comun']}  \n"
-                    f"📋 {info['norma']}  \n{info['nota']}"
-                )
-            for item in hits_reg:
-                st.warning(
-                    f"⚠️ **Veda REGIONAL** ({item['car']}) — "
-                    f"{item.get('nombre_comun', busqueda)}  \n"
-                    f"📋 {item['norma']}  \n{item['nota']}"
-                )
-        else:
-            st.success(
-                f"✅ **'{busqueda}'** no figura en la base de datos de vedas "
-                "(nacional ni regional). Verifica también con la CAR competente."
-            )
-
 # ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("### ⚙️ Configuración")
@@ -535,15 +390,13 @@ with st.sidebar:
         value=float(settings.DAP_MIN_DEFAULT), step=0.5,
         help="CAP ≥ 31 cm → DAP ≈ 9.87 cm"
     )
+    from config.vedas import VEDAS_REGIONALES as _VEDAS_REGIONALES_SIDEBAR
     car_proyecto = st.selectbox(
         "CAR competente",
-        options=[
-            "", "CORPOCESAR", "CORPOGUAJIRA", "CRA", "CORPOBOYACA",
-            "CDMB", "CAS", "CORPAMAG", "CORANTIOQUIA", "CORPOURABA",
-            "CORTOLIMA", "CARDER", "CVC", "CRC", "CORPOCALDAS",
-            "CARSUCRE", "CAR", "CORPONOR",
-        ],
-        help="Para cruce con vedas regionales"
+        options=[""] + sorted(_VEDAS_REGIONALES_SIDEBAR.keys()),
+        help="Para cruce con vedas regionales. Lista completa de las 31 CAR "
+             "de Colombia — ver pestaña 'Consulta y Vedas' para el detalle "
+             "de cada una.",
     )
 
     st.markdown("---")
@@ -598,6 +451,34 @@ _IUCN_ABBR = {
 }
 
 
+def _consultar_veda_todas_cars(nombre_cientifico, nombre_comun=""):
+    """Cruza una especie contra la veda nacional y contra las 31 CAR de Colombia.
+
+    Devuelve dict con:
+      en_veda_nacional (bool), nacional_info (dict|None)
+      regionales (list[dict]): una entrada por cada CAR en la que la especie
+        está vedada (incluye las que solo heredan la veda nacional, marcadas
+        con "solo_nacional": True)
+    """
+    from config.vedas import VEDAS_REGIONALES, consultar_veda
+
+    r_nac = consultar_veda(nombre_cientifico, nombre_comun)
+    regionales = []
+    for car_key, datos in sorted(VEDAS_REGIONALES.items()):
+        r = consultar_veda(nombre_cientifico, nombre_comun, car=car_key)
+        if r["en_veda_regional"] and r.get("veda_regional_info"):
+            regionales.append({
+                "car": car_key,
+                "solo_nacional": bool(datos.get("solo_nacional")),
+                "norma": r["veda_regional_info"]["norma"],
+            })
+    return {
+        "en_veda_nacional": r_nac["en_veda_nacional"],
+        "nacional_info": r_nac["veda_nacional_info"],
+        "regionales": regionales,
+    }
+
+
 def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx):
     key = nombre.strip().lower()
     mads_cat, mads_nombre_comun, mads_familia = "No listado", "", ""
@@ -622,6 +503,8 @@ def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx):
         cat_full = str(row.get("redlistCategory", "")).strip()
         iucn_cat = _IUCN_ABBR.get(cat_full, cat_full) or "No evaluado"
 
+    veda = _consultar_veda_todas_cars(nombre.strip(), mads_nombre_comun)
+
     return {
         "nombre": nombre.strip(),
         "mads": mads_cat,
@@ -629,6 +512,7 @@ def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx):
         "iucn": iucn_cat,
         "nombre_comun": mads_nombre_comun,
         "familia": mads_familia,
+        "veda": veda,
     }
 
 
@@ -642,13 +526,38 @@ def _badge_html(texto, fuente=None):
     return f"{label}<span class='{cls}'>{t}</span>"
 
 
-def _render_tab_consulta(key_suffix=""):
-    """Contenido del tab Consulta especies. key_suffix evita colisión de keys entre instancias."""
-    _section("Consulta de Estado de Amenaza por Especie", "🔍")
+def _veda_linea_html(veda):
+    """Línea HTML resumen de vedas para una especie: 🚫 NACIONAL + lista de CAR."""
+    if not veda["en_veda_nacional"] and not veda["regionales"]:
+        return "<div class='sp-veda-line sp-veda-none'>✅ Sin veda nacional ni regional identificada</div>"
+    partes = []
+    if veda["en_veda_nacional"]:
+        partes.append("NACIONAL (todo el país)")
+    propias = [r["car"] for r in veda["regionales"] if not r["solo_nacional"]]
+    if propias:
+        partes.append("regional propia: " + ", ".join(propias))
+    return (
+        "<div class='sp-veda-line sp-veda-hit'>🚫 <b>En veda</b> — " + " · ".join(partes) + "</div>"
+    )
+
+
+def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto=""):
+    """Tab único: Consulta de amenaza + cruce de vedas (nacional y las 31 CAR),
+    más el cruce con el inventario (si hay uno cargado) y el navegador de
+    vedas por CAR. key_suffix evita colisión de keys entre instancias."""
+    from config.vedas import VEDAS_NACIONALES, VEDAS_REGIONALES
+
+    _section("Consulta de Estado de Amenaza y Vedas por Especie", "🔍")
     st.markdown(
-        "Ingresa una lista de especies (una por línea) para consultar su categoría de amenaza "
-        "según **MADS** (Res. 0126/2024), **CITES** (Apéndices) e **IUCN** (Lista Roja global). "
-        "No se requiere inventario cargado."
+        "Ingresa una lista de especies (una por línea) para consultar, en un solo resultado, "
+        "su categoría de amenaza según **MADS** (Res. 0126/2024), **CITES** (Apéndices) e "
+        "**IUCN** (Lista Roja global), y si está **en veda** — nacional o en alguna de las "
+        "**31 CAR de Colombia**. No se requiere inventario cargado."
+    )
+    st.info(
+        "Las vedas **no modifican el FCAFU** ni el área de compensación, pero generan "
+        "**obligaciones procedimentales** adicionales ante la CAR (concepto técnico, rescate, "
+        "reubicación, censo 100%). Verifica siempre la norma vigente al momento de radicación."
     )
 
     col_input, col_opts = st.columns([3, 1])
@@ -664,9 +573,10 @@ def _render_tab_consulta(key_suffix=""):
         mostrar_mads  = st.checkbox("MADS (Col)", value=True, key=f"ch_mads{key_suffix}")
         mostrar_cites = st.checkbox("CITES",      value=True, key=f"ch_cites{key_suffix}")
         mostrar_iucn  = st.checkbox("IUCN",       value=True, key=f"ch_iucn{key_suffix}")
+        mostrar_veda  = st.checkbox("Vedas (nacional + CAR)", value=True, key=f"ch_veda{key_suffix}")
         solo_amenazadas = st.checkbox(
-            "Solo amenazadas", value=False, key=f"ch_solo_am{key_suffix}",
-            help="Oculta especies sin categoría en ninguna fuente"
+            "Solo amenazadas o en veda", value=False, key=f"ch_solo_am{key_suffix}",
+            help="Oculta especies sin categoría en ninguna fuente y sin veda"
         )
 
     if st.button("🔍 Consultar", key=f"btn_consulta_sp{key_suffix}", type="primary"):
@@ -674,7 +584,7 @@ def _render_tab_consulta(key_suffix=""):
         if not nombres:
             st.warning("Ingresa al menos un nombre de especie.")
         else:
-            with st.spinner(f"Consultando {len(nombres)} especies..."):
+            with st.spinner(f"Consultando {len(nombres)} especies en fuentes de amenaza y en las 31 CAR..."):
                 mads_idx, cites_idx, iucn_idx = _cargar_indices_amenaza()
                 resultados = [_consultar_amenaza_sp(n, mads_idx, cites_idx, iucn_idx) for n in nombres]
 
@@ -684,22 +594,26 @@ def _render_tab_consulta(key_suffix=""):
                     if r["mads"] in {"CR","EN","VU","NT"}
                     or "Apéndice" in r["cites"]
                     or r["iucn"] in {"CR","EN","VU","NT"}
+                    or r["veda"]["en_veda_nacional"]
+                    or r["veda"]["regionales"]
                 ]
 
             if not resultados:
-                st.info("Ninguna especie figura con categoría de amenaza en las fuentes consultadas.")
+                st.info("Ninguna especie figura con categoría de amenaza ni en veda en las fuentes consultadas.")
             else:
-                n_cr  = sum(1 for r in resultados if r["mads"]=="CR"  or r["iucn"]=="CR")
-                n_en  = sum(1 for r in resultados if r["mads"]=="EN"  or r["iucn"]=="EN")
-                n_vu  = sum(1 for r in resultados if r["mads"]=="VU"  or r["iucn"]=="VU")
-                n_cit = sum(1 for r in resultados if "Apéndice" in r["cites"])
+                n_cr   = sum(1 for r in resultados if r["mads"]=="CR"  or r["iucn"]=="CR")
+                n_en   = sum(1 for r in resultados if r["mads"]=="EN"  or r["iucn"]=="EN")
+                n_vu   = sum(1 for r in resultados if r["mads"]=="VU"  or r["iucn"]=="VU")
+                n_cit  = sum(1 for r in resultados if "Apéndice" in r["cites"])
+                n_veda = sum(1 for r in resultados if r["veda"]["en_veda_nacional"] or r["veda"]["regionales"])
 
-                mc1, mc2, mc3, mc4, mc5 = st.columns(5)
+                mc1, mc2, mc3, mc4, mc5, mc6 = st.columns(6)
                 mc1.metric("Consultadas", len(resultados))
                 mc2.metric("🔴 CR", n_cr)
                 mc3.metric("🟠 EN", n_en)
                 mc4.metric("🟡 VU", n_vu)
                 mc5.metric("🟣 CITES", n_cit)
+                mc6.metric("🚫 En veda", n_veda)
 
                 st.markdown("---")
 
@@ -717,12 +631,15 @@ def _render_tab_consulta(key_suffix=""):
                     if mostrar_iucn:  badges_html += _badge_html(r["iucn"],  "IUCN")  + "&nbsp;"
                     badges_html += "</div>"
 
+                    veda_html = _veda_linea_html(r["veda"]) if mostrar_veda else ""
+
                     st.markdown(f"""
                     <div class='sp-card'>
                       <div class='sp-card-name'>{r["nombre"]}</div>
                       {nombre_comun_html}
                       <hr class='sp-divider'/>
                       {badges_html}
+                      {veda_html}
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -735,30 +652,143 @@ def _render_tab_consulta(key_suffix=""):
                         "MADS (Res. 0126/2024)": r["mads"],
                         "CITES":             r["cites"],
                         "IUCN":              r["iucn"],
+                        "Veda nacional":     "Sí" if r["veda"]["en_veda_nacional"] else "No",
+                        "CAR con veda regional propia": ", ".join(
+                            [x["car"] for x in r["veda"]["regionales"] if not x["solo_nacional"]]
+                        ) or "—",
                     } for r in resultados])
                     st.dataframe(df_res, use_container_width=True, hide_index=True)
                     buf = io.BytesIO()
                     with pd.ExcelWriter(buf, engine="openpyxl") as xw:
-                        df_res.to_excel(xw, index=False, sheet_name="Consulta amenaza")
+                        df_res.to_excel(xw, index=False, sheet_name="Consulta amenaza y vedas")
                     st.download_button(
                         "⬇️ Descargar Excel",
                         data=buf.getvalue(),
-                        file_name="consulta_amenaza_especies.xlsx",
+                        file_name="consulta_amenaza_vedas.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         key=f"dl_consulta_sp{key_suffix}",
                     )
+
+    # ── Cruce con inventario cargado (si aplica) ──────────────────────────────
+    st.markdown("---")
+    _section("Especies en Veda Detectadas en el Inventario Cargado", "📋")
+    if todas_vedas is not None:
+        if todas_vedas:
+            n_nac = sum(v['n_individuos'] for v in todas_vedas if 'nacional' in v.get('nivel', ''))
+            n_reg = sum(v['n_individuos'] for v in todas_vedas if v.get('nivel') == 'regional')
+            n_spp = len({v['nombre_cientifico'] for v in todas_vedas})
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("Especies en veda", n_spp)
+            col_b.metric("Ind. veda nacional", n_nac)
+            col_c.metric("Ind. veda regional", n_reg)
+            st.markdown("---")
+            df_v = pd.DataFrame(todas_vedas)[
+                ['cobertura', 'nombre_cientifico', 'n_individuos', 'nivel', 'norma', 'alerta']
+            ]
+            df_v.columns = ['Cobertura', 'Nombre científico', 'N ind.', 'Nivel', 'Norma', 'Alerta']
+            st.dataframe(df_v, use_container_width=True, hide_index=True)
+            if any('nacional' in v.get('nivel', '') for v in todas_vedas):
+                st.error(
+                    "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
+                    "1. Censo al 100% de individuos fustales de la especie vedada.\n"
+                    "2. Medidas in situ: rescate y reubicación de individuos.\n"
+                    "3. Medidas ex situ: propagación en vivero y siembra en área de compensación.\n"
+                    "4. Shapefile georreferenciado con localización de cada individuo vedado."
+                )
+            if any(v.get('nivel') == 'regional' for v in todas_vedas):
+                car_txt = car_proyecto or "la CAR competente"
+                st.warning(
+                    f"**Obligaciones — veda regional ({car_txt}):**\n"
+                    "1. Solicitud formal ante GIT Forestal de la CAR.\n"
+                    "2. Concepto técnico favorable previo a cualquier intervención.\n"
+                    "3. Justificación de interés público o condición de riesgo.\n"
+                    "4. Medidas de compensación o reposición que determine la CAR."
+                )
+        else:
+            st.success(
+                "✅ Ninguna especie del inventario figura en la base de datos de vedas "
+                f"(nacional ni {car_proyecto or 'regional'}). "
+                "Verifica igualmente con la CAR competente antes de la radicación."
+            )
+    else:
+        st.caption(
+            "💡 Carga el KMZ y el inventario forestal para ver el cruce automático "
+            "con las especies inventariadas."
+        )
+
+    # ── Navegador de vedas por CAR (las 31 CAR de Colombia) ──────────────────
+    st.markdown("---")
+    _section("Vedas Nacionales y por CAR — Mapa Completo (31 CAR)", "🏛️")
+    cars_disponibles = ["NACIONAL"] + sorted(VEDAS_REGIONALES.keys())
+    default_cars = [car_proyecto] if car_proyecto and car_proyecto in VEDAS_REGIONALES else []
+    cars_sel = st.multiselect(
+        "Selecciona 'NACIONAL' y/o una o varias CAR para ver su listado de especies vedadas",
+        options=cars_disponibles,
+        default=default_cars,
+        help="Si seleccionaste una CAR en el sidebar, aparece preseleccionada. "
+             "Elige 'NACIONAL' para ver las vedas que aplican en todo el país.",
+        key=f"vedas_cars_sel{key_suffix}"
+    )
+    if not cars_sel:
+        st.caption("Selecciona al menos una opción para ver sus vedas.")
+    else:
+        for car_key in cars_sel:
+            if car_key == "NACIONAL":
+                st.markdown("### 🇨🇴 NACIONAL — 🔴 Veda indefinida (todo el territorio)")
+                st.caption(
+                    "Fuentes: Res. 0316/1974 INDERENA · Ley 61/1985 · "
+                    "Res. 1602/1995 + Res. 020/1996 MADS"
+                )
+                rows_nac = [
+                    {
+                        "Nombre común": sp["nombre_comun"],
+                        "Nombre científico (fragmentos)": "; ".join(
+                            n.capitalize() for n in sp["sci_fragmentos"]
+                        ),
+                        "Norma": sp["norma"],
+                        "Nota": sp["nota"],
+                    }
+                    for sp in VEDAS_NACIONALES
+                ]
+                st.dataframe(pd.DataFrame(rows_nac), use_container_width=True, hide_index=True)
+                st.markdown("---")
+                continue
+
+            datos = VEDAS_REGIONALES[car_key]
+            tipo_badge = (
+                "🔴 Veda indefinida" if datos.get("tipo") == "indefinida"
+                else "🟡 Veda temporal" if datos.get("tipo") == "temporal"
+                else "⚪ Sin veda regional propia"
+            )
+            st.markdown(f"### {car_key} — {tipo_badge}")
+            st.markdown(
+                f"📋 **Norma:** {datos['norma']}  \n"
+                f"ℹ️ {datos['nota']}"
+            )
+            rows = [
+                {
+                    "Nombre común": sp["nombre_comun"],
+                    "Nombre científico (fragmentos)": "; ".join(
+                        n.capitalize() for n in sp["sci_fragmentos"]
+                    ),
+                }
+                for sp in datos.get("spp", [])
+            ]
+            if rows:
+                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            elif datos.get("solo_nacional"):
+                st.caption("👉 Sin especies propias — consulta la fila 'NACIONAL' de arriba.")
+            st.markdown("---")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PANTALLA DE BIENVENIDA
 # ══════════════════════════════════════════════════════════════════════════════
 if not impacto_file or not excel_file:
-    _tab_vedas_only = st.tabs(["🚫 Vedas", "🔍 Consulta especies", "ℹ️ Cómo usar"])
-    with _tab_vedas_only[0]:
-        _render_tab_vedas(todas_vedas=None, car_proyecto=car_proyecto)
-    with _tab_vedas_only[1]:
-        _render_tab_consulta(key_suffix="_bienvenida")
-    with _tab_vedas_only[2]:
+    _tab_welcome = st.tabs(["🔍 Consulta y Vedas", "ℹ️ Cómo usar"])
+    with _tab_welcome[0]:
+        _render_tab_consulta_vedas(key_suffix="_bienvenida", todas_vedas=None, car_proyecto=car_proyecto)
+    with _tab_welcome[1]:
         st.markdown("### ¿Qué calcula esta app?")
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -775,7 +805,7 @@ if not impacto_file or not excel_file:
         <li><b>ATC</b> por rango geográfico R1–R6 en dos escenarios: oficial y con CITES</li>
         <li><b>Tasa BAU</b> dinámica por municipio, SZH y ZH (Hansen GFC)</li>
         <li><b>Adicionalidad</b> a 3, 5, 10 y 15 años — Conservar y Restaurar</li>
-        <li><b>Vedas</b> nacionales y regionales cruzadas con el inventario</li>
+        <li><b>Consulta y Vedas</b>: amenaza (MADS/CITES/IUCN) y vedas nacional + 31 CAR, cruzadas con el inventario</li>
       </ul>
     </div>
         """, unsafe_allow_html=True)
@@ -900,14 +930,13 @@ TASA_BAU    = tasa_bau
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS PRINCIPALES
 # ══════════════════════════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📍 Contexto",
     "🌳 FCAFU",
     "📐 ATC",
     "🌱 Adicionalidad",
     "📥 Exportar",
-    "🚫 Vedas",
-    "🔍 Consulta especies",
+    "🔍 Consulta y Vedas",
 ])
 
 
@@ -1563,14 +1592,7 @@ with tab5:
 
 
 # ════════════════════════════════════════════════════════════════════════
-# TAB 6 — VEDAS
+# TAB 6 — CONSULTA DE ESTADO DE AMENAZA Y VEDAS (nacional + 31 CAR)
 # ════════════════════════════════════════════════════════════════════════
 with tab6:
-    _render_tab_vedas(todas_vedas=todas_vedas, car_proyecto=car_proyecto)
-
-
-# ════════════════════════════════════════════════════════════════════════
-# TAB 7 — CONSULTA DE ESTADO DE AMENAZA POR ESPECIE
-# ════════════════════════════════════════════════════════════════════════
-with tab7:
-    _render_tab_consulta(key_suffix="_tab7")
+    _render_tab_consulta_vedas(key_suffix="_tab6", todas_vedas=todas_vedas, car_proyecto=car_proyecto)
