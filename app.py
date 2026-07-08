@@ -323,7 +323,7 @@ st.markdown(f"""
     background: {PURPLE_LIGHT};
     color: {PURPLE_DARK} !important;
     font-weight: 800;
-    text-align: left;
+    text-align: center;
     padding: 10px 14px;
     white-space: nowrap;
   }}
@@ -332,6 +332,7 @@ st.markdown(f"""
     color: #1A1A2E;
     border-top: 1px solid #E0D9F5;
     vertical-align: middle;
+    text-align: center;
   }}
   .sp-table tbody tr:nth-child(even) {{
     background: #FAFAFE;
@@ -697,7 +698,7 @@ def _tabla_consulta_html(resultados, mostrar_mads, mostrar_cites, mostrar_iucn,
     """Construye la tabla HTML de resultados de consulta de especies
     (reemplaza el listado de tarjetas apiladas por una tabla visible de una
     sola vez, con colores consistentes con el resto de la app)."""
-    headers = ["Nombre científico", "Nombre común / familia"]
+    headers = ["Nombre científico", "Nombre común"]
     if mostrar_mads:  headers.append("MADS")
     if mostrar_cites: headers.append("CITES")
     if mostrar_iucn:  headers.append("IUCN")
@@ -708,10 +709,7 @@ def _tabla_consulta_html(resultados, mostrar_mads, mostrar_cites, mostrar_iucn,
 
     rows_html = []
     for r in resultados:
-        common_parts = []
-        if r["nombre_comun"]: common_parts.append(r["nombre_comun"])
-        if r["familia"]:     common_parts.append(f"<i>{r['familia']}</i>")
-        common_html = " &nbsp;·&nbsp; ".join(common_parts) if common_parts else "—"
+        common_html = r["nombre_comun"] if r["nombre_comun"] else "—"
 
         cells = [
             f"<td class='sp-table-sci'>{r['nombre']}</td>",
@@ -798,6 +796,7 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                     _consultar_amenaza_sp(n, mads_idx, cites_idx, iucn_idx, car_filtro=car_filtro_sel)
                     for n in nombres
                 ]
+                resultados.sort(key=lambda r: r["nombre"].lower())
 
             if solo_amenazadas:
                 resultados = [
