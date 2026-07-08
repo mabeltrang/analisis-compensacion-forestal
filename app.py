@@ -698,7 +698,7 @@ def _tabla_consulta_html(resultados, mostrar_mads, mostrar_cites, mostrar_iucn,
     """Construye la tabla HTML de resultados de consulta de especies
     (reemplaza el listado de tarjetas apiladas por una tabla visible de una
     sola vez, con colores consistentes con el resto de la app)."""
-    headers = ["Nombre científico", "Nombre común"]
+    headers = ["Nombre científico"]
     if mostrar_mads:  headers.append("MADS")
     if mostrar_cites: headers.append("CITES")
     if mostrar_iucn:  headers.append("IUCN")
@@ -709,11 +709,8 @@ def _tabla_consulta_html(resultados, mostrar_mads, mostrar_cites, mostrar_iucn,
 
     rows_html = []
     for r in resultados:
-        common_html = r["nombre_comun"] if r["nombre_comun"] else "—"
-
         cells = [
             f"<td class='sp-table-sci'>{r['nombre']}</td>",
-            f"<td class='sp-table-common'>{common_html}</td>",
         ]
         if mostrar_mads:  cells.append(f"<td>{_badge_html(r['mads'])}</td>")
         if mostrar_cites: cells.append(f"<td>{_badge_html(r['cites'])}</td>")
