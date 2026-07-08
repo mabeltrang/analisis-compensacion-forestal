@@ -306,6 +306,68 @@ st.markdown(f"""
     border: 1px solid #C8E6C9;
   }}
 
+  /* ── Tabla de consulta de especies (reemplaza las tarjetas apiladas) ── */
+  .sp-table-wrap {{
+    background: #FFFFFF;
+    border: 1.5px solid #B8A9E0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }}
+  .sp-table {{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }}
+  .sp-table thead th {{
+    background: {PURPLE_LIGHT};
+    color: {PURPLE_DARK} !important;
+    font-weight: 800;
+    text-align: left;
+    padding: 10px 14px;
+    white-space: nowrap;
+  }}
+  .sp-table tbody td {{
+    padding: 9px 14px;
+    color: #1A1A2E;
+    border-top: 1px solid #E0D9F5;
+    vertical-align: middle;
+  }}
+  .sp-table tbody tr:nth-child(even) {{
+    background: #FAFAFE;
+  }}
+  .sp-table-sci {{
+    font-style: italic;
+    font-weight: 700;
+    color: {PURPLE_DARK};
+  }}
+  .sp-table-common {{
+    color: #5A5A72;
+    font-size: 0.8rem;
+  }}
+  .badge-veda-hit {{
+    display: inline-block;
+    background: #FDECEA;
+    color: #B71C1C;
+    border: 1px solid #F5C6C2;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.76rem;
+  }}
+  .veda-ok-text {{
+    color: #2E7D32;
+    font-weight: 700;
+    font-size: 0.8rem;
+  }}
+  .veda-detalle {{
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #B71C1C;
+    margin-top: 2px;
+  }}
+
   /* ── Markdown general: párrafos oscuros, code blocks intactos ── */
   div[data-testid="stMarkdownContainer"] > p {{ color: #1A1A2E; }}
   div[data-testid="stMarkdownContainer"] > ul li {{ color: #1A1A2E; }}
@@ -595,6 +657,80 @@ def _veda_linea_html(veda):
     )
 
 
+def _veda_celda_html(veda):
+    """Versión compacta de _veda_linea_html pensada para una celda de tabla
+    (badge corto + detalle en una segunda línea pequeña), en vez del bloque
+    de línea completa usado antes en las tarjetas."""
+    if veda.get("_modo") == "car_unica":
+        car = veda["_car"]
+        if veda["nivel"] == "sin_veda":
+            return "<span class='veda-ok-text'>✅ Sin veda</span>"
+        if veda["nivel"] == "nacional+regional":
+            detalle = f"NACIONAL + regional: {car}"
+        elif veda["nivel"] == "nacional":
+            detalle = "NACIONAL (todo el país)"
+        else:  # regional
+            detalle = f"regional: {car}"
+        return (
+            "<span class='badge-veda-hit'>🚫 En veda</span>"
+            f"<span class='veda-detalle'>{detalle}</span>"
+        )
+
+    # modo "todas" (sin filtro de CAR)
+    if not veda["en_veda_nacional"] and not veda["regionales"]:
+        return "<span class='veda-ok-text'>✅ Sin veda</span>"
+    partes = []
+    if veda["en_veda_nacional"]:
+        partes.append("NACIONAL")
+    propias = [r["car"] for r in veda["regionales"] if not r["solo_nacional"]]
+    if propias:
+        partes.append("regional: " + ", ".join(propias))
+    detalle = " · ".join(partes)
+    return (
+        "<span class='badge-veda-hit'>🚫 En veda</span>"
+        f"<span class='veda-detalle'>{detalle}</span>"
+    )
+
+
+def _tabla_consulta_html(resultados, mostrar_mads, mostrar_cites, mostrar_iucn,
+                          mostrar_veda, car_filtro=""):
+    """Construye la tabla HTML de resultados de consulta de especies
+    (reemplaza el listado de tarjetas apiladas por una tabla visible de una
+    sola vez, con colores consistentes con el resto de la app)."""
+    headers = ["Nombre científico", "Nombre común / familia"]
+    if mostrar_mads:  headers.append("MADS")
+    if mostrar_cites: headers.append("CITES")
+    if mostrar_iucn:  headers.append("IUCN")
+    if mostrar_veda:
+        headers.append(f"Veda ({car_filtro})" if car_filtro else "Veda (nacional + CAR)")
+
+    thead = "<tr>" + "".join(f"<th>{h}</th>" for h in headers) + "</tr>"
+
+    rows_html = []
+    for r in resultados:
+        common_parts = []
+        if r["nombre_comun"]: common_parts.append(r["nombre_comun"])
+        if r["familia"]:     common_parts.append(f"<i>{r['familia']}</i>")
+        common_html = " &nbsp;·&nbsp; ".join(common_parts) if common_parts else "—"
+
+        cells = [
+            f"<td class='sp-table-sci'>{r['nombre']}</td>",
+            f"<td class='sp-table-common'>{common_html}</td>",
+        ]
+        if mostrar_mads:  cells.append(f"<td>{_badge_html(r['mads'])}</td>")
+        if mostrar_cites: cells.append(f"<td>{_badge_html(r['cites'])}</td>")
+        if mostrar_iucn:  cells.append(f"<td>{_badge_html(r['iucn'])}</td>")
+        if mostrar_veda:  cells.append(f"<td>{_veda_celda_html(r['veda'])}</td>")
+
+        rows_html.append("<tr>" + "".join(cells) + "</tr>")
+
+    return (
+        "<div class='sp-table-wrap'><table class='sp-table'>"
+        f"<thead>{thead}</thead><tbody>{''.join(rows_html)}</tbody>"
+        "</table></div>"
+    )
+
+
 def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto=""):
     """Tab único: Consulta de amenaza + cruce de vedas (nacional y las 31 CAR),
     más el cruce con el inventario (si hay uno cargado) y el navegador de
@@ -694,31 +830,15 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
 
                 st.markdown("---")
 
-                for r in resultados:
-                    partes = []
-                    if r["nombre_comun"]: partes.append(r["nombre_comun"])
-                    if r["familia"]:     partes.append(f"<i>{r['familia']}</i>")
-                    nombre_comun_html = (
-                        f"<div class='sp-card-common'>{' &nbsp;·&nbsp; '.join(partes)}</div>"
-                        if partes else ""
-                    )
-                    badges_html = "<div class='sp-badges'>"
-                    if mostrar_mads:  badges_html += _badge_html(r["mads"],  "MADS")  + "&nbsp;"
-                    if mostrar_cites: badges_html += _badge_html(r["cites"], "CITES") + "&nbsp;"
-                    if mostrar_iucn:  badges_html += _badge_html(r["iucn"],  "IUCN")  + "&nbsp;"
-                    badges_html += "</div>"
-
-                    veda_html = _veda_linea_html(r["veda"]) if mostrar_veda else ""
-
-                    st.markdown(f"""
-                    <div class='sp-card'>
-                      <div class='sp-card-name'>{r["nombre"]}</div>
-                      {nombre_comun_html}
-                      <hr class='sp-divider'/>
-                      {badges_html}
-                      {veda_html}
-                    </div>
-                    """, unsafe_allow_html=True)
+                tabla_html = _tabla_consulta_html(
+                    resultados,
+                    mostrar_mads=mostrar_mads,
+                    mostrar_cites=mostrar_cites,
+                    mostrar_iucn=mostrar_iucn,
+                    mostrar_veda=mostrar_veda,
+                    car_filtro=car_filtro_sel,
+                )
+                st.markdown(tabla_html, unsafe_allow_html=True)
 
                 st.markdown("---")
                 with st.expander("📋 Ver tabla completa / exportar"):
