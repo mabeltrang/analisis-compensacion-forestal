@@ -569,27 +569,27 @@ def _veda_hit(veda):
 
 def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx, car_filtro=""):
     key = nombre.strip().lower()
-    mads_cat, mads_nombre_comun, mads_familia = "No listado", "", ""
+    mads_cat, mads_nombre_comun, mads_familia = "No aplica (NA)", "", ""
     if key in mads_idx.index:
         row = mads_idx.loc[key]
         if isinstance(row, pd.DataFrame): row = row.iloc[0]
-        mads_cat = str(row.get("Categoría de amenaza", "")).strip() or "No listado"
+        mads_cat = str(row.get("Categoría de amenaza", "")).strip() or "No aplica (NA)"
         mads_nombre_comun = str(row.get("Nombre común", "")).strip()
         mads_familia = str(row.get("Familia", "")).strip()
 
-    cites_apendice = "No listado"
+    cites_apendice = "No aplica (NA)"
     if key in cites_idx.index:
         row = cites_idx.loc[key]
         if isinstance(row, pd.DataFrame): row = row.iloc[0]
         ap = str(row.get("CurrentListing", "")).strip()
-        cites_apendice = f"Apéndice {ap}" if ap else "No listado"
+        cites_apendice = f"Apéndice {ap}" if ap else "No aplica (NA)"
 
-    iucn_cat = "No evaluado"
+    iucn_cat = "No aplica (NA)"
     if key in iucn_idx.index:
         row = iucn_idx.loc[key]
         if isinstance(row, pd.DataFrame): row = row.iloc[0]
         cat_full = str(row.get("redlistCategory", "")).strip()
-        iucn_cat = _IUCN_ABBR.get(cat_full, cat_full) or "No evaluado"
+        iucn_cat = _IUCN_ABBR.get(cat_full, cat_full) or "No aplica (NA)"
 
     if car_filtro:
         veda = _consultar_veda_car_unica(nombre.strip(), mads_nombre_comun, car_filtro)
@@ -691,6 +691,30 @@ def _veda_celda_html(veda):
         "<span class='badge-veda-hit'>🚫 En veda</span>"
         f"<span class='veda-detalle'>{detalle}</span>"
     )
+
+
+_CAT_NOMBRE_COMPLETO = {
+    "CR": "En Peligro Crítico",
+    "EN": "En Peligro",
+    "VU": "Vulnerable",
+    "NT": "Casi Amenazada",
+    "LC": "Preocupación Menor",
+    "DD": "Datos Insuficientes",
+    "EX": "Extinta",
+    "EW": "Extinta en Estado Silvestre",
+}
+
+
+def _estado_con_abrev_excel(codigo):
+    """SOLO para el Excel exportable: agrega el nombre completo del estado
+    con su abreviatura entre paréntesis, ej. 'En Peligro (EN)'.
+    Los 'No aplica (NA)' se dejan igual."""
+    t = str(codigo).strip()
+    if t in ("No aplica (NA)", "No listado", "No evaluado", "", "nan"):
+        return "No aplica (NA)"
+    if t in _CAT_NOMBRE_COMPLETO:
+        return f"{_CAT_NOMBRE_COMPLETO[t]} ({t})"
+    return t  # ej. "Apéndice II" queda igual, ya es texto completo
 
 
 def _tabla_consulta_html(resultados, mostrar_mads, mostrar_cites, mostrar_iucn,
@@ -855,9 +879,9 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                             "Nombre científico": r["nombre"],
                             "Nombre común":      r["nombre_comun"],
                             "Familia":           r["familia"],
-                            "MADS (Res. 0126/2024)": r["mads"],
-                            "CITES":             r["cites"],
-                            "IUCN":              r["iucn"],
+                            "MADS (Res. 0126/2024)": _estado_con_abrev_excel(r["mads"]),
+                            "CITES":             _estado_con_abrev_excel(r["cites"]),
+                            "IUCN":              _estado_con_abrev_excel(r["iucn"]),
                             "Veda nacional":     veda_nac_str,
                             col_car_reg:         veda_reg_str,
                         })
