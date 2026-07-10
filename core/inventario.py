@@ -3,10 +3,12 @@
 inventario.py — Procesamiento del inventario forestal Unergy
 Manual 2026 (Res. 0305/2026 MADS)
 
-Escenarios de Criterio B:
-  - B_oficial : solo Res. 0126/2024 MADS  (CR=1.0, EN=0.6, VU=0.4)
-  - B_cites   : max(B_oficial, equivalencia CITES)  — escenario Unergy
-  - B_uicn    : max(B_oficial, categoría UICN)      — escenario Unergy
+Criterio B — un solo valor por individuo:
+  valor_b = max(valor_MADS, valor_CITES, valor_IUCN)
+  Se tienen en cuenta las tres fuentes de amenaza, pero se reporta un único
+  valor (el máximo) — no se presentan escenarios "oficial/CITES/IUCN" por
+  separado. Este valor único alimenta tanto el factor de compensación
+  (FCAFU) como el área a compensar (ATC).
 
 Matching de especies:
   1. Especie exacta en cada fuente
@@ -160,8 +162,9 @@ def _cargar_indices(car: str = ""):
 def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str = ""):
     """
     Procesa el inventario forestal estándar de Unergy.
-    Calcula N, S, SN, A, B_oficial, B_cites, B_uicn, C,
-    FCAFU, FCAFU_cites y FCAFU_uicn por cobertura.
+    Calcula N, S, SN, A, B, C y FCAFU por cobertura.
+    Criterio B = max(MADS, CITES, IUCN) por individuo (un solo valor,
+    sin escenarios separados).
 
     Retorna dict: { cobertura: { ...métricas... } }
     """
@@ -271,33 +274,32 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
         .apply(lambda x: pd.Series(_lookup(x)))
     )
 
-    # ── Valores numéricos B ───────────────────────────────────────────────────
-    # B oficial (MADS)
-    df_filtrado['valor_b_oficial'] = (
+    # ── Valor numérico B por individuo — máximo entre MADS, CITES e IUCN ─────
+    # Se tienen en cuenta las tres fuentes; se reporta un único valor (el
+    # máximo), sin desglosar en escenarios separados.
+    df_filtrado['valor_b_mads'] = (
         df_filtrado['categoria_amenaza'].map(settings.AMENAZA_VALORES).fillna(0.0)
     )
 
-    # B CITES: max(B_oficial, valor CITES)
-    def _b_cites(row):
-        v  = row['valor_b_oficial']
+    def _valor_cites(row):
         ap = row['cites_apendice']
         if ap and str(ap) not in ('nan', 'None'):
-            v = max(v, settings.CITES_VALORES.get(str(ap).strip(), 0.0))
-        return v
+            return settings.CITES_VALORES.get(str(ap).strip(), 0.0)
+        return 0.0
 
-    # B UICN: max(B_oficial, valor UICN)
-    def _b_uicn(row):
-        v   = row['valor_b_oficial']
+    def _valor_uicn(row):
         cat = row['categoria_uicn']
         if cat and str(cat) not in ('nan', 'None'):
-            v = max(v, settings.UICN_VALORES.get(str(cat).strip(), 0.0))
-        return v
+            return settings.UICN_VALORES.get(str(cat).strip(), 0.0)
+        return 0.0
 
-    df_filtrado['valor_b_cites'] = df_filtrado.apply(_b_cites, axis=1)
-    df_filtrado['valor_b_uicn']  = df_filtrado.apply(_b_uicn,  axis=1)
+    df_filtrado['valor_b_cites'] = df_filtrado.apply(_valor_cites, axis=1)
+    df_filtrado['valor_b_uicn']  = df_filtrado.apply(_valor_uicn,  axis=1)
 
-    # B max: el mayor de los tres escenarios por individuo
-    df_filtrado['valor_b_max'] = df_filtrado[['valor_b_oficial','valor_b_cites','valor_b_uicn']].max(axis=1)
+    # Valor B por individuo = máximo entre las tres fuentes
+    df_filtrado['valor_b'] = df_filtrado[
+        ['valor_b_mads', 'valor_b_cites', 'valor_b_uicn']
+    ].max(axis=1)
 
     # ── Agrupación por cobertura ──────────────────────────────────────────────
     resultados = {}
@@ -311,11 +313,8 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
         val_a = coberturas_a[coberturas_a['cobertura'] == cob]['valor_a'].values
         a = float(val_a[0]) if len(val_a) > 0 else 0.0
 
-        # Criterio B — tres escenarios + máximo
-        b_oficial = float(group['valor_b_oficial'].sum() / n) if n > 0 else 0.0
-        b_cites   = float(group['valor_b_cites'].sum()   / n) if n > 0 else 0.0
-        b_uicn    = float(group['valor_b_uicn'].sum()    / n) if n > 0 else 0.0
-        b_max     = float(group['valor_b_max'].sum()     / n) if n > 0 else 0.0
+        # Criterio B — máximo entre MADS, CITES e IUCN por individuo
+        b = float(group['valor_b'].sum() / n) if n > 0 else 0.0
 
         # Criterio C
         c_row = tabla_c[(tabla_c['sn_min'] <= sn) & (tabla_c['sn_max'] > sn)]
@@ -323,11 +322,8 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             float(c_row['valor_c'].values[0]) if not c_row.empty else 0.1
         )
 
-        # FCAFU — tres escenarios + máximo
-        fcafu_oficial = 1 + a + b_oficial + c
-        fcafu_cites   = 1 + a + b_cites   + c
-        fcafu_uicn    = 1 + a + b_uicn    + c
-        fcafu_max     = 1 + a + b_max     + c
+        # FCAFU
+        fcafu = 1 + a + b + c
 
         # ── Desglose especies con estatus ────────────────────────────────────
         amenazadas = []
@@ -341,15 +337,10 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             cat_mads = sp_grp['categoria_amenaza'].iloc[0]
             cites_sp = sp_grp['cites_apendice'].iloc[0]
             cat_uicn = sp_grp['categoria_uicn'].iloc[0]
-            v_ofic   = float(sp_grp['valor_b_oficial'].iloc[0])
-            v_cites  = float(sp_grp['valor_b_cites'].iloc[0])
-            v_uicn   = float(sp_grp['valor_b_uicn'].iloc[0])
+            v        = float(sp_grp['valor_b'].iloc[0])
 
             def _clean(x):
                 return x if (x and str(x) not in ('nan', 'None')) else '—'
-
-            # valor máximo entre los tres escenarios por individuo
-            v_max = max(v_ofic, v_cites, v_uicn)
 
             amenazadas.append({
                 'nombre_cientifico': sp_sci,
@@ -357,16 +348,9 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
                 'cat_uicn':          _clean(cat_uicn),
                 'cites_apendice':    _clean(cites_sp),
                 'n_individuos':      n_sp,
-                # Valores B por escenario
-                'valor_b_oficial':   v_ofic,
-                'valor_b_cites':     v_cites,
-                'valor_b_uicn':      v_uicn,
-                'valor_b_max':       v_max,
-                # Aporte al B de la cobertura
-                'aporte_b_oficial':  round(v_ofic  * n_sp / n, 4) if n > 0 else 0.0,
-                'aporte_b_cites':    round(v_cites  * n_sp / n, 4) if n > 0 else 0.0,
-                'aporte_b_uicn':     round(v_uicn   * n_sp / n, 4) if n > 0 else 0.0,
-                'aporte_b_max':      round(v_max    * n_sp / n, 4) if n > 0 else 0.0,
+                # Valor B único (máximo entre MADS/CITES/IUCN) y su aporte
+                'valor_b':           v,
+                'aporte_b':          round(v * n_sp / n, 4) if n > 0 else 0.0,
             })
 
         # ── Vedas ────────────────────────────────────────────────────────────
@@ -411,17 +395,10 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             'SN':  sn,
             # Criterios
             'A':         a,
-            'B':         b_oficial,    # alias compatibilidad
-            'B_oficial': b_oficial,
-            'B_cites':   b_cites,
-            'B_uicn':    b_uicn,
-            'B_max':     b_max,
+            'B':         b,
             'C':         c,
-            # FCAFU — tres escenarios + máximo
-            'FCAFU':        fcafu_oficial,
-            'FCAFU_cites':  fcafu_cites,
-            'FCAFU_uicn':   fcafu_uicn,
-            'FCAFU_max':    fcafu_max,
+            # FCAFU — un único valor (B = máximo entre MADS/CITES/IUCN)
+            'FCAFU':        fcafu,
             # Desglose
             'amenazadas':       amenazadas,
             'area_basal_total': area_basal,
