@@ -2,12 +2,8 @@ streamlit
 pandas
 geopandas
 shapely
-contextily
 earthengine-api
 openpyxl
 python-docx
-folium
-streamlit-folium
-geemap
 lxml
 pyproj
