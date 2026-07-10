@@ -1275,7 +1275,8 @@ with tab2:
         st.info(
             "**Criterio B** toma en cuenta las tres fuentes de amenaza "
             "(MADS Res. 0126/2024, CITES e IUCN) y usa el **valor máximo** "
-            "por individuo — un solo valor, sin escenarios separados."
+            "por individuo — un solo valor, sin escenarios separados. "
+            "`[MARCA_VERSION: max-B-v2]`"
         )
 
         # ── Desglose criterio B ──────────────────────────────────────────
