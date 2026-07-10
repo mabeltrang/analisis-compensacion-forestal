@@ -887,9 +887,20 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                         })
                     df_res = pd.DataFrame(filas_export)
                     st.dataframe(df_res, use_container_width=True, hide_index=True)
+
+                    # ── Excel: SOLO estas 4 columnas, en este orden ──────────
+                    df_excel = pd.DataFrame([
+                        {
+                            "Especie": r["nombre"],
+                            "CITES":   _estado_con_abrev_excel(r["cites"]),
+                            "IUCN":    _estado_con_abrev_excel(r["iucn"]),
+                            "MADS":    _estado_con_abrev_excel(r["mads"]),
+                        }
+                        for r in resultados
+                    ])
                     buf = io.BytesIO()
                     with pd.ExcelWriter(buf, engine="openpyxl") as xw:
-                        df_res.to_excel(xw, index=False, sheet_name="Consulta amenaza y vedas")
+                        df_excel.to_excel(xw, index=False, sheet_name="Consulta amenaza y vedas")
                     st.download_button(
                         "⬇️ Descargar Excel",
                         data=buf.getvalue(),
