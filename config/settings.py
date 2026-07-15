@@ -16,6 +16,28 @@ GEE_ASSETS = {
     "sentinel":    "COPERNICUS/S2_SR_HARMONIZED",
     "municipios":  "projects/ndvi-restauracion/assets/Municipios_Abril_2026_shp",
     "sinap":       "WCMC/WDPA/current/polygons",
+    # NUEVO — mismos assets que ya usa el script GEE de export R1-R6 para
+    # las "iniciativas de conservación" (sección 5 del script, extraerIniciativas()).
+    # Se agregan acá en vez de reutilizar "reaa"/"sinap" porque son shapes
+    # distintos con campos distintos (ap_nombre/ap_categor, nombre_cap/aa, etc.)
+    "runap":                "projects/ndvi-restauracion/assets/RUNAP",
+    "reaa_excluir":         "projects/ndvi-restauracion/assets/REAA_excluir_simplificado",
+    "omec":                 "projects/ndvi-restauracion/assets/OMEC_simplificado",
+    "bst":                  "projects/ndvi-restauracion/assets/BST_simplificado",
+    "reservas_forestales":  "projects/ndvi-restauracion/assets/forest_reserves",
+}
+
+# Portafolios regionales por CAR (Escenarios de Compensación) — mismo dict
+# que PORTAFOLIOS_CAR en el script GEE. Se activa por departamento.
+PORTAFOLIOS_CAR = {
+    'CRA': {
+        'asset':     "projects/ndvi-restauracion/assets/acciones_de_Compensacion_CRA",
+        'campo_acc': 'AccionGen',
+        'campo_esc': 'Escenarios',
+        'campo_pri': 'Val_Priori',
+        'deptos':    ['Atlántico'],  # con tilde, igual que en el shape
+    }
+    # Para agregar otra CAR: nueva entrada aquí, igual que en el script GEE.
 }
 
 # ─── Factores de rango Manual 2026 (Res. 0305/2026) ─────────────────────────
