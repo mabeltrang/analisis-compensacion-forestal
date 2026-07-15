@@ -231,6 +231,11 @@ def obtener_contexto_impacto(gdf):
         'tasa_bau_szh_fuente':  fuente_bau_szh,
         'tasa_bau_zh':          tasa_bau_zh,
         'tasa_bau_zh_fuente':   fuente_bau_zh,
+        # NUEVO — se exponen para core/iniciativas.py (tab de iniciativas de
+        # conservación). Son ee.Geometry ya construidas en este mismo
+        # request; exponerlas no dispara ninguna llamada nueva a GEE.
+        'municipio_geom':       municipio_geom,
+        'szh_geom':             szh_geom,
     }
 
 
