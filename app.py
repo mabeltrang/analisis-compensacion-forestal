@@ -14,7 +14,7 @@ import streamlit as st
 import pandas as pd
 import os, tempfile, io
 
-from core import inputs, contexto, inventario, atc, utils
+from core import inputs, contexto, inventario, atc, utils, iniciativas
 from core.atc import (
     adicionalidad_conservar,
     adicionalidad_conservar_anual,
@@ -1204,6 +1204,35 @@ with tab1:
         st.dataframe(df_cob, use_container_width=True, hide_index=True)
     else:
         st.warning("⚠️ No se detectaron coberturas.")
+
+    _section("Iniciativas de Conservación en la Zona", "🌿")
+    st.caption(
+        "RUNAP, REAA, OMEC, Bosque Seco Tropical (IAvH), Reservas Forestales Ley 2a "
+        "y Portafolio CAR (si aplica) — a nivel de Municipio y SZH."
+    )
+
+    _cache_key = f"iniciativas_{ctx.get('municipio','')}_{ctx.get('szh','')}"
+
+    if st.button("🌿 Consultar iniciativas de conservación (GEE)", key="btn_iniciativas"):
+        with st.spinner("Consultando RUNAP / REAA / OMEC / BST / Reservas en GEE..."):
+            try:
+                filas_iniciativas = iniciativas.obtener_iniciativas(ctx)
+                st.session_state[_cache_key] = filas_iniciativas
+            except Exception as e:
+                st.error(f"❌ Error consultando iniciativas: {e}")
+
+    if _cache_key in st.session_state:
+        df_ini = iniciativas.deduplicar_iniciativas(st.session_state[_cache_key])
+        if df_ini.empty:
+            st.info("No se encontraron iniciativas de conservación en el municipio ni la SZH.")
+        else:
+            st.dataframe(df_ini, use_container_width=True, hide_index=True)
+            st.download_button(
+                "⬇️ Descargar iniciativas (CSV)",
+                data=df_ini.to_csv(index=False).encode("utf-8"),
+                file_name=f"{ctx.get('municipio','proyecto')}_iniciativas_conservacion.csv",
+                mime="text/csv",
+            )
 
 
 # ── Cálculo global de vedas detectadas (disponible para tab2 y tab6) ──
