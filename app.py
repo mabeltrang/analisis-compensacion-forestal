@@ -1229,7 +1229,13 @@ with tab1:
             st.dataframe(df_ini, use_container_width=True, hide_index=True)
             st.download_button(
                 "⬇️ Descargar iniciativas (CSV)",
-                data=df_ini.to_csv(index=False).encode("utf-8"),
+                # sep=';' — Excel en español usa ',' como separador decimal, así
+                # que interpreta ';' como separador de columnas. Como nuestros
+                # valores (ej. columna 'niveles', tags de OMEC/REAA) ya tienen
+                # comas adentro, usar ',' como separador partía esas celdas.
+                # encode('utf-8-sig') agrega el BOM que Excel necesita para
+                # detectar UTF-8 y no romper tildes/ñ (CaÃ±o -> Caño).
+                data=df_ini.to_csv(index=False, sep=';').encode("utf-8-sig"),
                 file_name=f"{ctx.get('municipio','proyecto')}_iniciativas_conservacion.csv",
                 mime="text/csv",
             )
