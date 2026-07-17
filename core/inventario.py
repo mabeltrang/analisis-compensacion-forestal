@@ -296,9 +296,28 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     df_filtrado['valor_b_cites'] = df_filtrado.apply(_valor_cites, axis=1)
     df_filtrado['valor_b_uicn']  = df_filtrado.apply(_valor_uicn,  axis=1)
 
-    # Valor B por individuo = máximo entre las tres fuentes
+    # ── Valor B por veda regional (criterio propio Unergy — settings.VEDA_VALOR_UNERGY) ──
+    # Solo se calcula una vez por especie (no por individuo) y se mapea,
+    # para no repetir consultar_veda() N veces por especie repetida.
+    especies_unicas = df_filtrado['Nombre cientifico'].unique()
+    _veda_por_especie = {}
+    for sp_sci in especies_unicas:
+        info_v = consultar_veda(sp_sci, car=car)
+        # Solo la veda REGIONAL de la CAR del proyecto sube el factor.
+        # La veda nacional (mangles, palma de cera, etc.) no se traduce
+        # aquí en un valor B — son especies que de entrada no deberían
+        # estar en un aprovechamiento forestal autorizado.
+        _veda_por_especie[sp_sci] = (
+            settings.VEDA_VALOR_UNERGY if info_v['en_veda_regional'] else 0.0
+        )
+    df_filtrado['valor_b_veda'] = (
+        df_filtrado['Nombre cientifico'].map(_veda_por_especie).fillna(0.0)
+    )
+
+    # Valor B por individuo = máximo entre las tres fuentes de amenaza
+    # + veda regional (criterio propio Unergy, ver settings.VEDA_VALOR_UNERGY)
     df_filtrado['valor_b'] = df_filtrado[
-        ['valor_b_mads', 'valor_b_cites', 'valor_b_uicn']
+        ['valor_b_mads', 'valor_b_cites', 'valor_b_uicn', 'valor_b_veda']
     ].max(axis=1)
 
     # ── Agrupación por cobertura ──────────────────────────────────────────────
@@ -330,7 +349,8 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
         mask = (
             (group['categoria_amenaza'] != 'LC') |
             (group['cites_apendice'].notna() & (group['cites_apendice'].astype(str) != 'nan')) |
-            (group['categoria_uicn'].notna()   & (group['categoria_uicn'].astype(str).isin(['CR','EN','VU','NT'])))
+            (group['categoria_uicn'].notna()   & (group['categoria_uicn'].astype(str).isin(['CR','EN','VU','NT']))) |
+            (group['valor_b_veda'] > 0)  # especies que suben solo por veda regional (criterio Unergy)
         )
         for sp_sci, sp_grp in group[mask].groupby('Nombre cientifico'):
             n_sp     = len(sp_grp)
@@ -338,6 +358,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             cites_sp = sp_grp['cites_apendice'].iloc[0]
             cat_uicn = sp_grp['categoria_uicn'].iloc[0]
             v        = float(sp_grp['valor_b'].iloc[0])
+            en_veda  = bool(sp_grp['valor_b_veda'].iloc[0] > 0)
 
             def _clean(x):
                 return x if (x and str(x) not in ('nan', 'None')) else '—'
@@ -348,9 +369,12 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
                 'cat_uicn':          _clean(cat_uicn),
                 'cites_apendice':    _clean(cites_sp),
                 'n_individuos':      n_sp,
-                # Valor B único (máximo entre MADS/CITES/IUCN) y su aporte
+                # Valor B único (máximo entre MADS/CITES/IUCN/veda) y su aporte
                 'valor_b':           v,
                 'aporte_b':          round(v * n_sp / n, 4) if n > 0 else 0.0,
+                # Marca si el valor_b fue determinado (o igualado) por veda
+                # regional — criterio propio Unergy, no del Manual 2026.
+                'valor_b_por_veda':  en_veda,
             })
 
         # ── Vedas ────────────────────────────────────────────────────────────
