@@ -218,9 +218,16 @@ def obtener_contexto_impacto(gdf):
     time.sleep(1)
     tasa_bau_zh, fuente_bau_zh = _calcular_tasa_bau(zh_geom, f"ZH {nom_zh}")
 
+    # ─── CAR competente — automática por municipio/departamento ──
+    from config.car_lookup import obtener_car
+    info_car = obtener_car(municipio, departamento)
+
     return {
         'municipio':            municipio,
         'departamento':         departamento,
+        'car':                  info_car['car'],           # None si no se pudo determinar
+        'car_fuente':           info_car['fuente'],
+        'car_mensaje':          info_car['mensaje'],
         'zh':                   nom_zh,
         'szh':                  nom_szh,
         'bioma_principal':      bioma_principal,
