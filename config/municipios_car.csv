@@ -1,0 +1,450 @@
+departamento,municipio,car
+Antioquia,Abejorral,CORNARE
+Antioquia,Alejandría,CORNARE
+Antioquia,Amagá,CORANTIOQUIA
+Antioquia,Amalfi,CORANTIOQUIA
+Antioquia,Andes,CORANTIOQUIA
+Antioquia,Angelópolis,CORANTIOQUIA
+Antioquia,Angostura,CORANTIOQUIA
+Antioquia,Anorí,CORANTIOQUIA
+Antioquia,Anzá,CORANTIOQUIA
+Antioquia,Argelia,CORNARE
+Antioquia,Armenia,CORANTIOQUIA
+Antioquia,Barbosa,CORANTIOQUIA
+Antioquia,Bello,CORANTIOQUIA
+Antioquia,Betania,CORANTIOQUIA
+Antioquia,Betulia,CORANTIOQUIA
+Antioquia,Buriticá,CORANTIOQUIA
+Antioquia,Caicedo,CORANTIOQUIA
+Antioquia,Caldas,CORANTIOQUIA
+Antioquia,Caracolí,CORANTIOQUIA
+Antioquia,Caramanta,CORANTIOQUIA
+Antioquia,Carmen De Viboral,CORNARE
+Antioquia,Caucasia,CORANTIOQUIA
+Antioquia,Cisneros,CORANTIOQUIA
+Antioquia,Ciudad Bolívar,CORANTIOQUIA
+Antioquia,Cocorná,CORNARE
+Antioquia,Concepción,CORNARE
+Antioquia,Concordia,CORANTIOQUIA
+Antioquia,Copacabana,CORANTIOQUIA
+Antioquia,Cáceres,CORANTIOQUIA
+Antioquia,El Bagre,CORANTIOQUIA
+Antioquia,El Retiro,CORNARE
+Antioquia,Envigado,CORANTIOQUIA
+Antioquia,Fredonia,CORANTIOQUIA
+Antioquia,Girardota,CORANTIOQUIA
+Antioquia,Granada,CORNARE
+Antioquia,Guarne,CORNARE
+Antioquia,Guatapé,CORNARE
+Antioquia,Hispania,CORANTIOQUIA
+Antioquia,Itagüí,CORANTIOQUIA
+Antioquia,Ituango,CORANTIOQUIA
+Antioquia,Jardín,CORANTIOQUIA
+Antioquia,Jericó,CORANTIOQUIA
+Antioquia,La Ceja,CORNARE
+Antioquia,La Estrella,CORANTIOQUIA
+Antioquia,La Pintada,CORANTIOQUIA
+Antioquia,La Unión,CORNARE
+Antioquia,Maceo,CORANTIOQUIA
+Antioquia,Marinilla,CORNARE
+Antioquia,Medellín,CORANTIOQUIA
+Antioquia,Montebello,CORANTIOQUIA
+Antioquia,Nariño,CORNARE
+Antioquia,Nechí,CORANTIOQUIA
+Antioquia,Peñol,CORNARE
+Antioquia,Pueblorrico,CORANTIOQUIA
+Antioquia,Puerto Berrío,CORANTIOQUIA
+Antioquia,Puerto Nare,CORANTIOQUIA
+Antioquia,Puerto Triunfo,CORNARE
+Antioquia,Remedios,CORANTIOQUIA
+Antioquia,Rionegro,CORNARE
+Antioquia,Sabanalarga,CORANTIOQUIA
+Antioquia,Sabaneta,CORANTIOQUIA
+Antioquia,Salgar,CORANTIOQUIA
+Antioquia,San Carlos,CORNARE
+Antioquia,San Francisco,CORNARE
+Antioquia,San Luis,CORNARE
+Antioquia,San Rafael,CORNARE
+Antioquia,San Roque,CORANTIOQUIA
+Antioquia,San Roque,CORNARE
+Antioquia,San Vicente,CORNARE
+Antioquia,Santa Bárbara,CORANTIOQUIA
+Antioquia,Santa Fe De Antioquia,CORANTIOQUIA
+Antioquia,Santa Rosa De Osos,CORANTIOQUIA
+Antioquia,Santo Domingo,CORNARE
+Antioquia,Santuario,CORNARE
+Antioquia,Segovia,CORANTIOQUIA
+Antioquia,Sonsón,CORNARE
+Antioquia,Tarazá,CORANTIOQUIA
+Antioquia,Tarso,CORANTIOQUIA
+Antioquia,Titiribí,CORANTIOQUIA
+Antioquia,Valdivia,CORANTIOQUIA
+Antioquia,Valparaiso,CORANTIOQUIA
+Antioquia,Vegachí,CORANTIOQUIA
+Antioquia,Yalí,CORANTIOQUIA
+Antioquia,Yarumal,CORANTIOQUIA
+Antioquia,Yolombó,CORANTIOQUIA
+Antioquia,Zaragoza,CORANTIOQUIA
+Arauca,Arauca,CORPORINOQUIA
+Arauca,Arauquita,CORPORINOQUIA
+Arauca,Cravo Norte,CORPORINOQUIA
+Arauca,Fortul,CORPORINOQUIA
+Arauca,Puerto Rondón,CORPORINOQUIA
+Arauca,Saravena,CORPORINOQUIA
+Arauca,Tame,CORPORINOQUIA
+Bogotá D.C.,Bogotá D.C. (área rural),CAR
+Boyacá,Almeida,CORPOCHIVOR
+Boyacá,Aquitania,CORPOBOYACÁ
+Boyacá,Arcabuco,CORPOBOYACÁ
+Boyacá,Belén,CORPOBOYACÁ
+Boyacá,Berbeo,CORPOBOYACÁ
+Boyacá,Betéitiva,CORPOBOYACÁ
+Boyacá,Boavita,CORPOBOYACÁ
+Boyacá,Boyacá,CORPOCHIVOR
+Boyacá,Briceño,CORPOBOYACÁ
+Boyacá,Buenavista,CORPOBOYACÁ
+Boyacá,Buenavista,CAR
+Boyacá,Busbanzá,CORPOBOYACÁ
+Boyacá,Caldas,CORPOBOYACÁ
+Boyacá,Caldas,CAR
+Boyacá,Campohermoso,CORPOCHIVOR
+Boyacá,Cerinza,CORPOBOYACÁ
+Boyacá,Chinavita,CORPOCHIVOR
+Boyacá,Chiquinquirá,CORPOBOYACÁ
+Boyacá,Chiquinquirá,CAR
+Boyacá,Chiscas,CORPOBOYACÁ
+Boyacá,Chita,CORPOBOYACÁ
+Boyacá,Chitaraque,CORPOBOYACÁ
+Boyacá,Chivatá,CORPOBOYACÁ
+Boyacá,Chivor,CORPOCHIVOR
+Boyacá,Chíquiza,CORPOBOYACÁ
+Boyacá,Ciénega,CORPOCHIVOR
+Boyacá,Coper,CORPOBOYACÁ
+Boyacá,Corrales,CORPOBOYACÁ
+Boyacá,Covarachía,CORPOBOYACÁ
+Boyacá,Cubará,CORPOBOYACÁ
+Boyacá,Cubará,CORPORINOQUIA
+Boyacá,Cucaita,CORPOBOYACÁ
+Boyacá,Cuítiva,CORPOBOYACÁ
+Boyacá,Cómbita,CORPOBOYACÁ
+Boyacá,Duitama,CORPOBOYACÁ
+Boyacá,El Cocuy,CORPOBOYACÁ
+Boyacá,El Espino,CORPOBOYACÁ
+Boyacá,Firavitoba,CORPOBOYACÁ
+Boyacá,Floresta,CORPOBOYACÁ
+Boyacá,Garagoa,CORPOCHIVOR
+Boyacá,Guacamayas,CORPOBOYACÁ
+Boyacá,Guateque,CORPOCHIVOR
+Boyacá,Guayatá,CORPOCHIVOR
+Boyacá,Gámeza,CORPOBOYACÁ
+Boyacá,Güicán De La Sierra,CORPOBOYACÁ
+Boyacá,Iza,CORPOBOYACÁ
+Boyacá,Jenesano,CORPOCHIVOR
+Boyacá,Jericó,CORPOBOYACÁ
+Boyacá,La Capilla,CORPOCHIVOR
+Boyacá,La Uvita,CORPOBOYACÁ
+Boyacá,La Victoria,CORPOBOYACÁ
+Boyacá,Labranzagrande,CORPORINOQUIA
+Boyacá,Macanal,CORPOBOYACÁ
+Boyacá,Macanal,CORPOCHIVOR
+Boyacá,Maripí,CORPOBOYACÁ
+Boyacá,Miraflores,CORPOBOYACÁ
+Boyacá,Mongua,CORPOBOYACÁ
+Boyacá,Monguí,CORPOBOYACÁ
+Boyacá,Moniquirá,CORPOBOYACÁ
+Boyacá,Motavita,CORPOBOYACÁ
+Boyacá,Muzo,CORPOBOYACÁ
+Boyacá,Nobsa,CORPOBOYACÁ
+Boyacá,Nuevo Colón,CORPOCHIVOR
+Boyacá,Oicatá,CORPOBOYACÁ
+Boyacá,Otanche,CORPOBOYACÁ
+Boyacá,Pachavita,CORPOCHIVOR
+Boyacá,Paipa,CORPOBOYACÁ
+Boyacá,Pajarito,CORPORINOQUIA
+Boyacá,Panqueba,CORPOBOYACÁ
+Boyacá,Pauna,CORPOBOYACÁ
+Boyacá,Paya,CORPORINOQUIA
+Boyacá,Paz De Rio,CORPOBOYACÁ
+Boyacá,Pesca,CORPOBOYACÁ
+Boyacá,Pisba,CORPORINOQUIA
+Boyacá,Páez,CORPOBOYACÁ
+Boyacá,Quípama,CORPOBOYACÁ
+Boyacá,Ramiriquí,CORPOCHIVOR
+Boyacá,Rondón,CORPOBOYACÁ
+Boyacá,Ráquira,CORPOBOYACÁ
+Boyacá,Ráquira,CAR
+Boyacá,Saboyá,CORPOBOYACÁ
+Boyacá,Saboyá,CAR
+Boyacá,Samacá,CORPOBOYACÁ
+Boyacá,San Eduardo,CORPOBOYACÁ
+Boyacá,San José De Pare,CORPOBOYACÁ
+Boyacá,San Luis De Gaceno,CORPOCHIVOR
+Boyacá,San Mateo,CORPOBOYACÁ
+Boyacá,San Miguel De Sema,CORPOBOYACÁ
+Boyacá,San Miguel De Sema,CAR
+Boyacá,Santa María,CORPOBOYACÁ
+Boyacá,Santa María,CORPOCHIVOR
+Boyacá,Santa Rosa De Viterbo,CORPOBOYACÁ
+Boyacá,Santa Sofía,CORPOBOYACÁ
+Boyacá,Sativanorte,CORPOBOYACÁ
+Boyacá,Sativasur,CORPOBOYACÁ
+Boyacá,Siachoque,CORPOBOYACÁ
+Boyacá,Soatá,CORPOBOYACÁ
+Boyacá,Socha,CORPOBOYACÁ
+Boyacá,Socotá,CORPOBOYACÁ
+Boyacá,Sogamoso,CORPOBOYACÁ
+Boyacá,Somondoco,CORPOCHIVOR
+Boyacá,Sora,CORPOBOYACÁ
+Boyacá,Sotaquirá,CORPOBOYACÁ
+Boyacá,Susacón,CORPOBOYACÁ
+Boyacá,Sutamarchán,CORPOBOYACÁ
+Boyacá,Sutatenza,CORPOCHIVOR
+Boyacá,Sáchica,CORPOBOYACÁ
+Boyacá,Tasco,CORPOBOYACÁ
+Boyacá,Tenza,CORPOCHIVOR
+Boyacá,Tibaná,CORPOCHIVOR
+Boyacá,Tibasosa,CORPOBOYACÁ
+Boyacá,Tinjacá,CORPOBOYACÁ
+Boyacá,Tipacoque,CORPOBOYACÁ
+Boyacá,Toca,CORPOBOYACÁ
+Boyacá,Tota,CORPOBOYACÁ
+Boyacá,Tunja,CORPOBOYACÁ
+Boyacá,Tununguá,CORPOBOYACÁ
+Boyacá,Turmequé,CORPOCHIVOR
+Boyacá,Tuta,CORPOBOYACÁ
+Boyacá,Tutazá,CORPOBOYACÁ
+Boyacá,Tópaga,CORPOBOYACÁ
+Boyacá,Ventaquemada,CORPOCHIVOR
+Boyacá,Villa De Leiva,CORPOBOYACÁ
+Boyacá,Viracachá,CORPOCHIVOR
+Boyacá,Zetaquirá,CORPOBOYACÁ
+Boyacá,Úmbita,CORPOCHIVOR
+Casanare,Aguazul,CORPORINOQUIA
+Casanare,Chámeza,CORPORINOQUIA
+Casanare,Hato Corozal,CORPORINOQUIA
+Casanare,La Salina,CORPORINOQUIA
+Casanare,Maní,CORPORINOQUIA
+Casanare,Monterrey,CORPORINOQUIA
+Casanare,Nunchía,CORPORINOQUIA
+Casanare,Orocué,CORPORINOQUIA
+Casanare,Paz De Ariporo,CORPORINOQUIA
+Casanare,Pore,CORPORINOQUIA
+Casanare,Recetor,CORPORINOQUIA
+Casanare,Sabanalarga,CORPORINOQUIA
+Casanare,San Luis De Palenque,CORPORINOQUIA
+Casanare,Sácama,CORPORINOQUIA
+Casanare,Tauramena,CORPORINOQUIA
+Casanare,Trinidad,CORPORINOQUIA
+Casanare,Támara,CORPORINOQUIA
+Casanare,Villanueva,CORPORINOQUIA
+Casanare,Yopal,CORPORINOQUIA
+Cundinamarca,Agua De Dios,CAR
+Cundinamarca,Albán,CAR
+Cundinamarca,Anapoima,CAR
+Cundinamarca,Apulo,CAR
+Cundinamarca,Arbeláez,CAR
+Cundinamarca,Bojacá,CAR
+Cundinamarca,Cabrera,CAR
+Cundinamarca,Cachipay,CAR
+Cundinamarca,Cajicá,CAR
+Cundinamarca,Caparrapí,CAR
+Cundinamarca,Carmen De Carupa,CAR
+Cundinamarca,Chipaque,CAR
+Cundinamarca,Choachí,CAR
+Cundinamarca,Chocontá,CAR
+Cundinamarca,Chía,CAR
+Cundinamarca,Cogua,CAR
+Cundinamarca,Cáqueza,CAR
+Cundinamarca,El Colegio,CAR
+Cundinamarca,El Peñón,CAR
+Cundinamarca,El Rosal,CAR
+Cundinamarca,Facatativá,CAR
+Cundinamarca,Fosca,CAR
+Cundinamarca,Funza,CAR
+Cundinamarca,Fómeque,CAR
+Cundinamarca,Fómeque,CORPOGUAVIO
+Cundinamarca,Fúquene,CAR
+Cundinamarca,Gachalá,CORPOGUAVIO
+Cundinamarca,Gachancipá,CAR
+Cundinamarca,Gachetá,CORPOGUAVIO
+Cundinamarca,Gama,CORPOGUAVIO
+Cundinamarca,Girardot,CAR
+Cundinamarca,Granada,CAR
+Cundinamarca,Guachetá,CAR
+Cundinamarca,Guaduas,CAR
+Cundinamarca,Guasca,CORPOGUAVIO
+Cundinamarca,Guataquí,CAR
+Cundinamarca,Guatavita,CAR
+Cundinamarca,Guayabetal,CAR
+Cundinamarca,Gutiérrez,CAR
+Cundinamarca,Jerusalén,CAR
+Cundinamarca,Junín,CORPOGUAVIO
+Cundinamarca,La Mesa,CAR
+Cundinamarca,La Palma,CAR
+Cundinamarca,La Peña,CAR
+Cundinamarca,Lenguazaque,CAR
+Cundinamarca,Machetá,CAR
+Cundinamarca,Madrid,CAR
+Cundinamarca,Manta,CAR
+Cundinamarca,Medina,CAR
+Cundinamarca,Medina,CORPOGUAVIO
+Cundinamarca,Mosquera,CAR
+Cundinamarca,Nariño,CAR
+Cundinamarca,Nemocón,CAR
+Cundinamarca,Nilo,CAR
+Cundinamarca,Nimaima,CAR
+Cundinamarca,Nocaima,CAR
+Cundinamarca,Pacho,CAR
+Cundinamarca,Pandi,CAR
+Cundinamarca,Paratebueno,CAR
+Cundinamarca,Pasca,CAR
+Cundinamarca,Puerto Salgar,CAR
+Cundinamarca,Pulí,CAR
+Cundinamarca,Quebradanegra,CAR
+Cundinamarca,Quetame,CAR
+Cundinamarca,Ricaurte,CAR
+Cundinamarca,San Antonio Del Tequendama,CAR
+Cundinamarca,San Bernardo,CAR
+Cundinamarca,San Francisco,CAR
+Cundinamarca,Sasaima,CAR
+Cundinamarca,Sesquilé,CAR
+Cundinamarca,Sibaté,CAR
+Cundinamarca,Silvania,CAR
+Cundinamarca,Simijaca,CAR
+Cundinamarca,Soacha,CAR
+Cundinamarca,Sopó,CAR
+Cundinamarca,Subachoque,CAR
+Cundinamarca,Suesca,CAR
+Cundinamarca,Supatá,CAR
+Cundinamarca,Susa,CAR
+Cundinamarca,Sutatausa,CAR
+Cundinamarca,Tabio,CAR
+Cundinamarca,Tausa,CAR
+Cundinamarca,Tena,CAR
+Cundinamarca,Tenjo,CAR
+Cundinamarca,Tibacuy,CAR
+Cundinamarca,Tibirita,CAR
+Cundinamarca,Tocaima,CAR
+Cundinamarca,Tocancipá,CAR
+Cundinamarca,Topaipí,CAR
+Cundinamarca,Ubalá,CORPOGUAVIO
+Cundinamarca,Ubaque,CAR
+Cundinamarca,Ubaté,CAR
+Cundinamarca,Venecia,CAR
+Cundinamarca,Vergara,CAR
+Cundinamarca,Villagómez,CAR
+Cundinamarca,Villapinzón,CAR
+Cundinamarca,Villeta,CAR
+Cundinamarca,Viotá,CAR
+Cundinamarca,Yacopí,CAR
+Cundinamarca,Zipacón,CAR
+Cundinamarca,Zipaquirá,CAR
+Cundinamarca,Útica,CAR
+Santander,Aguada,CAS
+Santander,Albania,CAS
+Santander,Aratoca,CAS
+Santander,Barbosa,CAS
+Santander,Barichara,CAS
+Santander,Barrancabermeja,CAS
+Santander,Betulia,CAS
+Santander,Bolívar,CAS
+Santander,Bucaramanga,CDMB
+Santander,Cabrera,CAS
+Santander,California,CDMB
+Santander,Capitanejo,CAS
+Santander,Carcasí,CAS
+Santander,Cerrito,CAS
+Santander,Charalá,CAS
+Santander,Charta,CDMB
+Santander,Chima,CAS
+Santander,Chipatá,CAS
+Santander,Concepción,CAS
+Santander,Confines,CAS
+Santander,Contratación,CAS
+Santander,Coromoro,CAS
+Santander,Curití,CAS
+Santander,El Carmen,CAS
+Santander,El Guacamayo,CAS
+Santander,El Peñón,CAS
+Santander,El Playón,CAS
+Santander,El Playón,CDMB
+Santander,Encino,CAS
+Santander,Enciso,CAS
+Santander,Floridablanca,CDMB
+Santander,Florián,CAS
+Santander,Galán,CAS
+Santander,Girón,CDMB
+Santander,Guaca,CAS
+Santander,Guadalupe,CAS
+Santander,Guavatá,CAS
+Santander,Güepsa,CAS
+Santander,Hato,CAS
+Santander,Jesús María,CAS
+Santander,La Belleza,CAS
+Santander,La Paz,CAS
+Santander,Landázuri,CAS
+Santander,Lebrija,CDMB
+Santander,Macaravita,CAS
+Santander,Matanza,CDMB
+Santander,Mogotes,CAS
+Santander,Molagavita,CAS
+Santander,Málaga,CAS
+Santander,Ocamonte,CAS
+Santander,Oiba,CAS
+Santander,Palmas Del Socorro,CAS
+Santander,Piedecuesta,CDMB
+Santander,Pinchote,CAS
+Santander,Puente Nacional,CAS
+Santander,Puerto Parra,CAS
+Santander,Puerto Wilches,CAS
+Santander,Páramo,CAS
+Santander,Rionegro,CDMB
+Santander,Sabana De Torres,CAS
+Santander,San Andrés,CAS
+Santander,San Benito,CAS
+Santander,San Gil,CAS
+Santander,San Joaquín,CAS
+Santander,San José De Miranda,CAS
+Santander,San Miguel,CAS
+Santander,San Vicente De Chucurí,CAS
+Santander,Santa Bárbara,CAS
+Santander,Santa Helena Del Opón,CAS
+Santander,Simacota,CAS
+Santander,Socorro,CAS
+Santander,Suaita,CAS
+Santander,Suratá,CDMB
+Santander,Tona,CDMB
+Santander,Valle De San José,CAS
+Santander,Vetas,CDMB
+Santander,Villanueva,CAS
+Santander,Vélez,CAS
+Sucre,Buenavista,CARSUCRE
+Sucre,Caimito,CORPOMOJANA
+Sucre,Chalán,CARSUCRE
+Sucre,Colosó,CARSUCRE
+Sucre,Corozal,CARSUCRE
+Sucre,Coveñas,CARSUCRE
+Sucre,El Roble,CARSUCRE
+Sucre,Galeras,CARSUCRE
+Sucre,Guaranda,CORPOMOJANA
+Sucre,La Unión,CORPOMOJANA
+Sucre,Los Palmitos,CARSUCRE
+Sucre,Majagual,CORPOMOJANA
+Sucre,Morroa,CARSUCRE
+Sucre,Ovejas,CARSUCRE
+Sucre,Palmito,CARSUCRE
+Sucre,Sampués,CARSUCRE
+Sucre,San Benito Abad,CORPOMOJANA
+Sucre,San Juan De Betulia,CARSUCRE
+Sucre,San Marcos,CORPOMOJANA
+Sucre,San Onofre,CARSUCRE
+Sucre,San Pedro,CARSUCRE
+Sucre,Sincelejo,CARSUCRE
+Sucre,Sincé,CARSUCRE
+Sucre,Sucre,CORPOMOJANA
+Sucre,Toluviejo,CARSUCRE
+Sucre,Tolú,CARSUCRE
+Vichada,Cumaribo,CORPORINOQUIA
+Vichada,La Primavera,CORPORINOQUIA
+Vichada,Puerto Carreño,CORPORINOQUIA
+Vichada,Santa Rosalía,CORPORINOQUIA
