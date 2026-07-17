@@ -47,7 +47,7 @@ def _normalizar(s: str) -> str:
 # Fuente: jurisdicciones oficiales publicadas por cada corporación / ASOCARS.
 # Si un proyecto cae en Antioquia, Bolívar o Valle del Cauca, OJO: esos
 # departamentos SÍ están repartidos entre varias autoridades
-# (Antioquia: CORANTIOQUIA/CORNARE/CORPOURABA/AMVA;
+# (Antioquia: CORANTIOQUIA/CORNARE/CORPOURABA/AMVA:
 #  Bolívar: CARDIQUE/CSB; Valle del Cauca: CVC/DAGMA-Cali) y no deben
 # agregarse aquí sin la tabla municipio a municipio correspondiente.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -94,20 +94,49 @@ def obtener_car(municipio: str, departamento: str) -> dict:
     """
     Determina la CAR competente para un municipio/departamento dado.
 
+    Orden de búsqueda (importante):
+      1. Departamento de jurisdicción ÚNICA (ej. Cesar → CORPOCESAR):
+         se resuelve de una vez, sin tocar la tabla CSV. Esto garantiza
+         que un problema de lectura del CSV, una fila faltante, o un
+         desajuste de nombre en el excel NUNCA rompa el caso simple
+         (una sola CAR por departamento).
+      2. Solo si el departamento NO es de jurisdicción única, se busca
+         en la tabla municipio a municipio (departamentos repartidos
+         entre 2+ CAR).
+
     Returns:
         dict con:
             car (str | None): código de la CAR (ej. 'CORPOCESAR') o None
                                si no se pudo determinar.
-            fuente (str): 'municipio_car_csv', 'departamento_unico', o
+            fuente (str): 'departamento_unico', 'municipio_car_csv', o
                           'no_encontrado'.
             mensaje (str): texto explicativo para mostrar al usuario.
     """
     dep_norm = _normalizar(departamento)
     mun_norm = _normalizar(municipio)
 
-    # 1) Tabla municipio a municipio (departamentos con reparto entre CAR)
-    df = _cargar_tabla()
-    match = df[(df["dep_norm"] == dep_norm) & (df["mun_norm"] == mun_norm)]
+    # 1) Departamento de jurisdicción única — PRIMERO, sin depender del CSV.
+    if dep_norm in DEPARTAMENTO_CAR_UNICA:
+        car = DEPARTAMENTO_CAR_UNICA[dep_norm]
+        return {
+            "car": car,
+            "fuente": "departamento_unico",
+            "mensaje": f"{departamento} → {car} "
+                       f"(jurisdicción sobre todo el departamento).",
+        }
+
+    # 2) Tabla municipio a municipio (departamentos con reparto entre CAR)
+    try:
+        df = _cargar_tabla()
+        match = df[(df["dep_norm"] == dep_norm) & (df["mun_norm"] == mun_norm)]
+    except Exception as e:
+        return {
+            "car": None,
+            "fuente": "error_csv",
+            "mensaje": f"⚠️ No se pudo leer municipios_car.csv ({e}). "
+                       f"Selecciona la CAR manualmente.",
+        }
+
     if len(match) == 1:
         car = match.iloc[0]["car"]
         return {
@@ -123,16 +152,6 @@ def obtener_car(municipio: str, departamento: str) -> dict:
             "fuente": "ambiguo",
             "mensaje": f"⚠️ Más de una CAR posible para {municipio} "
                        f"({departamento}). Selecciona manualmente.",
-        }
-
-    # 2) Departamento de jurisdicción única
-    if dep_norm in DEPARTAMENTO_CAR_UNICA:
-        car = DEPARTAMENTO_CAR_UNICA[dep_norm]
-        return {
-            "car": car,
-            "fuente": "departamento_unico",
-            "mensaje": f"{departamento} → {car} "
-                       f"(jurisdicción sobre todo el departamento).",
         }
 
     # 3) No encontrado — requiere selección manual
