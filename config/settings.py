@@ -95,6 +95,32 @@ UICN_VALORES = {
     "DD": 0.0,
 }
 
+# ─── Veda regional CAR → Criterio B (escenario Unergy) ──────────────────────
+# SIN respaldo normativo directo en el Manual 2026 (que de hecho excluye
+# expresamente el manejo de especies en veda de su alcance — Res. 0305/2026,
+# Parágrafo 3°). Es una medida de gestión propia de Unergy: cuando un
+# individuo pertenece a una especie bajo veda regional de la CAR competente
+# del proyecto, se toma max(valor_b_amenaza, VEDA_VALOR_UNERGY) en vez del
+# valor de amenaza solo.
+#
+# Valor = 0.6, equivalente a la categoría "En Peligro" (EN) ya existente en
+# la escala del Manual (Res. 0126/2024). Se ancla a EN — y no a un punto
+# intermedio EN-CR inventado — porque: (1) una veda regional muchas veces
+# se declara por razones que no son estrictamente riesgo de extinción
+# poblacional (ej. valor histórico/cultural/paisajístico, ver Res.
+# 0035/2026 CORPOCESAR, Tabla 2), a diferencia de una categoría de amenaza
+# nacional que sí pasó por una evaluación formal con criterios UICN; y
+# (2) resulta más conservador y defendible frente a una CAR o auditoría
+# no asignarle a una veda regional un peso mayor que el de una especie
+# nacionalmente En Peligro sin evidencia adicional que lo sustente.
+#
+# Este valor entra en el máximo del Criterio B (Amenaza), NO reemplaza ni
+# modifica la categoría oficial de amenaza de la especie (MADS/CITES/IUCN)
+# ni el FCAFU completo — solo el término "b" dentro de FCAFU = 1 + a + b + c.
+# Debe documentarse explícitamente como criterio propio en el Plan de
+# Compensación (no atribuirlo al Manual 2026 ni a Res. 0126/2024).
+VEDA_VALOR_UNERGY = 0.6
+
 # ─── Configuración inventario ────────────────────────────────────────────────
 DAP_MIN_DEFAULT    = 9.86   # cm  (CAP ≥ 31 cm → DAP = 31/π ≈ 9.87 cm)
 HORIZONTE_TEMPORAL = 15     # años
