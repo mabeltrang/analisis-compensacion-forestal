@@ -458,8 +458,11 @@ with st.sidebar:
     car_proyecto = st.selectbox(
         "CAR competente",
         options=[""] + sorted(_VEDAS_REGIONALES_SIDEBAR.keys()),
-        help="Para cruce con vedas regionales. Lista completa de las 31 CAR "
-             "de Colombia — ver pestaña 'Consulta y Vedas' para el detalle "
+        help="Opcional: si la dejas vacía, se detecta automáticamente por "
+             "municipio/departamento del polígono de impacto al procesar. "
+             "Selecciónala aquí solo para forzar una CAR distinta a la "
+             "detección automática. Lista completa de las 31 CAR de "
+             "Colombia — ver pestaña 'Consulta y Vedas' para el detalle "
              "de cada una.",
     )
 
@@ -1084,6 +1087,29 @@ with st.spinner("Obteniendo contexto geográfico + tasas BAU (Hansen GFC)..."):
         ctx = contexto.obtener_contexto_impacto(gdf_impacto)
     except Exception as e:
         st.error(f"❌ Error contexto GEE: {e}"); st.stop()
+
+# ─── CAR competente: automática por municipio/departamento, con override manual ───
+_car_detectada = ctx.get('car')
+if not car_proyecto and _car_detectada:
+    car_proyecto = _car_detectada
+    st.info(
+        f"📍 CAR detectada automáticamente para **{ctx['municipio']} "
+        f"({ctx['departamento']})** → **{car_proyecto}**. "
+        f"{ctx.get('car_mensaje', '')}"
+    )
+elif not car_proyecto and not _car_detectada:
+    st.warning(
+        f"⚠️ No se pudo determinar la CAR automáticamente para "
+        f"{ctx['municipio']} ({ctx['departamento']}). {ctx.get('car_mensaje', '')}"
+    )
+elif car_proyecto and _car_detectada and car_proyecto != _car_detectada:
+    st.warning(
+        f"⚠️ Seleccionaste manualmente **{car_proyecto}** en la barra lateral, "
+        f"pero la detección automática por municipio/departamento sugiere "
+        f"**{_car_detectada}** ({ctx.get('car_mensaje', '')}). Verifica cuál "
+        f"es la CAR competente antes de continuar — se usará la que "
+        f"seleccionaste manualmente ({car_proyecto})."
+    )
 
 if coberturas_kmz:
     ctx['areas_cobertura'] = coberturas_kmz
