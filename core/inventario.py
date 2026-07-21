@@ -433,6 +433,10 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             'n_ind_veda_regional': n_ind_veda_regional,
             'n_ind_veda_ambas':    n_ind_veda_ambas,
             'car':                 car,
+            # TODAS las especies de la cobertura (no solo las amenazadas/vedadas),
+            # para poder mostrar siempre el resumen de estado de amenaza aunque
+            # ninguna especie esté en peligro (ver Resumen FCAFU en app.py).
+            'todas_especies':      sorted(group['Nombre cientifico'].dropna().unique().tolist()),
         }
 
     return resultados
