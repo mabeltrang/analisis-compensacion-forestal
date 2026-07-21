@@ -1340,6 +1340,34 @@ with tab2:
             "`[MARCA_VERSION: max-B-v2]`"
         )
 
+        # ── Resumen de TODAS las especies y su estado de amenaza ──────────
+        # A diferencia del "Desglose Criterio B" (que solo aparece si hay
+        # especies amenazadas/vedadas), este resumen se muestra siempre,
+        # aunque ninguna especie esté en peligro — mismo estilo de tabla
+        # que la pestaña "Consulta y Vedas".
+        todas_especies_proyecto = sorted({
+            sp for d in fcafu_por_cobertura.values()
+            for sp in d.get('todas_especies', [])
+        })
+        if todas_especies_proyecto:
+            with st.expander(
+                f"📋 Resumen de especies y estado de amenaza ({len(todas_especies_proyecto)} spp.)",
+                expanded=True
+            ):
+                mads_idx, cites_idx, iucn_idx = _cargar_indices_amenaza()
+                resultados_resumen = [
+                    _consultar_amenaza_sp(sp, mads_idx, cites_idx, iucn_idx, car_filtro=car_proyecto)
+                    for sp in todas_especies_proyecto
+                ]
+                st.markdown(
+                    _tabla_consulta_html(
+                        resultados_resumen,
+                        mostrar_mads=True, mostrar_cites=True, mostrar_iucn=True,
+                        mostrar_veda=True, car_filtro=car_proyecto,
+                    ),
+                    unsafe_allow_html=True
+                )
+
         # ── Desglose criterio B ──────────────────────────────────────────
         amenazadas_total = []
         for cob, d in fcafu_por_cobertura.items():
