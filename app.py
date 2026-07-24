@@ -1156,15 +1156,40 @@ TASA_POR_NIVEL = {
     "Rango 6": tasa_bau_zh,
 }
 # ── Selector de ecosistema para la curva de RESTAURAR ─────────────────────
+from config.ecosistemas_k import detectar_ecosistema_por_bioma
+
+_bioma_ctx = ctx.get('bioma_principal', 'Desconocido')
+_eco_auto = detectar_ecosistema_por_bioma(_bioma_ctx)
+
 with st.sidebar:
     st.markdown("---")
     st.caption("🌱 Ecosistema para curva de restauración")
+
+    if _eco_auto:
+        st.success(
+            f"✅ Auto-detectado desde el Bioma-Unidad Biótica del área de "
+            f"impacto: **\"{_bioma_ctx}\"** → **{_eco_auto}**"
+        )
+        _default_eco = _eco_auto
+    else:
+        st.info(
+            f"ℹ️ No se pudo auto-detectar el tipo de ecosistema a partir de "
+            f"**\"{_bioma_ctx}\"** (bioma no cubierto por el clasificador — "
+            f"ej. páramo, Helobioma, Peinobioma, Orobioma sin calificativo "
+            f"de humedad). **Selecciona manualmente.**"
+        )
+        _default_eco = DEFAULT_ECOSISTEMA
+
     ecosistema_sel = st.selectbox(
-        "Tipo de ecosistema (Holdridge)",
+        "Tipo de ecosistema (Holdridge)"
+        + ("" if _eco_auto else " — selección manual requerida"),
         options=list(ECOSISTEMAS_K.keys()),
         format_func=lambda c: f"{c} — {ECOSISTEMAS_K[c]['nombre']} ({ECOSISTEMAS_K[c]['confianza']})",
-        index=list(ECOSISTEMAS_K.keys()).index(DEFAULT_ECOSISTEMA),
+        index=list(ECOSISTEMAS_K.keys()).index(_default_eco),
     )
+    if ecosistema_sel != _eco_auto:
+        st.caption("↳ Ecosistema ajustado manualmente (distinto al auto-detectado).")
+
     _eco_info = ECOSISTEMAS_K[ecosistema_sel]
     if _eco_info["confianza"] == "baja":
         st.warning(
