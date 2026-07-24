@@ -99,3 +99,44 @@ def k_por_ecosistema(codigo: str) -> float:
     conservador y mejor documentado) en vez de fallar.
     """
     return ECOSISTEMAS_K.get(codigo, ECOSISTEMAS_K[DEFAULT_ECOSISTEMA])["k"]
+
+
+def _sin_tildes(s: str) -> str:
+    import unicodedata
+    s = unicodedata.normalize("NFD", s)
+    return "".join(c for c in s if unicodedata.category(c) != "Mn")
+
+
+def detectar_ecosistema_por_bioma(bioma_texto: str):
+    """
+    Intenta clasificar el texto de Bioma-Unidad Biótica (campo BIOMA_IAvH del
+    Mapa de Ecosistemas IDEAM/IAvH, ej. 'Zonobioma Alternohígrico Tropical',
+    'Zonobioma Húmedo Tropical', 'Orobioma Bajo de los Andes') en uno de los
+    códigos de ECOSISTEMAS_K, usando coincidencia de palabras clave.
+
+    Devuelve el código (ej. 'bs-T') si hay coincidencia razonable, o None si
+    el texto no encaja con ningún patrón conocido — en ese caso se debe pedir
+    selección manual, NUNCA asumir un ecosistema por defecto silenciosamente.
+
+    Cobertura actual: zonobiomas tropicales de tierras bajas y orobiomas
+    premontanos. NO cubre páramo, subxerofítico andino, ni otros biomas de
+    alta montaña — para esos, este clasificador devuelve None a propósito.
+    """
+    if not bioma_texto or bioma_texto == "Desconocido":
+        return None
+
+    t = _sin_tildes(bioma_texto).lower()
+
+    es_premontano = any(p in t for p in ("premontano", "montano", "andino", "orobioma"))
+
+    if any(p in t for p in ("seco", "alternohigric", "xerofit", "subxerofit")):
+        return "bs-T"  # el subxerofítico andino no está bien cubierto, pero
+                        # es más conservador caer en bs-T que en algo húmedo
+
+    if any(p in t for p in ("pluvial", "muy humedo", "higrofit")):
+        return "bmh-PM" if es_premontano else "bmh-T"
+
+    if "humedo" in t:
+        return "bh-PM" if es_premontano else "bh-T"
+
+    return None
