@@ -1638,6 +1638,23 @@ ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
             st.dataframe(pd.DataFrame(filas_comp), use_container_width=True, hide_index=True)
 
             # ─── Curva de ganancia — resolución seleccionable — ambos métodos ────
+            # ─── Helper: exportar cualquier figura matplotlib a bytes JPG ────
+            import matplotlib
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+            from PIL import Image
+            import io as _io
+
+            def _fig_a_jpg_bytes(fig, dpi=150, calidad=92):
+                buf_png = _io.BytesIO()
+                fig.savefig(buf_png, format="png", dpi=dpi, bbox_inches="tight")
+                buf_png.seek(0)
+                img = Image.open(buf_png).convert("RGB")
+                buf_jpg = _io.BytesIO()
+                img.save(buf_jpg, format="JPEG", quality=calidad)
+                plt.close(fig)
+                return buf_jpg.getvalue()
+
             _section("Curva de Ganancia de Cobertura — Año 1 a 15", "📈")
             st.caption(
                 f"Por hectárea compensada · Conservar (tasa BAU municipio "
@@ -1662,13 +1679,35 @@ ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
                 ],
             }).set_index("Año")
             st.line_chart(df_curva)
-            st.download_button(
-                "⬇️ Descargar datos (CSV) — curva 15 años",
-                data=df_curva.to_csv(index=True).encode("utf-8"),
-                file_name=f"curva_adicionalidad_15anios_{ecosistema_sel}.csv",
-                mime="text/csv",
-                key="descarga_curva_15",
-            )
+
+            _fig15, _ax15 = plt.subplots(figsize=(9, 5))
+            _ax15.plot(df_curva.index, df_curva["Conservar (ha/ha)"], marker="o",
+                       markersize=3, label="Conservar (ha/ha)", color="#1f4e8c")
+            _ax15.plot(df_curva.index, df_curva["Restaurar (ha/ha)"], marker="o",
+                       markersize=3, label="Restaurar (ha/ha)", color="#5aa9e6")
+            _ax15.set_xlabel("Años")
+            _ax15.set_ylabel("ha adicionales / ha compensada")
+            _ax15.set_title(f"Ganancia de cobertura — 15 años ({ecosistema_sel})")
+            _ax15.legend()
+            _ax15.grid(alpha=0.3)
+
+            _col_d1, _col_d2 = st.columns(2)
+            with _col_d1:
+                st.download_button(
+                    "🖼️ Descargar imagen (JPG) — curva 15 años",
+                    data=_fig_a_jpg_bytes(_fig15),
+                    file_name=f"curva_adicionalidad_15anios_{ecosistema_sel}.jpg",
+                    mime="image/jpeg",
+                    key="descarga_curva_15_jpg",
+                )
+            with _col_d2:
+                st.download_button(
+                    "⬇️ Descargar datos (CSV) — curva 15 años",
+                    data=df_curva.to_csv(index=True).encode("utf-8"),
+                    file_name=f"curva_adicionalidad_15anios_{ecosistema_sel}.csv",
+                    mime="text/csv",
+                    key="descarga_curva_15",
+                )
             st.caption(
                 "Restaurar parte más rápido (curva asintótica) pero ambas siguen "
                 "creciendo a 15 años sin llegar a estabilizarse del todo. "
@@ -1729,13 +1768,45 @@ ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
                 use_container_width=True,
             )
             _df_full_wide = df_full.pivot(index="Año", columns="Escenario", values="Valor")
-            st.download_button(
-                "⬇️ Descargar datos (CSV) — curva completa",
-                data=_df_full_wide.to_csv(index=True).encode("utf-8"),
-                file_name=f"curva_adicionalidad_completa_{ecosistema_sel}.csv",
-                mime="text/csv",
-                key="descarga_curva_full",
+
+            _figF, _axF = plt.subplots(figsize=(10, 5.5))
+            _axF.plot(_df_full_wide.index, _df_full_wide["Conservar (ha/ha)"],
+                      label="Conservar (ha/ha)", color="#1f4e8c")
+            _axF.plot(_df_full_wide.index, _df_full_wide["Restaurar (ha/ha)"],
+                      label="Restaurar (ha/ha)", color="#5aa9e6")
+            for _n in _anios_marca:
+                _axF.axvline(_n, color="gray", linestyle="--", alpha=0.4)
+                for _serie, _color in [("Conservar (ha/ha)", "#1f4e8c"), ("Restaurar (ha/ha)", "#5aa9e6")]:
+                    _val = _df_full_wide.loc[_n, _serie]
+                    _axF.plot(_n, _val, "o", color=_color, markersize=6)
+                    _axF.annotate(f"{_val:.2f}", (_n, _val), textcoords="offset points",
+                                  xytext=(0, 8), fontsize=8, ha="center")
+            _axF.set_xlabel("Años")
+            _axF.set_ylabel("ha adicionales / ha compensada")
+            _axF.set_title(
+                f"Ganancia de cobertura hasta estabilización — {ecosistema_sel} "
+                f"(marcadores en 3/5/10/15 años)"
             )
+            _axF.legend()
+            _axF.grid(alpha=0.3)
+
+            _col_dF1, _col_dF2 = st.columns(2)
+            with _col_dF1:
+                st.download_button(
+                    "🖼️ Descargar imagen (JPG) — curva completa",
+                    data=_fig_a_jpg_bytes(_figF),
+                    file_name=f"curva_adicionalidad_completa_{ecosistema_sel}.jpg",
+                    mime="image/jpeg",
+                    key="descarga_curva_full_jpg",
+                )
+            with _col_dF2:
+                st.download_button(
+                    "⬇️ Descargar datos (CSV) — curva completa",
+                    data=_df_full_wide.to_csv(index=True).encode("utf-8"),
+                    file_name=f"curva_adicionalidad_completa_{ecosistema_sel}.csv",
+                    mime="text/csv",
+                    key="descarga_curva_full",
+                )
             st.caption(
                 f"Curva extendida hasta {_max_years_full} años para mostrar el "
                 f"aplanamiento completo (asíntota ≈ {F_RESTAURAR} ha/ha para Restaurar). "
