@@ -1590,7 +1590,8 @@ ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
 
         with adic_tab2:
             st.caption(
-                "Hectáreas que SE ganan — curva Chapman-Richards (k=0.076, f=0.75)"
+                f"Hectáreas que SE ganan — curva Chapman-Richards "
+                f"(k={K_RESTAURAR}, f={F_RESTAURAR}, ecosistema: {ecosistema_sel})"
             )
             filas_r = []
             for rango_id, data in atc_resultados.items():
@@ -1636,13 +1637,19 @@ ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
                 })
             st.dataframe(pd.DataFrame(filas_comp), use_container_width=True, hide_index=True)
 
-            # ─── Curva de ganancia año a año (1–15) — ambos métodos ────
+            # ─── Curva de ganancia — resolución seleccionable — ambos métodos ────
             _section("Curva de Ganancia de Cobertura — Año 1 a 15", "📈")
             st.caption(
                 f"Por hectárea compensada · Conservar (tasa BAU municipio "
                 f"`{tasa_bau*100:.3f}%`) vs Restaurar (`{ecosistema_sel}`, k={K_RESTAURAR})"
             )
-            anios_curva = list(range(1, 16))
+            _resolucion = st.radio(
+                "Resolución temporal", ["Anual", "Bimestral (cada 2 meses)", "Mensual"],
+                horizontal=True, key="resolucion_curva_adic",
+            )
+            _paso = {"Anual": 1.0, "Bimestral (cada 2 meses)": 2/12, "Mensual": 1/12}[_resolucion]
+            _n_puntos = int(round(15 / _paso))
+            anios_curva = [round((i + 1) * _paso, 4) for i in range(_n_puntos)]
             df_curva = pd.DataFrame({
                 "Año": anios_curva,
                 "Conservar (ha/ha)": [
@@ -1655,9 +1662,85 @@ ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
                 ],
             }).set_index("Año")
             st.line_chart(df_curva)
+            st.download_button(
+                "⬇️ Descargar datos (CSV) — curva 15 años",
+                data=df_curva.to_csv(index=True).encode("utf-8"),
+                file_name=f"curva_adicionalidad_15anios_{ecosistema_sel}.csv",
+                mime="text/csv",
+                key="descarga_curva_15",
+            )
             st.caption(
                 "Restaurar parte más rápido (curva asintótica) pero ambas siguen "
-                "creciendo a 15 años sin llegar a estabilizarse del todo."
+                "creciendo a 15 años sin llegar a estabilizarse del todo. "
+                "Nota: más resolución no cambia la forma de la curva — "
+                "el aplanamiento real ocurre más allá de los 15 años para bs-T."
+            )
+
+            # ─── Vista completa hasta estabilización, con marcadores 3/5/10/15 ────
+            import math
+            import altair as alt
+
+            st.markdown("**Vista completa — curva hasta estabilización**")
+            _max_years_full = min(100, max(40, int(round(-math.log(0.05) / K_RESTAURAR / 5) * 5)))
+            _anios_full = list(range(0, _max_years_full + 1))
+            df_full = pd.DataFrame({
+                "Año": _anios_full * 2,
+                "Escenario": (
+                    ["Conservar (ha/ha)"] * len(_anios_full)
+                    + ["Restaurar (ha/ha)"] * len(_anios_full)
+                ),
+                "Valor": (
+                    [adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) for n in _anios_full]
+                    + [adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR) for n in _anios_full]
+                ),
+            })
+
+            _lineas = alt.Chart(df_full).mark_line().encode(
+                x=alt.X("Año:Q", title="Años"),
+                y=alt.Y("Valor:Q", title="ha adicionales / ha compensada"),
+                color=alt.Color("Escenario:N", legend=alt.Legend(title=None)),
+            )
+
+            _anios_marca = [3, 5, 10, 15]
+            df_marcas = pd.DataFrame({
+                "Año": _anios_marca * 2,
+                "Escenario": (
+                    ["Conservar (ha/ha)"] * len(_anios_marca)
+                    + ["Restaurar (ha/ha)"] * len(_anios_marca)
+                ),
+                "Valor": (
+                    [adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) for n in _anios_marca]
+                    + [adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR) for n in _anios_marca]
+                ),
+            })
+            _puntos = alt.Chart(df_marcas).mark_point(size=70, filled=True).encode(
+                x="Año:Q", y="Valor:Q", color="Escenario:N",
+            )
+            _etiquetas = alt.Chart(df_marcas).mark_text(dy=-10, fontSize=11).encode(
+                x="Año:Q", y="Valor:Q", text=alt.Text("Valor:Q", format=".2f"),
+                color="Escenario:N",
+            )
+            _reglas = alt.Chart(pd.DataFrame({"Año": _anios_marca})).mark_rule(
+                strokeDash=[4, 4], color="gray", opacity=0.4
+            ).encode(x="Año:Q")
+
+            st.altair_chart(
+                (_reglas + _lineas + _puntos + _etiquetas).properties(height=380),
+                use_container_width=True,
+            )
+            _df_full_wide = df_full.pivot(index="Año", columns="Escenario", values="Valor")
+            st.download_button(
+                "⬇️ Descargar datos (CSV) — curva completa",
+                data=_df_full_wide.to_csv(index=True).encode("utf-8"),
+                file_name=f"curva_adicionalidad_completa_{ecosistema_sel}.csv",
+                mime="text/csv",
+                key="descarga_curva_full",
+            )
+            st.caption(
+                f"Curva extendida hasta {_max_years_full} años para mostrar el "
+                f"aplanamiento completo (asíntota ≈ {F_RESTAURAR} ha/ha para Restaurar). "
+                f"Líneas grises punteadas: horizontes de decisión (3, 5, 10, 15 años) — "
+                f"los mismos que usa el resto de la app."
             )
 
             st.info(
