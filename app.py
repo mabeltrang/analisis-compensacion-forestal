@@ -21,6 +21,7 @@ from core.atc import (
     adicionalidad_restaurar,
 )
 from config import settings
+from config.ecosistemas_k import ECOSISTEMAS_K, k_por_ecosistema, DEFAULT_ECOSISTEMA
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CONFIG Y ESTILOS
@@ -1154,7 +1155,26 @@ TASA_POR_NIVEL = {
     "Rango 5": tasa_bau_szh,
     "Rango 6": tasa_bau_zh,
 }
-K_RESTAURAR = 0.076
+# ── Selector de ecosistema para la curva de RESTAURAR ─────────────────────
+with st.sidebar:
+    st.markdown("---")
+    st.caption("🌱 Ecosistema para curva de restauración")
+    ecosistema_sel = st.selectbox(
+        "Tipo de ecosistema (Holdridge)",
+        options=list(ECOSISTEMAS_K.keys()),
+        format_func=lambda c: f"{c} — {ECOSISTEMAS_K[c]['nombre']} ({ECOSISTEMAS_K[c]['confianza']})",
+        index=list(ECOSISTEMAS_K.keys()).index(DEFAULT_ECOSISTEMA),
+    )
+    _eco_info = ECOSISTEMAS_K[ecosistema_sel]
+    if _eco_info["confianza"] == "baja":
+        st.warning(
+            f"⚠️ k={_eco_info['k']} para {_eco_info['nombre']} es una "
+            f"**extrapolación sin cronosecuencia local publicada** — "
+            f"documentar como estimación propia si se reporta a una CAR."
+        )
+    st.caption(f"k = {_eco_info['k']}  ·  t90 ≈ {_eco_info['t90_anios']} años")
+
+K_RESTAURAR = k_por_ecosistema(ecosistema_sel)
 F_CONSERVAR = 0.85
 F_RESTAURAR = 0.75
 HORIZONTES  = [3, 5, 10, 15]
@@ -1523,7 +1543,7 @@ with tab4:
     )
 
     with st.expander("📖 Metodología y fuentes"):
-        st.markdown("""
+        st.markdown(f"""
 **CONSERVAR — Fórmula exponencial acumulada**
 ```
 ha_adicional(n) = ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85
@@ -1532,11 +1552,13 @@ ha_adicional(n) = ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85
 - Factor 0.85: **Andam et al. (2008)** [DOI:10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105) · **Pfaff et al. (2014)** [DOI:10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)
 
 ---
-**RESTAURAR — Curva Chapman-Richards (Poorter 2016)**
+**RESTAURAR — Curva Chapman-Richards, recuperación de COBERTURA (no biomasa)**
 ```
-ha_adicional(n) = ha × [1 - e^(-0.076×n)] × 0.75
+ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
 ```
-- k=0.076: **Poorter et al. (2016)** Nature 530:211-214. [DOI:10.1038/nature16469](https://doi.org/10.1038/nature16469)
+- La variable modelada es **extensión de cobertura vegetal recuperada** — el criterio que exige el Manual 2026 (Cap. I, num. 5.3 Adicionalidad), no biomasa ni carbono.
+- k depende del ecosistema (seleccionable en el sidebar) y corresponde a la categoría "estructura" de **Poorter et al. (2021)** *Science* 374:1370-1376 [DOI:10.1126/science.abh3629](https://doi.org/10.1126/science.abh3629) — recuperación al 90% en 2.5 a 6 décadas según el sitio (mucho más rápido que la curva de *biomasa*, que toma >12 décadas).
+- k actual: **{K_RESTAURAR}** ({ECOSISTEMAS_K[ecosistema_sel]['nombre']}, confianza {ECOSISTEMAS_K[ecosistema_sel]['confianza']}). Ver `config/ecosistemas_k.py` para el detalle y las fuentes por ecosistema.
 - Factor 0.75: **Crouzeilles et al. (2017)** [DOI:10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345) · **González-M. et al. (2018)** IAvH BST Colombia
         """)
 
@@ -1613,6 +1635,30 @@ ha_adicional(n) = ha × [1 - e^(-0.076×n)] × 0.75
                     "Ratio Rest/Cons":  round(rest_ha/cons_ha, 1) if cons_ha > 0 else "—",
                 })
             st.dataframe(pd.DataFrame(filas_comp), use_container_width=True, hide_index=True)
+
+            # ─── Curva de ganancia año a año (1–15) — ambos métodos ────
+            _section("Curva de Ganancia de Cobertura — Año 1 a 15", "📈")
+            st.caption(
+                f"Por hectárea compensada · Conservar (tasa BAU municipio "
+                f"`{tasa_bau*100:.3f}%`) vs Restaurar (`{ecosistema_sel}`, k={K_RESTAURAR})"
+            )
+            anios_curva = list(range(1, 16))
+            df_curva = pd.DataFrame({
+                "Año": anios_curva,
+                "Conservar (ha/ha)": [
+                    round(adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR), 4)
+                    for n in anios_curva
+                ],
+                "Restaurar (ha/ha)": [
+                    round(adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR), 4)
+                    for n in anios_curva
+                ],
+            }).set_index("Año")
+            st.line_chart(df_curva)
+            st.caption(
+                "Restaurar parte más rápido (curva asintótica) pero ambas siguen "
+                "creciendo a 15 años sin llegar a estabilizarse del todo."
+            )
 
             st.info(
                 "**¿Qué horizonte usar?**\n\n"
