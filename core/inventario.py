@@ -12,7 +12,20 @@ Criterio B — un solo valor por individuo:
 
 Matching de especies:
   1. Especie exacta en cada fuente
-  2. Nombre indeterminado (sp./spp.) → peor categoría del género (MADS y CITES)
+  2. Nombre indeterminado (sp./spp.):
+     - MADS  → SOLO hereda la peor categoría del género si el género está
+       en la lista curada config.generos_alta_amenaza.GENEROS_ALTA_AMENAZA
+       (géneros donde prácticamente todas las especies colombianas están
+       amenazadas, ej. Quercus, Magnolia). Para el resto de géneros se
+       mantiene el comportamiento histórico: LC / "No aplica" — igual que
+       en todos los planes de compensación radicados hasta ahora. Aplicar
+       el fallback a géneros grandes y diversos (Ficus, Cestrum,
+       Erythroxylum, etc.) sobreestimaría el riesgo, porque la mayoría de
+       especies de esos géneros son LC o no evaluadas.
+     - CITES → siempre hereda el listado de género (a diferencia del
+       fallback de MADS, un listado CITES a rango GENUS es una decisión
+       regulatoria de la Convención que aplica legalmente a todas las
+       especies del género, no una inferencia estadística nuestra).
   3. Especie determinada sin match   → LC / None
 """
 
@@ -25,6 +38,7 @@ from collections import defaultdict
 from . import utils
 from config import settings
 from config.vedas import consultar_veda
+from config.generos_alta_amenaza import es_genero_alta_amenaza
 
 
 def _norm(s):
@@ -239,22 +253,34 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
     # ── Función de lookup unificada ───────────────────────────────────────────
     def _lookup(nombre_sci):
         """
-        Retorna (cat_mads, cites_ap, cat_uicn) para un nombre científico.
+        Retorna (cat_mads, cites_ap, cat_uicn, por_genero) para un nombre
+        científico.
 
-        MADS  : exacto → fallback género solo para sp./spp.
-        CITES : exacto → fallback género (hereda listado del género CITES)
-        UICN  : exacto binomial
+        MADS  : exacto → fallback género SOLO si el género está en la
+                lista curada de géneros de alta amenaza generalizada
+                (config.generos_alta_amenaza). Para el resto de géneros,
+                un nombre indeterminado ("Genero sp") se reporta LC / "No
+                aplica", igual que en la práctica histórica.
+        CITES : exacto → fallback género (hereda listado del género
+                CITES; esto es un listado regulatorio real, no una
+                inferencia, así que se mantiene sin cambios).
+        UICN  : exacto binomial.
         """
         n     = _norm(nombre_sci)
         gen   = n.split()[0] if n.split() else ''
         indet = _es_indeterminado(n)
 
         # MADS
+        por_genero = False
         if n in amenaza_exact:
             cat_mads = amenaza_exact[n]
-        elif indet:
-            cat_mads = amenaza_genero[gen]
+        elif indet and es_genero_alta_amenaza(gen):
+            cat_mads   = amenaza_genero[gen]
+            por_genero = cat_mads != 'LC'
         else:
+            # Género indeterminado que NO está en la lista curada (ej.
+            # Ficus sp, Cestrum sp, Erythroxylum sp) → comportamiento
+            # histórico: no se infiere nada, LC / "No aplica".
             cat_mads = 'LC'
 
         # CITES: especie exacta primero, luego fallback de género
@@ -267,9 +293,11 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
         binomial = ' '.join(n.split()[:2])
         cat_uicn = uicn_exact.get(binomial, None)
 
-        return cat_mads, cites_ap, cat_uicn
+        return cat_mads, cites_ap, cat_uicn, por_genero
 
-    df_filtrado[['categoria_amenaza', 'cites_apendice', 'categoria_uicn']] = (
+    df_filtrado[
+        ['categoria_amenaza', 'cites_apendice', 'categoria_uicn', 'categoria_por_genero']
+    ] = (
         df_filtrado['Nombre cientifico']
         .apply(lambda x: pd.Series(_lookup(x)))
     )
@@ -359,6 +387,7 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
             cat_uicn = sp_grp['categoria_uicn'].iloc[0]
             v        = float(sp_grp['valor_b'].iloc[0])
             en_veda  = bool(sp_grp['valor_b_veda'].iloc[0] > 0)
+            por_gen  = bool(sp_grp['categoria_por_genero'].iloc[0])
 
             def _clean(x):
                 return x if (x and str(x) not in ('nan', 'None')) else '—'
@@ -375,6 +404,10 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
                 # Marca si el valor_b fue determinado (o igualado) por veda
                 # regional — criterio propio Unergy, no del Manual 2026.
                 'valor_b_por_veda':  en_veda,
+                # Marca si la categoría MADS fue heredada del género (solo
+                # posible para nombres indeterminados en un género de la
+                # lista curada config.generos_alta_amenaza).
+                'categoria_por_genero': por_gen,
             })
 
         # ── Vedas ────────────────────────────────────────────────────────────
