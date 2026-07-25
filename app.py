@@ -22,6 +22,7 @@ from core.atc import (
 )
 from config import settings
 from config.ecosistemas_k import ECOSISTEMAS_K, k_por_ecosistema, DEFAULT_ECOSISTEMA
+from config.generos_alta_amenaza import es_genero_alta_amenaza
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CONFIG Y ESTILOS
@@ -484,6 +485,21 @@ with st.sidebar:
 # FUNCIÓN REUTILIZABLE — CONSULTA ESTADO DE AMENAZA
 # ════════════════════════════════════════════════════════════════════════
 
+# Orden de restricción MADS, usado únicamente para calcular la peor
+# categoría por género (ver mads_genero_idx en _cargar_indices_amenaza).
+_CAT_ORDER_APP = {'CR': 6, 'EN': 5, 'VU': 4, 'NT': 3, 'LC': 2, 'DD': 1, 'EW': 7, 'EX': 8}
+
+# Sufijos que marcan un nombre como indeterminado a nivel de especie
+# (idéntico al criterio usado en core/inventario.py::_es_indeterminado).
+_SP_SUFIJOS_APP = {'sp', 'sp.', 'spp', 'spp.', 'sp1', 'sp2', 'sp3'}
+
+
+def _es_indeterminado_app(nombre: str) -> bool:
+    """True si 'nombre' tiene forma 'Genero sp/spp' (indeterminado)."""
+    partes = nombre.strip().lower().split()
+    return len(partes) == 2 and partes[1] in _SP_SUFIJOS_APP
+
+
 @st.cache_data(show_spinner=False)
 def _cargar_indices_amenaza():
     """Carga y preprocesa los tres CSV de amenaza para búsqueda rápida."""
@@ -492,6 +508,23 @@ def _cargar_indices_amenaza():
     df_mads = pd.read_csv(os.path.join(BASE, "especies_amenazadas_co.csv"))
     df_mads["_key"] = df_mads["nombre cientifico"].str.strip().str.lower()
     mads_idx = df_mads.set_index("_key")
+
+    # Peor categoría MADS por género — solo se usa como fallback para
+    # nombres indeterminados ("Genero sp") cuyo género esté en la lista
+    # curada config.generos_alta_amenaza.GENEROS_ALTA_AMENAZA. Para
+    # cualquier otro género se mantiene "No aplica (NA)" (comportamiento
+    # histórico), sin importar lo que diga este índice.
+    mads_genero_idx = {}
+    for _, r in df_mads.iterrows():
+        nombre = str(r["nombre cientifico"]).strip().lower()
+        cat    = str(r.get("Categoría de amenaza", "")).strip()
+        if not nombre or not cat:
+            continue
+        gen = nombre.split()[0] if nombre.split() else ""
+        if not gen:
+            continue
+        if _CAT_ORDER_APP.get(cat, 0) > _CAT_ORDER_APP.get(mads_genero_idx.get(gen, "LC"), 0):
+            mads_genero_idx[gen] = cat
 
     df_cites = pd.read_csv(os.path.join(BASE, "Listado_CITES.csv"), on_bad_lines="skip")
     df_cites["_sci"] = (
@@ -504,7 +537,7 @@ def _cargar_indices_amenaza():
     df_iucn["_key"] = df_iucn["scientificName"].str.strip().str.lower()
     iucn_idx = df_iucn.set_index("_key")
 
-    return mads_idx, cites_idx, iucn_idx
+    return mads_idx, cites_idx, iucn_idx, mads_genero_idx
 
 
 _IUCN_ABBR = {
@@ -572,15 +605,27 @@ def _veda_hit(veda):
     return bool(veda["en_veda_nacional"]) or bool(veda["regionales"])
 
 
-def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx, car_filtro=""):
+def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx, car_filtro="",
+                           mads_genero_idx=None):
     key = nombre.strip().lower()
     mads_cat, mads_nombre_comun, mads_familia = "No aplica (NA)", "", ""
+    mads_por_genero = False
     if key in mads_idx.index:
         row = mads_idx.loc[key]
         if isinstance(row, pd.DataFrame): row = row.iloc[0]
         mads_cat = str(row.get("Categoría de amenaza", "")).strip() or "No aplica (NA)"
         mads_nombre_comun = str(row.get("Nombre común", "")).strip()
         mads_familia = str(row.get("Familia", "")).strip()
+    elif mads_genero_idx and _es_indeterminado_app(nombre):
+        # Nombre indeterminado ("Genero sp") sin match exacto: solo se
+        # infiere la categoría del género si este está en la lista
+        # curada de géneros de alta amenaza generalizada (ej. Quercus,
+        # Magnolia). Para el resto de géneros se mantiene "No aplica
+        # (NA)", igual que en la práctica histórica.
+        gen = key.split()[0] if key.split() else ""
+        if es_genero_alta_amenaza(gen) and gen in mads_genero_idx:
+            mads_cat        = mads_genero_idx[gen]
+            mads_por_genero = True
 
     cites_apendice = "No aplica (NA)"
     if key in cites_idx.index:
@@ -609,17 +654,21 @@ def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx, car_filtro=""):
         "nombre_comun": mads_nombre_comun,
         "familia": mads_familia,
         "veda": veda,
+        # True si "mads" fue inferido por fallback de género curado
+        # (config.generos_alta_amenaza), no por match exacto de especie.
+        "mads_por_genero": mads_por_genero,
     }
 
 
-def _badge_html(texto, fuente=None):
+def _badge_html(texto, fuente=None, nota=None):
     t = str(texto).strip()
     _cls_map = {"CR":"badge-CR","EN":"badge-EN","VU":"badge-VU","NT":"badge-NT","LC":"badge-LC"}
     if t in _cls_map: cls = _cls_map[t]
     elif "Apéndice" in t: cls = "badge-CITES"
     else: cls = "badge-NL"
     label = f"<span class='sp-source-label'>{fuente}: </span>" if fuente else ""
-    return f"{label}<span class='{cls}'>{t}</span>"
+    nota_html = f"<span class='sp-source-label'> {nota}</span>" if nota else ""
+    return f"{label}<span class='{cls}'>{t}</span>{nota_html}"
 
 
 def _veda_linea_html(veda):
@@ -741,7 +790,9 @@ def _tabla_consulta_html(resultados, mostrar_mads, mostrar_cites, mostrar_iucn,
         cells = [
             f"<td class='sp-table-sci'>{r['nombre']}</td>",
         ]
-        if mostrar_mads:  cells.append(f"<td>{_badge_html(r['mads'])}</td>")
+        if mostrar_mads:
+            nota_mads = "🧬 género" if r.get("mads_por_genero") else None
+            cells.append(f"<td>{_badge_html(r['mads'], nota=nota_mads)}</td>")
         if mostrar_cites: cells.append(f"<td>{_badge_html(r['cites'])}</td>")
         if mostrar_iucn:  cells.append(f"<td>{_badge_html(r['iucn'])}</td>")
         if mostrar_veda:  cells.append(f"<td>{_veda_celda_html(r['veda'])}</td>")
@@ -817,9 +868,12 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                 f"Consultando {len(nombres)} especies en fuentes de amenaza y en las 31 CAR..."
             )
             with st.spinner(spinner_txt):
-                mads_idx, cites_idx, iucn_idx = _cargar_indices_amenaza()
+                mads_idx, cites_idx, iucn_idx, mads_genero_idx = _cargar_indices_amenaza()
                 resultados = [
-                    _consultar_amenaza_sp(n, mads_idx, cites_idx, iucn_idx, car_filtro=car_filtro_sel)
+                    _consultar_amenaza_sp(
+                        n, mads_idx, cites_idx, iucn_idx,
+                        car_filtro=car_filtro_sel, mads_genero_idx=mads_genero_idx,
+                    )
                     for n in nombres
                 ]
                 resultados.sort(key=lambda r: r["nombre"].lower())
@@ -864,6 +918,15 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                     car_filtro=car_filtro_sel,
                 )
                 st.markdown(tabla_html, unsafe_allow_html=True)
+                if any(r.get("mads_por_genero") for r in resultados):
+                    st.caption(
+                        "🧬 género: la categoría MADS se infirió a partir de la peor "
+                        "categoría conocida del género (nombre indeterminado, ej. "
+                        "'Quercus sp'), porque ese género está en la lista curada de "
+                        "géneros de alta amenaza generalizada "
+                        "(config/generos_alta_amenaza.py). Para el resto de géneros "
+                        "indeterminados se mantiene 'No aplica (NA)'."
+                    )
 
                 st.markdown("---")
                 with st.expander("📋 Ver tabla completa / exportar"):
@@ -885,6 +948,7 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                             "Nombre común":      r["nombre_comun"],
                             "Familia":           r["familia"],
                             "MADS (Res. 0126/2024)": _estado_con_abrev_excel(r["mads"]),
+                            "MADS inferido por género": "Sí" if r.get("mads_por_genero") else "No",
                             "CITES":             _estado_con_abrev_excel(r["cites"]),
                             "IUCN":              _estado_con_abrev_excel(r["iucn"]),
                             "Veda nacional":     veda_nac_str,
@@ -1399,9 +1463,12 @@ with tab2:
                 f"📋 Resumen de especies y estado de amenaza ({len(todas_especies_proyecto)} spp.)",
                 expanded=True
             ):
-                mads_idx, cites_idx, iucn_idx = _cargar_indices_amenaza()
+                mads_idx, cites_idx, iucn_idx, mads_genero_idx = _cargar_indices_amenaza()
                 resultados_resumen = [
-                    _consultar_amenaza_sp(sp, mads_idx, cites_idx, iucn_idx, car_filtro=car_proyecto)
+                    _consultar_amenaza_sp(
+                        sp, mads_idx, cites_idx, iucn_idx,
+                        car_filtro=car_proyecto, mads_genero_idx=mads_genero_idx,
+                    )
                     for sp in todas_especies_proyecto
                 ]
                 st.markdown(
@@ -1449,6 +1516,11 @@ with tab2:
                         ap     = sp.get('cites_apendice',  '—')
                         cat    = sp.get('categoria_amenaza','—')
                         cat_ui = sp.get('cat_uicn',        '—')
+                        origen = []
+                        if sp.get('categoria_por_genero'):
+                            origen.append('🧬 género')
+                        if sp.get('valor_b_por_veda'):
+                            origen.append('🚫 veda')
                         rows_b.append({
                             'Nombre científico': sp.get('nombre_cientifico',''),
                             'Cat. Res.0126':     cat,
@@ -1457,11 +1529,18 @@ with tab2:
                             'Valor B (máximo)':  v,
                             'N ind.':            n_sp,
                             'Aporte a B':        sp.get('aporte_b', round(v*n_sp/N,4) if N else 0),
+                            'Origen':            ' + '.join(origen) if origen else '—',
                         })
                     st.dataframe(
                         pd.DataFrame(rows_b),
                         use_container_width=True, hide_index=True
                     )
+                    if any(sp.get('categoria_por_genero') for sp in spp_cob):
+                        st.caption(
+                            "🧬 género: categoría MADS inferida por fallback de género "
+                            "curado (nombre indeterminado en un género de "
+                            "config/generos_alta_amenaza.py)."
+                        )
                     st.markdown("---")
 
         # ── Desglose criterio A ──────────────────────────────────────────
@@ -1965,6 +2044,8 @@ with tab5:
                         "Valor B (máximo)": sp.get("valor_b", 0),
                         "N individuos":     sp.get("n_individuos", 0),
                         "Aporte a B":       sp.get("aporte_b", 0),
+                        "Cat. inferida por género": "Sí" if sp.get("categoria_por_genero") else "No",
+                        "Valor B por veda regional": "Sí" if sp.get("valor_b_por_veda") else "No",
                     })
             if rows_sp:
                 pd.DataFrame(rows_sp).to_excel(
