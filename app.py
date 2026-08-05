@@ -489,15 +489,13 @@ with st.sidebar:
 # categoría por género (ver mads_genero_idx en _cargar_indices_amenaza).
 _CAT_ORDER_APP = {'CR': 6, 'EN': 5, 'VU': 4, 'NT': 3, 'LC': 2, 'DD': 1, 'EW': 7, 'EX': 8}
 
-# Sufijos que marcan un nombre como indeterminado a nivel de especie
-# (idéntico al criterio usado en core/inventario.py::_es_indeterminado).
-_SP_SUFIJOS_APP = {'sp', 'sp.', 'spp', 'spp.', 'sp1', 'sp2', 'sp3'}
-
-
-def _es_indeterminado_app(nombre: str) -> bool:
-    """True si 'nombre' tiene forma 'Genero sp/spp' (indeterminado)."""
-    partes = nombre.strip().lower().split()
-    return len(partes) == 2 and partes[1] in _SP_SUFIJOS_APP
+# Normalización de nombres: MISMA función que usa core/inventario.py
+# (config/nombres.py). Antes esta pestaña normalizaba solo con
+# nombre.strip().lower(), sin quitar tildes ni colapsar espacios
+# internos dobles/"invisibles" (\xa0 de Excel/Word), lo que producía
+# falsos "No aplica (NA)" para especies que SÍ estaban en los CSV
+# (ej. Bowdichia virgilioides → Least Concern en Listado_UICN.csv).
+from config.nombres import norm_especie as _norm_app, es_indeterminado as _es_indeterminado_app
 
 
 @st.cache_data(show_spinner=False)
@@ -506,7 +504,7 @@ def _cargar_indices_amenaza():
     BASE = os.path.join(os.path.dirname(__file__), "config")
 
     df_mads = pd.read_csv(os.path.join(BASE, "especies_amenazadas_co.csv"))
-    df_mads["_key"] = df_mads["nombre cientifico"].str.strip().str.lower()
+    df_mads["_key"] = df_mads["nombre cientifico"].apply(_norm_app)
     mads_idx = df_mads.set_index("_key")
 
     # Peor categoría MADS por género — solo se usa como fallback para
@@ -516,7 +514,7 @@ def _cargar_indices_amenaza():
     # histórico), sin importar lo que diga este índice.
     mads_genero_idx = {}
     for _, r in df_mads.iterrows():
-        nombre = str(r["nombre cientifico"]).strip().lower()
+        nombre = _norm_app(r["nombre cientifico"])
         cat    = str(r.get("Categoría de amenaza", "")).strip()
         if not nombre or not cat:
             continue
@@ -528,13 +526,13 @@ def _cargar_indices_amenaza():
 
     df_cites = pd.read_csv(os.path.join(BASE, "Listado_CITES.csv"), on_bad_lines="skip")
     df_cites["_sci"] = (
-        df_cites["Genus"].fillna("").str.strip() + " " +
-        df_cites["Species"].fillna("").str.strip()
-    ).str.strip().str.lower()
+        df_cites["Genus"].fillna("").apply(_norm_app) + " " +
+        df_cites["Species"].fillna("").apply(_norm_app)
+    ).apply(_norm_app)
     cites_idx = df_cites[df_cites["Species"].notna()].set_index("_sci")
 
     df_iucn = pd.read_csv(os.path.join(BASE, "Listado_UICN.csv"))
-    df_iucn["_key"] = df_iucn["scientificName"].str.strip().str.lower()
+    df_iucn["_key"] = df_iucn["scientificName"].apply(_norm_app)
     iucn_idx = df_iucn.set_index("_key")
 
     return mads_idx, cites_idx, iucn_idx, mads_genero_idx
@@ -607,7 +605,7 @@ def _veda_hit(veda):
 
 def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx, car_filtro="",
                            mads_genero_idx=None):
-    key = nombre.strip().lower()
+    key = _norm_app(nombre)
     mads_cat, mads_nombre_comun, mads_familia = "No aplica (NA)", "", ""
     mads_por_genero = False
     if key in mads_idx.index:
@@ -616,7 +614,7 @@ def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx, car_filtro="",
         mads_cat = str(row.get("Categoría de amenaza", "")).strip() or "No aplica (NA)"
         mads_nombre_comun = str(row.get("Nombre común", "")).strip()
         mads_familia = str(row.get("Familia", "")).strip()
-    elif mads_genero_idx and _es_indeterminado_app(nombre):
+    elif mads_genero_idx and _es_indeterminado_app(key):
         # Nombre indeterminado ("Genero sp") sin match exacto: solo se
         # infiere la categoría del género si este está en la lista
         # curada de géneros de alta amenaza generalizada (ej. Quercus,
