@@ -31,7 +31,6 @@ Matching de especies:
 
 import os
 import csv
-import unicodedata
 import pandas as pd
 import numpy as np
 from collections import defaultdict
@@ -39,23 +38,7 @@ from . import utils
 from config import settings
 from config.vedas import consultar_veda
 from config.generos_alta_amenaza import es_genero_alta_amenaza
-
-
-def _norm(s):
-    """Normaliza string: sin tildes, minúsculas, sin espacios extra."""
-    s = str(s)
-    s = ''.join(c for c in unicodedata.normalize('NFD', s)
-                if unicodedata.category(c) != 'Mn')
-    return s.lower().strip()
-
-
-_SP_SUFIJOS = {'sp', 'sp.', 'spp', 'spp.', 'sp1', 'sp2', 'sp3'}
-
-
-def _es_indeterminado(nombre_norm: str) -> bool:
-    """True si el nombre es género + sufijo sp/spp (indeterminado)."""
-    partes = nombre_norm.strip().split()
-    return len(partes) == 2 and partes[1].lower() in _SP_SUFIJOS
+from config.nombres import norm_especie as _norm, es_indeterminado as _es_indeterminado
 
 
 # ── Mapa de categorías UICN (texto completo → código) ────────────────────────
