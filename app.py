@@ -496,6 +496,11 @@ _CAT_ORDER_APP = {'CR': 6, 'EN': 5, 'VU': 4, 'NT': 3, 'LC': 2, 'DD': 1, 'EW': 7,
 # falsos "No aplica (NA)" para especies que SÍ estaban en los CSV
 # (ej. Bowdichia virgilioides → Least Concern en Listado_UICN.csv).
 from config.nombres import norm_especie as _norm_app, es_indeterminado as _es_indeterminado_app
+from config.generos_cites_excluidos import genero_cites_aplica_colombia
+
+# Orden de restricción CITES (para elegir el apéndice más restrictivo
+# ante listados dobles tipo "I/II"). Idéntico a core/inventario.py::_CITES_ORD.
+_CITES_ORD_APP = {'I': 0, 'II': 1, 'III': 2}
 
 
 @st.cache_data(show_spinner=False)
@@ -531,11 +536,32 @@ def _cargar_indices_amenaza():
     ).apply(_norm_app)
     cites_idx = df_cites[df_cites["Species"].notna()].set_index("_sci")
 
+    # Fallback de género CITES — idéntico al de core/inventario.py:
+    # un listado CITES a rango GENUS es una decisión regulatoria real
+    # de la Convención (no una inferencia estadística), así que se
+    # hereda siempre... EXCEPTO cuando la anotación del género
+    # restringe el apéndice a una región que no cubre Colombia (ver
+    # config/generos_cites_excluidos.py, ej. Diospyros → solo
+    # "Populations of Madagascar").
+    cites_genero_idx = {}
+    for _, r in df_cites[df_cites["RankName"].astype(str).str.upper() == "GENUS"].iterrows():
+        genero = _norm_app(r.get("Genus", ""))
+        if not genero or not genero_cites_aplica_colombia(genero):
+            continue
+        listing = str(r.get("CurrentListing", "")).strip()
+        partes = [p.strip() for p in listing.replace("NC", "").split("/")
+                  if p.strip() in _CITES_ORD_APP]
+        if not partes:
+            continue
+        ap = sorted(partes, key=lambda x: _CITES_ORD_APP[x])[0]
+        if genero not in cites_genero_idx or _CITES_ORD_APP[ap] < _CITES_ORD_APP[cites_genero_idx[genero]]:
+            cites_genero_idx[genero] = ap
+
     df_iucn = pd.read_csv(os.path.join(BASE, "Listado_UICN.csv"))
     df_iucn["_key"] = df_iucn["scientificName"].apply(_norm_app)
     iucn_idx = df_iucn.set_index("_key")
 
-    return mads_idx, cites_idx, iucn_idx, mads_genero_idx
+    return mads_idx, cites_idx, iucn_idx, mads_genero_idx, cites_genero_idx
 
 
 _IUCN_ABBR = {
@@ -604,7 +630,7 @@ def _veda_hit(veda):
 
 
 def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx, car_filtro="",
-                           mads_genero_idx=None):
+                           mads_genero_idx=None, cites_genero_idx=None):
     key = _norm_app(nombre)
     mads_cat, mads_nombre_comun, mads_familia = "No aplica (NA)", "", ""
     mads_por_genero = False
@@ -631,6 +657,17 @@ def _consultar_amenaza_sp(nombre, mads_idx, cites_idx, iucn_idx, car_filtro="",
         if isinstance(row, pd.DataFrame): row = row.iloc[0]
         ap = str(row.get("CurrentListing", "")).strip()
         cites_apendice = f"Apéndice {ap}" if ap else "No aplica (NA)"
+    elif cites_genero_idx:
+        # Fallback de género CITES: a diferencia de MADS, un listado a
+        # rango GENUS es una decisión regulatoria real de la Convención
+        # y aplica a toda especie de ese género — salvo que la
+        # anotación del género restrinja el apéndice a una región que
+        # no cubre Colombia (ya filtrado al construir cites_genero_idx,
+        # ver config/generos_cites_excluidos.py).
+        gen = key.split()[0] if key.split() else ""
+        if gen in cites_genero_idx:
+            cites_apendice = f"Apéndice {cites_genero_idx[gen]}"
+
 
     iucn_cat = "No aplica (NA)"
     if key in iucn_idx.index:
@@ -866,11 +903,12 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                 f"Consultando {len(nombres)} especies en fuentes de amenaza y en las 31 CAR..."
             )
             with st.spinner(spinner_txt):
-                mads_idx, cites_idx, iucn_idx, mads_genero_idx = _cargar_indices_amenaza()
+                mads_idx, cites_idx, iucn_idx, mads_genero_idx, cites_genero_idx = _cargar_indices_amenaza()
                 resultados = [
                     _consultar_amenaza_sp(
                         n, mads_idx, cites_idx, iucn_idx,
                         car_filtro=car_filtro_sel, mads_genero_idx=mads_genero_idx,
+                        cites_genero_idx=cites_genero_idx,
                     )
                     for n in nombres
                 ]
@@ -1461,11 +1499,12 @@ with tab2:
                 f"📋 Resumen de especies y estado de amenaza ({len(todas_especies_proyecto)} spp.)",
                 expanded=True
             ):
-                mads_idx, cites_idx, iucn_idx, mads_genero_idx = _cargar_indices_amenaza()
+                mads_idx, cites_idx, iucn_idx, mads_genero_idx, cites_genero_idx = _cargar_indices_amenaza()
                 resultados_resumen = [
                     _consultar_amenaza_sp(
                         sp, mads_idx, cites_idx, iucn_idx,
                         car_filtro=car_proyecto, mads_genero_idx=mads_genero_idx,
+                        cites_genero_idx=cites_genero_idx,
                     )
                     for sp in todas_especies_proyecto
                 ]
