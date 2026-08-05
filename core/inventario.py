@@ -38,6 +38,7 @@ from . import utils
 from config import settings
 from config.vedas import consultar_veda
 from config.generos_alta_amenaza import es_genero_alta_amenaza
+from config.generos_cites_excluidos import genero_cites_aplica_colombia
 from config.nombres import norm_especie as _norm, es_indeterminado as _es_indeterminado
 
 
@@ -127,6 +128,13 @@ def _cargar_indices(car: str = ""):
                     if nombre not in cites_exact or _CITES_ORD[ap] < _CITES_ORD[cites_exact[nombre]]:
                         cites_exact[nombre] = ap
                 elif rank == 'GENUS' and genus:
+                    # No registrar el fallback de género si la anotación
+                    # CITES de ese género restringe el apéndice a una
+                    # región que no cubre Colombia (ver
+                    # config/generos_cites_excluidos.py — ej. Diospyros
+                    # solo cubre "Populations of Madagascar").
+                    if not genero_cites_aplica_colombia(genus):
+                        continue
                     if genus not in cites_genero or _CITES_ORD[ap] < _CITES_ORD[cites_genero[genus]]:
                         cites_genero[genus] = ap
     except Exception as e:
