@@ -726,10 +726,10 @@ def _badge_html(texto, fuente=None, nota=None):
 
 
 _GRUPO_SUCESIONAL_ABREV = {
-    "Pionera":            ("P",  "badge-gs-P"),
-    "Secundaria":         ("S",  "badge-gs-S"),
-    "Secundaria tardía":  ("ST", "badge-gs-ST"),
-    "Tardía":             ("T",  "badge-gs-T"),
+    "Pionera":            ("Pionera",    "badge-gs-P"),
+    "Secundaria":         ("Secundaria", "badge-gs-S"),
+    "Secundaria tardía":  ("ST",         "badge-gs-ST"),
+    "Tardía":             ("Tardía",     "badge-gs-T"),
 }
 
 
@@ -878,11 +878,10 @@ def _tabla_especies_zona_vida_html(df):
     """Tabla HTML para el catálogo de especies por zona de vida (Tab 7),
     con el mismo estilo de pills que _tabla_consulta_html (MADS/CITES/IUCN)."""
     incluir_zona = df["Zona de vida"].nunique() > 1
-    incluir_obs  = (df["Observaciones"].astype(str).str.strip() != "").any()
 
     headers = (["Zona de vida"] if incluir_zona else []) + [
         "Nombre científico", "Nombre común", "Tipo de crecimiento", "Amenaza"
-    ] + (["Observaciones"] if incluir_obs else [])
+    ]
 
     thead = "<tr>" + "".join(f"<th>{h}</th>" for h in headers) + "</tr>"
 
@@ -895,9 +894,6 @@ def _tabla_especies_zona_vida_html(df):
         cells.append(f"<td>{r['Nombre común']}</td>")
         cells.append(f"<td>{_badge_grupo_html(r['Grupo sucesional'])}</td>")
         cells.append(f"<td>{_badge_html(r['Amenaza (IUCN/Nacional)'])}</td>")
-        if incluir_obs:
-            obs = str(r["Observaciones"]).strip()
-            cells.append(f"<td class='sp-source-label'>{obs}</td>" if obs else "<td></td>")
         rows_html.append("<tr>" + "".join(cells) + "</tr>")
 
     return (
@@ -2302,15 +2298,13 @@ with tab7:
 
         st.markdown(_tabla_especies_zona_vida_html(df_zv_show), unsafe_allow_html=True)
         st.caption(
-            "**Tipo de crecimiento:** P = Pionera · S = Secundaria · "
-            "ST = Secundaria tardía · T = Tardía (climax). Pasa el cursor "
-            "sobre la sigla para ver el nombre completo."
+            "**Tipo de crecimiento:** ST = Secundaria tardía. "
+            "Pasa el cursor sobre la sigla para ver el nombre completo."
         )
 
         st.caption(
             "Catálogo curado a partir de listados regionales (Caribe, Boyacá, "
             "Cundinamarca) y verificado contra IUCN, Catálogo de Plantas de "
             "Colombia y el Libro Rojo de Especies Maderables (Cárdenas & "
-            "Salinas, 2007). La columna 'Observaciones' documenta correcciones "
-            "o inconsistencias detectadas en la fuente original."
+            "Salinas, 2007)."
         )
