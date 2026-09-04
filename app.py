@@ -570,19 +570,49 @@ def _cargar_indices_amenaza():
     return mads_idx, cites_idx, iucn_idx, mads_genero_idx, cites_genero_idx
 
 
+_SEVERIDAD_AMENAZA = {"CR": 5, "EN": 4, "VU": 3, "NT": 2, "LC": 1, "DD": 0.5, "No aplica (NA)": 0}
+
+
 @st.cache_data(show_spinner=False)
 def _cargar_especies_por_zona_vida():
     """Catálogo de especies nativas recomendadas por zona de vida (Holdridge),
-    usado como anexo de referencia en el Excel de resultados (Tab 5).
-    Curado a partir de listados por región (Caribe, Boyacá, Cundinamarca),
-    verificado contra IUCN, Catálogo de Plantas de Colombia y el Libro Rojo
-    de Especies Maderables (Cárdenas & Salinas, 2007)."""
+    usado en la pestaña 'Especies Zona de Vida' y como anexo del Excel de
+    resultados (Tab 5). Zona de vida / nombre común / familia / grupo
+    sucesional vienen de config/especies_por_zona_vida.csv (curado a partir
+    de listados regionales de Caribe, Boyacá y Cundinamarca).
+
+    La columna 'Amenaza (IUCN/Nacional)' NO se toma de ese csv — se calcula
+    en vivo cruzando cada especie contra las mismas dos fuentes que usa la
+    pestaña 'Consulta y Vedas' (config/especies_amenazadas_co.csv = MADS
+    Res. nacional, y config/Listado_UICN.csv), tomando la categoría más
+    severa entre las dos. Así evita que quede pegado un valor de amenaza
+    que no coincide con lo que el resto de la app reporta para esa misma
+    especie."""
     BASE = os.path.join(os.path.dirname(__file__), "config")
     path = os.path.join(BASE, "especies_por_zona_vida.csv")
     if not os.path.exists(path):
         return pd.DataFrame()
-    df = pd.read_csv(path)
-    return df.fillna("")  # evita que celdas vacías (Observaciones) salgan como "None"/"NaN"
+    df = pd.read_csv(path).fillna("")
+
+    mads_idx, _cites_idx, iucn_idx, _mg, _cg = _cargar_indices_amenaza()
+
+    def _amenaza_repo(nombre_cientifico):
+        key = _norm_app(nombre_cientifico)
+        mads_cat = "No aplica (NA)"
+        if key in mads_idx.index:
+            row = mads_idx.loc[key]
+            if isinstance(row, pd.DataFrame): row = row.iloc[0]
+            mads_cat = str(row.get("Categoría de amenaza", "")).strip() or "No aplica (NA)"
+        iucn_cat = "No aplica (NA)"
+        if key in iucn_idx.index:
+            row = iucn_idx.loc[key]
+            if isinstance(row, pd.DataFrame): row = row.iloc[0]
+            full = str(row.get("redlistCategory", "")).strip()
+            iucn_cat = _IUCN_ABBR.get(full, full) or "No aplica (NA)"
+        return max([mads_cat, iucn_cat], key=lambda c: _SEVERIDAD_AMENAZA.get(c, 0))
+
+    df["Amenaza (IUCN/Nacional)"] = df["Nombre científico"].apply(_amenaza_repo)
+    return df  # celdas vacías ya vinieron limpiadas por el fillna("") de arriba
 
 
 _IUCN_ABBR = {
@@ -2051,6 +2081,17 @@ ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
 with tab5:
     _section("Descarga de Resultados", "📥")
 
+    def _aplicar_estilo_encabezado(ws):
+        """Encabezado en negrilla sobre fondo gris, para todas las hojas del
+        Excel de resultados (mismo tratamiento visual en todo el archivo)."""
+        fill_gris = PatternFill("solid", fgColor="D9D9D9")
+        for c in range(1, ws.max_column + 1):
+            cell = ws.cell(row=1, column=c)
+            cell.font = Font(bold=True)
+            cell.fill = fill_gris
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        ws.freeze_panes = "A2"
+
     def _build_excel(ctx, fcafu_por_cobertura,
                      atc_resultados,
                      TASA_BAU, tasa_bau_szh, tasa_bau_zh,
@@ -2077,6 +2118,7 @@ with tab5:
                     round(tasa_bau_zh*100, 4),
                 ]
             }).to_excel(writer, sheet_name="Resumen", index=False)
+            _aplicar_estilo_encabezado(writer.sheets["Resumen"])
 
             # Hoja 2 – FCAFU
             rows_f = []
@@ -2092,6 +2134,7 @@ with tab5:
                     "AB total (m²)":    round(d.get("area_basal_total",0), 4),
                 })
             pd.DataFrame(rows_f).to_excel(writer, sheet_name="FCAFU", index=False)
+            _aplicar_estilo_encabezado(writer.sheets["FCAFU"])
 
             # Hoja 3 – ATC
             rows_a = []
@@ -2102,6 +2145,7 @@ with tab5:
                     "ATC (ha)": round(data["atc_total"], 4),
                 })
             pd.DataFrame(rows_a).to_excel(writer, sheet_name="ATC_por_Rango", index=False)
+            _aplicar_estilo_encabezado(writer.sheets["ATC_por_Rango"])
 
             # Hoja 4 – Adicionalidad Conservar
             rows_c = []
@@ -2122,6 +2166,7 @@ with tab5:
                     )
                 rows_c.append(fila)
             pd.DataFrame(rows_c).to_excel(writer, sheet_name="Adicionalidad_Conservar", index=False)
+            _aplicar_estilo_encabezado(writer.sheets["Adicionalidad_Conservar"])
 
             # Hoja 5 – Adicionalidad Restaurar
             rows_r = []
@@ -2134,8 +2179,36 @@ with tab5:
                     )
                 rows_r.append(fila)
             pd.DataFrame(rows_r).to_excel(writer, sheet_name="Adicionalidad_Restaurar", index=False)
+            _aplicar_estilo_encabezado(writer.sheets["Adicionalidad_Restaurar"])
 
-            # Hoja 6 – Comparación por ha
+            # Hoja 6 – Resumen por jerarquía (Rango): ATC + Adicionalidad de
+            # preservar y restaurar juntas en una sola tabla, tal como se
+            # pidió — antes esta misma información estaba repartida entre
+            # las hojas ATC_por_Rango / Adicionalidad_Conservar / _Restaurar.
+            # NOTA: no incluye "TPACB (%)" — falta confirmar con Miguel a
+            # qué corresponde esa columna (no existe en el cálculo actual
+            # del app; ver mensaje de chat).
+            rows_res = []
+            for rid, data in atc_resultados.items():
+                atc_total  = data["atc_total"]
+                tasa_rango = TASA_POR_NIVEL.get(rid, TASA_BAU)
+                rows_res.append({
+                    "Rango": rid,
+                    "ATC (ha)": round(atc_total, 4),
+                    "Adicionalidad por preservar (ha/año)": round(
+                        adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 6
+                    ),
+                    "Adicionalidad por preservar a 3 años (ha)": round(
+                        adicionalidad_conservar(atc_total, 3, tasa_rango, F_CONSERVAR), 6
+                    ),
+                    "Adicionalidad por restaurar a 3 años (ha)": round(
+                        adicionalidad_restaurar(atc_total, 3, K_RESTAURAR, F_RESTAURAR), 6
+                    ),
+                })
+            pd.DataFrame(rows_res).to_excel(writer, sheet_name="Resumen_por_Jerarquia", index=False)
+            _aplicar_estilo_encabezado(writer.sheets["Resumen_por_Jerarquia"])
+
+            # Hoja 7 – Comparación por ha
             rows_cp = []
             for n in HORIZONTES:
                 cons_ha = adicionalidad_conservar(1.0, n, TASA_BAU, F_CONSERVAR)
@@ -2147,8 +2220,9 @@ with tab5:
                     "Ratio Rest/Cons":   round(rest_ha/cons_ha, 2) if cons_ha > 0 else None,
                 })
             pd.DataFrame(rows_cp).to_excel(writer, sheet_name="Comparacion_por_ha", index=False)
+            _aplicar_estilo_encabezado(writer.sheets["Comparacion_por_ha"])
 
-            # Hoja 7 – Especies amenazadas + CITES
+            # Hoja 8 – Especies amenazadas + CITES
             rows_sp = []
             for cob, d in fcafu_por_cobertura.items():
                 for sp in d.get("amenazadas", []):
@@ -2168,8 +2242,9 @@ with tab5:
                 pd.DataFrame(rows_sp).to_excel(
                     writer, sheet_name="Especies_Amenazadas", index=False
                 )
+                _aplicar_estilo_encabezado(writer.sheets["Especies_Amenazadas"])
 
-            # Hoja 8 – Especies recomendadas por zona de vida del área de
+            # Hoja 9 – Especies recomendadas por zona de vida del área de
             # impacto (filtrado por el menú de Tab 7 — ver session_state).
             # Si no hay zona elegida, se exporta el catálogo completo como
             # fallback, igual que se muestra en pantalla.
@@ -2185,6 +2260,7 @@ with tab5:
                     df_zv_export = df_zv
                     hoja_zv = "Especies_Todas_Zonas_Vida"
                 df_zv_export.to_excel(writer, sheet_name=hoja_zv, index=False)
+                _aplicar_estilo_encabezado(writer.sheets[hoja_zv])
 
         buf.seek(0)
         return buf.getvalue()
