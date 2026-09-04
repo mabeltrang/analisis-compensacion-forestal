@@ -1319,16 +1319,50 @@ F_RESTAURAR = 0.75
 HORIZONTES  = [3, 5, 10, 15]
 TASA_BAU    = tasa_bau
 
+# ── Selector de Zona de Vida (Holdridge) para especies de compensación ────
+# Reutiliza el mismo bioma_principal ya calculado arriba, más la elevación
+# media (SRTM) del polígono de impacto, para sugerir de qué fila de
+# config/especies_por_zona_vida.csv sacar las especies recomendadas.
+from config.zonas_vida import detectar_zona_vida, ZONAS_VIDA
+
+_elev_ctx = ctx.get('elevacion_media_m')
+_zv_auto, _zv_motivo = detectar_zona_vida(_bioma_ctx, _elev_ctx)
+
+with st.sidebar:
+    st.markdown("---")
+    st.caption("🌱 Zona de vida (especies de compensación)")
+
+    _opciones_zv = [None] + list(ZONAS_VIDA.keys())
+    zona_vida_sel = st.selectbox(
+        "Zona de vida (opcional)",
+        options=_opciones_zv,
+        format_func=lambda c: "— sin filtrar —" if c is None else c,
+        index=0,
+    )
+
+    if zona_vida_sel:
+        st.caption(f"{zona_vida_sel} — {ZONAS_VIDA[zona_vida_sel]}")
+
+    if _zv_auto and _zv_auto != zona_vida_sel:
+        st.caption(f"💡 Sugerencia automática: **{_zv_auto}** — {ZONAS_VIDA[_zv_auto]}")
+        st.caption(_zv_motivo)
+    elif not _zv_auto:
+        st.caption(f"ℹ️ {_zv_motivo}")
+
+    if _elev_ctx is not None:
+        st.caption(f"Elevación media del polígono: {_elev_ctx:.0f} m (SRTM)")
+
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS PRINCIPALES
 # ══════════════════════════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📍 Contexto",
     "🌳 FCAFU",
     "📐 ATC",
     "🌱 Adicionalidad",
     "📥 Exportar",
     "🔍 Consulta y Vedas",
+    "🌳 Especies Zona de Vida",
 ])
 
 
@@ -2103,12 +2137,21 @@ with tab5:
                     writer, sheet_name="Especies_Amenazadas", index=False
                 )
 
-            # Hoja 8 – Especies recomendadas por zona de vida (anexo de referencia)
+            # Hoja 8 – Especies recomendadas por zona de vida del área de
+            # impacto (filtrado por zona_vida_sel — ver Tab 7 y la barra
+            # lateral). Si no hay zona confirmada, se exporta el catálogo
+            # completo como fallback, igual que se muestra en pantalla.
             df_zv = _cargar_especies_por_zona_vida()
             if not df_zv.empty:
-                df_zv.to_excel(
-                    writer, sheet_name="Especies_por_Zona_de_Vida", index=False
-                )
+                if zona_vida_sel:
+                    df_zv_export = df_zv[
+                        df_zv["Zona de vida"] == ZONAS_VIDA[zona_vida_sel]
+                    ]
+                    hoja_zv = "Especies_Zona_de_Vida"
+                else:
+                    df_zv_export = df_zv
+                    hoja_zv = "Especies_Todas_Zonas_Vida"
+                df_zv_export.to_excel(writer, sheet_name=hoja_zv, index=False)
 
         buf.seek(0)
         return buf.getvalue()
@@ -2168,3 +2211,49 @@ with tab5:
 # ════════════════════════════════════════════════════════════════════════
 with tab6:
     _render_tab_consulta_vedas(key_suffix="_tab6", todas_vedas=todas_vedas, car_proyecto=car_proyecto)
+
+
+# ════════════════════════════════════════════════════════════════════════
+# TAB 7 — ESPECIES RECOMENDADAS POR ZONA DE VIDA
+# ════════════════════════════════════════════════════════════════════════
+with tab7:
+    _section("Especies Nativas por Zona de Vida", "🌳")
+
+    df_zv_full = _cargar_especies_por_zona_vida()
+
+    if df_zv_full.empty:
+        st.warning("No se encontró config/especies_por_zona_vida.csv.")
+    else:
+        if zona_vida_sel:
+            st.info(
+                f"Mostrando especies para **{zona_vida_sel} — {ZONAS_VIDA[zona_vida_sel]}** "
+                f"(seleccionada en la barra lateral). Esta es también la tabla que se "
+                f"incluirá en el Excel descargable (pestaña Exportar)."
+            )
+            df_zv_show = df_zv_full[df_zv_full["Zona de vida"] == ZONAS_VIDA[zona_vida_sel]]
+        else:
+            st.info(
+                "No has seleccionado una zona de vida en la barra lateral (es opcional) "
+                "— se muestran **todas**. Elige una para filtrar la tabla y el Excel descargable."
+            )
+            df_zv_show = df_zv_full
+
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            _metric_card("Especies listadas", str(len(df_zv_show)))
+        with c2:
+            _n_amenazadas = df_zv_show["Amenaza (IUCN/Nacional)"].isin(["VU", "EN", "CR"]).sum()
+            _metric_card("Con categoría de amenaza", str(_n_amenazadas))
+        with c3:
+            _n_pioneras = (df_zv_show["Grupo sucesional"] == "Pionera").sum()
+            _metric_card("Pioneras", str(_n_pioneras))
+
+        st.dataframe(df_zv_show, use_container_width=True, hide_index=True)
+
+        st.caption(
+            "Catálogo curado a partir de listados regionales (Caribe, Boyacá, "
+            "Cundinamarca) y verificado contra IUCN, Catálogo de Plantas de "
+            "Colombia y el Libro Rojo de Especies Maderables (Cárdenas & "
+            "Salinas, 2007). La columna 'Observaciones' documenta correcciones "
+            "o inconsistencias detectadas en la fuente original."
+        )
