@@ -564,6 +564,20 @@ def _cargar_indices_amenaza():
     return mads_idx, cites_idx, iucn_idx, mads_genero_idx, cites_genero_idx
 
 
+@st.cache_data(show_spinner=False)
+def _cargar_especies_por_zona_vida():
+    """Catálogo de especies nativas recomendadas por zona de vida (Holdridge),
+    usado como anexo de referencia en el Excel de resultados (Tab 5).
+    Curado a partir de listados por región (Caribe, Boyacá, Cundinamarca),
+    verificado contra IUCN, Catálogo de Plantas de Colombia y el Libro Rojo
+    de Especies Maderables (Cárdenas & Salinas, 2007)."""
+    BASE = os.path.join(os.path.dirname(__file__), "config")
+    path = os.path.join(BASE, "especies_por_zona_vida.csv")
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    return pd.read_csv(path)
+
+
 _IUCN_ABBR = {
     "Critically Endangered": "CR",
     "Endangered": "EN",
@@ -2087,6 +2101,13 @@ with tab5:
             if rows_sp:
                 pd.DataFrame(rows_sp).to_excel(
                     writer, sheet_name="Especies_Amenazadas", index=False
+                )
+
+            # Hoja 8 – Especies recomendadas por zona de vida (anexo de referencia)
+            df_zv = _cargar_especies_por_zona_vida()
+            if not df_zv.empty:
+                df_zv.to_excel(
+                    writer, sheet_name="Especies_por_Zona_de_Vida", index=False
                 )
 
         buf.seek(0)
