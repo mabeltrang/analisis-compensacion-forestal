@@ -291,6 +291,10 @@ st.markdown(f"""
   .badge-LC  {{ background:#2E7D32; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
   .badge-CITES {{ background:{PURPLE}; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
   .badge-NL  {{ background:#9E9E9E; color:#fff; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-gs-P  {{ background:#AED581; color:#1A1A2E; padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-gs-S  {{ background:#66BB6A; color:#fff;    padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-gs-ST {{ background:#2E7D32; color:#fff;    padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
+  .badge-gs-T  {{ background:#1B4332; color:#fff;    padding:3px 10px; border-radius:20px; font-weight:700; font-size:0.78rem; }}
   .sp-divider {{ border: none; border-top: 1px solid #E0D9F5; margin: 2px 0 6px 0; }}
   .sp-veda-line {{
     margin-top: 8px;
@@ -721,6 +725,20 @@ def _badge_html(texto, fuente=None, nota=None):
     return f"{label}<span class='{cls}'>{t}</span>{nota_html}"
 
 
+_GRUPO_SUCESIONAL_ABREV = {
+    "Pionera":            ("P",  "badge-gs-P"),
+    "Secundaria":         ("S",  "badge-gs-S"),
+    "Secundaria tardía":  ("ST", "badge-gs-ST"),
+    "Tardía":             ("T",  "badge-gs-T"),
+}
+
+
+def _badge_grupo_html(texto):
+    t = str(texto).strip()
+    abrev, cls = _GRUPO_SUCESIONAL_ABREV.get(t, (t, "badge-NL"))
+    return f"<span class='{cls}' title='{t}'>{abrev}</span>"
+
+
 def _veda_linea_html(veda):
     """Línea HTML resumen de vedas para una especie.
 
@@ -847,6 +865,39 @@ def _tabla_consulta_html(resultados, mostrar_mads, mostrar_cites, mostrar_iucn,
         if mostrar_iucn:  cells.append(f"<td>{_badge_html(r['iucn'])}</td>")
         if mostrar_veda:  cells.append(f"<td>{_veda_celda_html(r['veda'])}</td>")
 
+        rows_html.append("<tr>" + "".join(cells) + "</tr>")
+
+    return (
+        "<div class='sp-table-wrap'><table class='sp-table'>"
+        f"<thead>{thead}</thead><tbody>{''.join(rows_html)}</tbody>"
+        "</table></div>"
+    )
+
+
+def _tabla_especies_zona_vida_html(df):
+    """Tabla HTML para el catálogo de especies por zona de vida (Tab 7),
+    con el mismo estilo de pills que _tabla_consulta_html (MADS/CITES/IUCN)."""
+    incluir_zona = df["Zona de vida"].nunique() > 1
+    incluir_obs  = (df["Observaciones"].astype(str).str.strip() != "").any()
+
+    headers = (["Zona de vida"] if incluir_zona else []) + [
+        "Nombre científico", "Nombre común", "Tipo de crecimiento", "Amenaza"
+    ] + (["Observaciones"] if incluir_obs else [])
+
+    thead = "<tr>" + "".join(f"<th>{h}</th>" for h in headers) + "</tr>"
+
+    rows_html = []
+    for _, r in df.iterrows():
+        cells = []
+        if incluir_zona:
+            cells.append(f"<td>{r['Zona de vida']}</td>")
+        cells.append(f"<td class='sp-table-sci'>{r['Nombre científico']}</td>")
+        cells.append(f"<td>{r['Nombre común']}</td>")
+        cells.append(f"<td>{_badge_grupo_html(r['Grupo sucesional'])}</td>")
+        cells.append(f"<td>{_badge_html(r['Amenaza (IUCN/Nacional)'])}</td>")
+        if incluir_obs:
+            obs = str(r["Observaciones"]).strip()
+            cells.append(f"<td class='sp-source-label'>{obs}</td>" if obs else "<td></td>")
         rows_html.append("<tr>" + "".join(cells) + "</tr>")
 
     return (
@@ -2249,7 +2300,12 @@ with tab7:
             _n_pioneras = (df_zv_show["Grupo sucesional"] == "Pionera").sum()
             _metric_card("Pioneras", str(_n_pioneras))
 
-        st.dataframe(df_zv_show, use_container_width=True, hide_index=True)
+        st.markdown(_tabla_especies_zona_vida_html(df_zv_show), unsafe_allow_html=True)
+        st.caption(
+            "**Tipo de crecimiento:** P = Pionera · S = Secundaria · "
+            "ST = Secundaria tardía · T = Tardía (climax). Pasa el cursor "
+            "sobre la sigla para ver el nombre completo."
+        )
 
         st.caption(
             "Catálogo curado a partir de listados regionales (Caribe, Boyacá, "
