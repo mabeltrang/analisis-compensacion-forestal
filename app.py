@@ -575,7 +575,8 @@ def _cargar_especies_por_zona_vida():
     path = os.path.join(BASE, "especies_por_zona_vida.csv")
     if not os.path.exists(path):
         return pd.DataFrame()
-    return pd.read_csv(path)
+    df = pd.read_csv(path)
+    return df.fillna("")  # evita que celdas vacías (Observaciones) salgan como "None"/"NaN"
 
 
 _IUCN_ABBR = {
@@ -1327,30 +1328,12 @@ from config.zonas_vida import detectar_zona_vida, ZONAS_VIDA
 
 _elev_ctx = ctx.get('elevacion_media_m')
 _zv_auto, _zv_motivo = detectar_zona_vida(_bioma_ctx, _elev_ctx)
-
-with st.sidebar:
-    st.markdown("---")
-    st.caption("🌱 Zona de vida (especies de compensación)")
-
-    _opciones_zv = [None] + list(ZONAS_VIDA.keys())
-    zona_vida_sel = st.selectbox(
-        "Zona de vida (opcional)",
-        options=_opciones_zv,
-        format_func=lambda c: "— sin filtrar —" if c is None else c,
-        index=0,
-    )
-
-    if zona_vida_sel:
-        st.caption(f"{zona_vida_sel} — {ZONAS_VIDA[zona_vida_sel]}")
-
-    if _zv_auto and _zv_auto != zona_vida_sel:
-        st.caption(f"💡 Sugerencia automática: **{_zv_auto}** — {ZONAS_VIDA[_zv_auto]}")
-        st.caption(_zv_motivo)
-    elif not _zv_auto:
-        st.caption(f"ℹ️ {_zv_motivo}")
-
-    if _elev_ctx is not None:
-        st.caption(f"Elevación media del polígono: {_elev_ctx:.0f} m (SRTM)")
+# El menú para elegir zona de vida vive en la pestaña "Especies Zona de
+# Vida" (Tab 7), no en la barra lateral — ver más abajo. Se lee de
+# st.session_state porque el código de Tab 5 (Exportar) corre antes que
+# el de Tab 7 en este archivo; Streamlit ya deja el valor actualizado
+# en session_state antes de rehacer el script, así que esto no se
+# desfasa un run de retraso.
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS PRINCIPALES
@@ -2138,14 +2121,15 @@ with tab5:
                 )
 
             # Hoja 8 – Especies recomendadas por zona de vida del área de
-            # impacto (filtrado por zona_vida_sel — ver Tab 7 y la barra
-            # lateral). Si no hay zona confirmada, se exporta el catálogo
-            # completo como fallback, igual que se muestra en pantalla.
+            # impacto (filtrado por el menú de Tab 7 — ver session_state).
+            # Si no hay zona elegida, se exporta el catálogo completo como
+            # fallback, igual que se muestra en pantalla.
             df_zv = _cargar_especies_por_zona_vida()
             if not df_zv.empty:
-                if zona_vida_sel:
+                _zv_export_sel = st.session_state.get("zona_vida_sel_key")
+                if _zv_export_sel:
                     df_zv_export = df_zv[
-                        df_zv["Zona de vida"] == ZONAS_VIDA[zona_vida_sel]
+                        df_zv["Zona de vida"] == ZONAS_VIDA[_zv_export_sel]
                     ]
                     hoja_zv = "Especies_Zona_de_Vida"
                 else:
@@ -2224,17 +2208,34 @@ with tab7:
     if df_zv_full.empty:
         st.warning("No se encontró config/especies_por_zona_vida.csv.")
     else:
+        _opciones_zv = [None] + list(ZONAS_VIDA.keys())
+        zona_vida_sel = st.selectbox(
+            "Zona de vida (opcional)",
+            options=_opciones_zv,
+            format_func=lambda c: "— sin filtrar —" if c is None else c,
+            index=0,
+            key="zona_vida_sel_key",
+        )
+
+        if zona_vida_sel:
+            st.caption(f"{zona_vida_sel} — {ZONAS_VIDA[zona_vida_sel]}")
+
+        if _zv_auto and _zv_auto != zona_vida_sel:
+            st.caption(f"💡 Sugerencia automática (según bioma y elevación): **{_zv_auto}** — {ZONAS_VIDA[_zv_auto]}")
+        elif not _zv_auto:
+            st.caption(f"ℹ️ {_zv_motivo}")
+
         if zona_vida_sel:
             st.info(
-                f"Mostrando especies para **{zona_vida_sel} — {ZONAS_VIDA[zona_vida_sel]}** "
-                f"(seleccionada en la barra lateral). Esta es también la tabla que se "
-                f"incluirá en el Excel descargable (pestaña Exportar)."
+                f"Mostrando especies para **{zona_vida_sel} — {ZONAS_VIDA[zona_vida_sel]}**. "
+                f"Esta es también la tabla que se incluirá en el Excel descargable "
+                f"(pestaña Exportar)."
             )
             df_zv_show = df_zv_full[df_zv_full["Zona de vida"] == ZONAS_VIDA[zona_vida_sel]]
         else:
             st.info(
-                "No has seleccionado una zona de vida en la barra lateral (es opcional) "
-                "— se muestran **todas**. Elige una para filtrar la tabla y el Excel descargable."
+                "No has seleccionado una zona de vida (es opcional) — se muestran "
+                "**todas**. Elige una arriba para filtrar la tabla y el Excel descargable."
             )
             df_zv_show = df_zv_full
 
