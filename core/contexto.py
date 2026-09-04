@@ -151,7 +151,25 @@ def obtener_contexto_impacto(gdf):
         )
     )
 
-    # ─── LLAMADA 1 — ZH + SZH + Bioma + Coberturas ────────────────
+    # ─── Elevación media (SRTM) — para distinguir pisos altitudinales
+    # (premontano/montano bajo/subpáramo) al inferir la Zona de Vida
+    # de Holdridge en config/zonas_vida.py. Se calcula sobre el mismo
+    # ee_geom del polígono de impacto, sin roundtrip adicional (se
+    # agrega como una clave más del mismo ctx_dict de LLAMADA 1).
+    elevacion_media = (
+        ee.Image('USGS/SRTMGL1_003')
+        .select('elevation')
+        .reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=ee_geom,
+            scale=30,
+            maxPixels=1e9,
+            bestEffort=True,
+        )
+        .get('elevation')
+    )
+
+    # ─── LLAMADA 1 — ZH + SZH + Bioma + Coberturas + Elevación ────
     ctx_dict = ee.Dictionary({
         'nom_zh':     zh_first.get('nom_zh'),
         'nom_szh':    zh_first.get('nom_szh'),
@@ -162,6 +180,7 @@ def obtener_contexto_impacto(gdf):
                           ee.Reducer.sum().group(1, 'COBERTURA'),
                           ['area_ha', 'COBERTURA']
                       ).get('groups'),
+        'elevacion_media': elevacion_media,
     })
 
     time.sleep(1)
@@ -179,6 +198,8 @@ def obtener_contexto_impacto(gdf):
     areas_cobertura = {}
     for group in (ctx_info.get('coberturas') or []):
         areas_cobertura[group['COBERTURA']] = group['sum']
+
+    elevacion_media_m = ctx_info.get('elevacion_media')
 
     # ─── Geometría del municipio para Hansen — desde GEE ──────────
     # El asset Municipios_Abril_2026_shp usa campo 'MpNombre' (IGAC/DANE)
@@ -231,6 +252,7 @@ def obtener_contexto_impacto(gdf):
         'zh':                   nom_zh,
         'szh':                  nom_szh,
         'bioma_principal':      bioma_principal,
+        'elevacion_media_m':    elevacion_media_m,
         'areas_cobertura':      areas_cobertura,
         'tasa_bau':             tasa_bau_mun,
         'tasa_bau_fuente':      fuente_bau_mun,
