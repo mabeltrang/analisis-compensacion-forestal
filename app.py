@@ -13,6 +13,8 @@ Cambios v7:
 import streamlit as st
 import pandas as pd
 import os, tempfile, io
+from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
 
 from core import inputs, contexto, inventario, atc, utils, iniciativas
 from core.atc import (
@@ -2307,4 +2309,53 @@ with tab7:
             "Cundinamarca) y verificado contra IUCN, Catálogo de Plantas de "
             "Colombia y el Libro Rojo de Especies Maderables (Cárdenas & "
             "Salinas, 2007)."
+        )
+
+        # ── Descarga independiente de esta tabla ya filtrada ───────────
+        # Aparte del Excel grande de la pestaña "Exportar" (que agrupa todo
+        # el proyecto), esta descarga solo trae la tabla de especies tal
+        # como se ve aquí — con el filtro de zona de vida que elegiste
+        # arriba, sin necesidad de pasar por la pestaña Exportar.
+        def _build_excel_especies_zv(df, zona_codigo):
+            buf_zv = io.BytesIO()
+            with pd.ExcelWriter(buf_zv, engine="openpyxl") as writer:
+                df.to_excel(writer, sheet_name="Especies", index=False)
+                ws = writer.sheets["Especies"]
+                headers = list(df.columns)
+                header_fill = PatternFill("solid", fgColor="2E7D32")
+                for c, h in enumerate(headers, start=1):
+                    cell = ws.cell(row=1, column=c)
+                    cell.font = Font(bold=True, color="FFFFFF")
+                    cell.fill = header_fill
+                    cell.alignment = Alignment(horizontal="center", wrap_text=True)
+                amenaza_fill = {
+                    "CR": PatternFill("solid", fgColor="C0392B"),
+                    "EN": PatternFill("solid", fgColor="E67E22"),
+                    "VU": PatternFill("solid", fgColor="F1C40F"),
+                }
+                col_amenaza = headers.index("Amenaza (IUCN/Nacional)") + 1
+                for r in range(2, ws.max_row + 1):
+                    amz = ws.cell(row=r, column=col_amenaza).value
+                    if amz in amenaza_fill:
+                        ws.cell(row=r, column=col_amenaza).fill = amenaza_fill[amz]
+                widths = {
+                    "Código zona de vida": 14, "Zona de vida": 28,
+                    "Nombre científico": 24, "Nombre común": 22,
+                    "Familia": 18, "Grupo sucesional": 16,
+                    "Amenaza (IUCN/Nacional)": 14, "Observaciones": 55,
+                }
+                for i, h in enumerate(headers, start=1):
+                    ws.column_dimensions[get_column_letter(i)].width = widths.get(h, 18)
+                ws.freeze_panes = "A2"
+                ws.auto_filter.ref = ws.dimensions
+            buf_zv.seek(0)
+            return buf_zv.getvalue()
+
+        _nombre_zv = zona_vida_sel if zona_vida_sel else "todas_zonas"
+        st.download_button(
+            "⬇️ Descargar esta tabla de especies (Excel)",
+            data=_build_excel_especies_zv(df_zv_show, zona_vida_sel),
+            file_name=f"especies_compensacion_{_nombre_zv}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="btn_descarga_especies_zv",
         )
