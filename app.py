@@ -627,6 +627,57 @@ _IUCN_ABBR = {
 }
 
 
+def _altura_tabla(n_filas, alto_fila=35):
+    """Alto en px para que st.dataframe muestre todas las filas sin scroll."""
+    return int((max(n_filas, 1) + 1) * alto_fila + 3)
+
+
+@st.cache_data(show_spinner=False)
+def _amenaza_de_fragmentos(fragmentos):
+    """Estado de amenaza (MADS / UICN / CITES) para una entrada de veda.
+
+    Recorre los fragmentos de nombre científico de la entrada (nombre
+    aceptado primero, luego sinónimos) y devuelve la primera coincidencia a
+    nivel de especie en cada fuente. Si la entrada es un género o familia
+    completa (ej. 'cedrela', 'lecythidaceae') la amenaza no se asigna, porque
+    varía por especie.
+    """
+    mads_idx, cites_idx, iucn_idx, _mg, cites_genero_idx = _cargar_indices_amenaza()
+    mads, iucn, cites = "—", "—", "—"
+    especies = [f for f in fragmentos if len(_norm_app(f).split()) >= 2]
+    if not especies:
+        return {"MADS": "Varía por especie", "UICN": "Varía por especie",
+                "CITES": "Varía por especie"}
+    for frag in especies:
+        key = _norm_app(frag)
+        if mads == "—" and key in mads_idx.index:
+            row = mads_idx.loc[key]
+            if isinstance(row, pd.DataFrame): row = row.iloc[0]
+            mads = str(row.get("Categoría de amenaza", "")).strip() or "—"
+        if iucn == "—" and key in iucn_idx.index:
+            row = iucn_idx.loc[key]
+            if isinstance(row, pd.DataFrame): row = row.iloc[0]
+            cat = str(row.get("redlistCategory", "")).strip()
+            iucn = _IUCN_ABBR.get(cat, cat) or "—"
+        if cites == "—":
+            if key in cites_idx.index:
+                row = cites_idx.loc[key]
+                if isinstance(row, pd.DataFrame): row = row.iloc[0]
+                ap = str(row.get("CurrentListing", "")).strip()
+                cites = f"Apéndice {ap}" if ap else "—"
+            else:
+                gen = key.split()[0]
+                if gen in cites_genero_idx:
+                    cites = f"Apéndice {cites_genero_idx[gen]}"
+    return {"MADS": mads if mads != "—" else "No listada",
+            "UICN": iucn if iucn != "—" else "No listada",
+            "CITES": cites if cites != "—" else "No listada"}
+
+
+def _amenaza_de_nombre(nombre_cientifico):
+    return _amenaza_de_fragmentos((nombre_cientifico,))
+
+
 def _consultar_veda_todas_cars(nombre_cientifico, nombre_comun=""):
     """Cruza una especie contra la veda nacional y contra las 31 CAR de Colombia.
 
@@ -935,6 +986,41 @@ def _tabla_especies_zona_vida_html(df):
     )
 
 
+def _tabla_vedas_html(filas, columnas):
+    """Tabla HTML de vedas con el mismo estilo de la consulta de amenaza.
+
+    filas: lista de dicts. columnas: lista de (titulo, clave, tipo) donde
+    tipo es 'sci' (nombre científico en cursiva, sinónimos en gris),
+    'badge' (pill de amenaza), 'texto' (centrado) o 'largo' (a la izquierda).
+    """
+    from html import escape as _esc
+    thead = "<tr>" + "".join(f"<th>{_esc(t)}</th>" for t, _, _ in columnas) + "</tr>"
+    body = []
+    for f in filas:
+        celdas = []
+        for _, clave, tipo in columnas:
+            v = f.get(clave, "")
+            if tipo == "sci":
+                nombres = [n for n in (v if isinstance(v, (list, tuple)) else [v]) if n]
+                principal = _esc(str(nombres[0]).capitalize()) if nombres else ""
+                sin = ", ".join(_esc(str(n).capitalize()) for n in nombres[1:])
+                sin_html = (f"<div class='sp-table-common' style='font-style:italic'>"
+                            f"Sin.: {sin}</div>") if sin else ""
+                celdas.append(f"<td style='text-align:left'><span class='sp-table-sci'>"
+                              f"{principal}</span>{sin_html}</td>")
+            elif tipo == "badge":
+                celdas.append(f"<td>{_badge_html(v)}</td>")
+            elif tipo == "largo":
+                celdas.append(f"<td style='text-align:left;font-size:0.8rem'>{_esc(str(v))}</td>")
+            else:
+                celdas.append(f"<td>{_esc(str(v))}</td>")
+        body.append("<tr>" + "".join(celdas) + "</tr>")
+    return (
+        "<div class='sp-table-wrap' style='overflow-x:auto'><table class='sp-table'>"
+        f"<thead>{thead}</thead><tbody>{''.join(body)}</tbody></table></div>"
+    )
+
+
 def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto=""):
     """Tab único: Consulta de amenaza + cruce de vedas (nacional y las 31 CAR),
     más el cruce con el inventario (si hay uno cargado) y el navegador de
@@ -1125,7 +1211,25 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                 ['cobertura', 'nombre_cientifico', 'n_individuos', 'nivel', 'norma', 'alerta']
             ]
             df_v.columns = ['Cobertura', 'Nombre científico', 'N ind.', 'Nivel', 'Norma', 'Alerta']
-            st.dataframe(df_v, use_container_width=True, hide_index=True)
+            _am = df_v['Nombre científico'].apply(_amenaza_de_nombre).apply(pd.Series)
+            _am.columns = [f"Amenaza {c}" for c in _am.columns]
+            df_v = pd.concat([df_v, _am], axis=1)
+            _nivel_txt = {"nacional": "Nacional", "regional": "Regional",
+                          "nacional+regional": "Nacional + regional"}
+            filas_inv = [
+                {**r, "Nivel": _nivel_txt.get(r["Nivel"], r["Nivel"])}
+                for r in df_v.to_dict("records")
+            ]
+            st.markdown(_tabla_vedas_html(filas_inv, [
+                ("Cobertura", "Cobertura", "texto"),
+                ("Nombre científico", "Nombre científico", "sci"),
+                ("N ind.", "N ind.", "texto"),
+                ("Nivel de veda", "Nivel", "texto"),
+                ("MADS", "Amenaza MADS", "badge"), ("UICN", "Amenaza UICN", "badge"),
+                ("CITES", "Amenaza CITES", "badge"),
+                ("Norma", "Norma", "texto"),
+                ("Alerta", "Alerta", "largo"),
+            ]), unsafe_allow_html=True)
             if any('nacional' in v.get('nivel', '') for v in todas_vedas):
                 st.error(
                     "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
@@ -1175,21 +1279,28 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
             if car_key == "NACIONAL":
                 st.markdown("### 🇨🇴 NACIONAL — 🔴 Veda indefinida (todo el territorio)")
                 st.caption(
-                    "Fuentes: Res. 0316/1974 INDERENA · Ley 61/1985 · "
-                    "Res. 1602/1995 + Res. 020/1996 MADS"
+                    "Fuentes: Res. 0316/1974, 0213/1977 y 0801/1977 INDERENA · "
+                    "Ley 61/1985 · Res. 1602/1995 + Res. 020/1996 MADS"
                 )
                 rows_nac = [
                     {
                         "Nombre común": sp["nombre_comun"],
-                        "Nombre científico (fragmentos)": "; ".join(
-                            n.capitalize() for n in sp["sci_fragmentos"]
-                        ),
+                        "sci": sp["sci_fragmentos"],
+                        **{f"Amenaza {k}": v for k, v in
+                           _amenaza_de_fragmentos(tuple(sp["sci_fragmentos"])).items()},
                         "Norma": sp["norma"],
                         "Nota": sp["nota"],
                     }
                     for sp in VEDAS_NACIONALES
                 ]
-                st.dataframe(pd.DataFrame(rows_nac), use_container_width=True, hide_index=True)
+                st.markdown(_tabla_vedas_html(rows_nac, [
+                    ("Nombre común", "Nombre común", "texto"),
+                    ("Nombre científico", "sci", "sci"),
+                    ("MADS", "Amenaza MADS", "badge"), ("UICN", "Amenaza UICN", "badge"),
+                    ("CITES", "Amenaza CITES", "badge"),
+                    ("Norma", "Norma", "texto"),
+                    ("Nota", "Nota", "largo"),
+                ]), unsafe_allow_html=True)
                 st.markdown("---")
                 continue
 
@@ -1207,14 +1318,19 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
             rows = [
                 {
                     "Nombre común": sp["nombre_comun"],
-                    "Nombre científico (fragmentos)": "; ".join(
-                        n.capitalize() for n in sp["sci_fragmentos"]
-                    ),
+                    "sci": sp["sci_fragmentos"],
+                    **{f"Amenaza {k}": v for k, v in
+                       _amenaza_de_fragmentos(tuple(sp["sci_fragmentos"])).items()},
                 }
                 for sp in datos.get("spp", [])
             ]
             if rows:
-                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                st.markdown(_tabla_vedas_html(rows, [
+                    ("Nombre común", "Nombre común", "texto"),
+                    ("Nombre científico", "sci", "sci"),
+                    ("MADS", "Amenaza MADS", "badge"), ("UICN", "Amenaza UICN", "badge"),
+                    ("CITES", "Amenaza CITES", "badge"),
+                ]), unsafe_allow_html=True)
             elif datos.get("solo_nacional"):
                 st.caption("👉 Sin especies propias — consulta la fila 'NACIONAL' de arriba.")
             st.markdown("---")
@@ -1546,7 +1662,22 @@ with tab2:
                 ['cobertura','nombre_cientifico','n_individuos','nivel','norma','alerta']
             ]
             df_v.columns = ['Cobertura','Nombre científico','N ind.','Nivel','Norma','Alerta']
-            st.dataframe(df_v, use_container_width=True, hide_index=True)
+            _am = df_v['Nombre científico'].apply(_amenaza_de_nombre).apply(pd.Series)
+            _am.columns = [f"Amenaza {c}" for c in _am.columns]
+            df_v = pd.concat([df_v, _am], axis=1)
+            _nivel_txt = {"nacional": "Nacional", "regional": "Regional",
+                          "nacional+regional": "Nacional + regional"}
+            st.markdown(_tabla_vedas_html(
+                [{**r, "Nivel": _nivel_txt.get(r["Nivel"], r["Nivel"])}
+                 for r in df_v.to_dict("records")],
+                [("Cobertura", "Cobertura", "texto"),
+                 ("Nombre científico", "Nombre científico", "sci"),
+                 ("N ind.", "N ind.", "texto"),
+                 ("Nivel de veda", "Nivel", "texto"),
+                 ("MADS", "Amenaza MADS", "badge"), ("UICN", "Amenaza UICN", "badge"),
+                 ("CITES", "Amenaza CITES", "badge"),
+                 ("Norma", "Norma", "texto"),
+                 ("Alerta", "Alerta", "largo")]), unsafe_allow_html=True)
             if any('nacional' in v['nivel'] for v in todas_vedas):
                 st.warning(
                     "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
