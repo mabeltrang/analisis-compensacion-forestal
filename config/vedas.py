@@ -4,7 +4,9 @@ Base de datos de vedas de flora arbórea en Colombia.
 Fuentes:
   - Nacional: Res. 0316/1974 INDERENA, Ley 61/1985, Res. 1602/1995 + 020/1996 MADS
   - CORPOCESAR: Res. 0035 del 28 de enero de 2026 (veda temporal)
-  - CDMB, CORANTIOQUIA, CORPOURABA, CORTOLIMA, CARDER, CVC, CORPOCALDAS, CRA:
+  - CORANTIOQUIA: Res. 040-RES2312-6645 del 14 de diciembre de 2023 (45 especies;
+    deroga la Res. 10194/2008)
+  - CDMB, CORPOURABA, CORTOLIMA, CARDER, CVC, CORPOCALDAS, CRA:
     inventario MADS/Dirección General Ecosistemas
   - CAR (Cundinamarca): Acuerdo CAR N° 021 de 17 de julio de 2018, Art. 7
   - CORNARE: Acuerdo 404 de 29 de mayo de 2020 (30 especies forestales
@@ -156,20 +158,154 @@ VEDAS_REGIONALES = {
         ]
     },
     "CORANTIOQUIA": {
-        "norma": "Res. 3183/2000 CORANTIOQUIA",
+        "norma": "Res. 040-RES2312-6645 del 14 de diciembre de 2023 CORANTIOQUIA",
         "tipo": "indefinida",
-        "nota": "Veda y restricción al aprovechamiento en toda la jurisdicción",
+        "nota": ("Veda indefinida y prohibición del aprovechamiento en toda la "
+                 "jurisdicción de CORANTIOQUIA (Art. 1°, 45 especies). El "
+                 "aprovechamiento queda sujeto a levantamiento de veda y a las "
+                 "medidas de manejo que imponga la Autoridad Ambiental (Parágrafo "
+                 "Art. 1°). Deroga la Res. 10194/2008 (Art. 8°). Acoge además las "
+                 "vedas nacionales (Res. 0316/1974, 1408/1975, 0213/1977 y 0801/1977 "
+                 "INDERENA, Ley 61/1985, Res. 96/2006 MAVDT — Art. 3°), prohíbe el uso "
+                 "de hojas de Ceroxylon y Attalea amygdalina para ramos (Art. 4°) y el "
+                 "uso y comercialización de bromelias silvestres (Art. 5°)."),
         "spp": [
-            {"nombre_comun": "Comino crespo", "sci_fragmentos": ["aniba perutilis"]},
-            {"nombre_comun": "Cedro negro", "sci_fragmentos": ["juglans neotropica"]},
-            {"nombre_comun": "Cedro de altura", "sci_fragmentos": ["cedrela montana"]},
-            {"nombre_comun": "Abarco", "sci_fragmentos": ["cariniana pyriformis"]},
-            {"nombre_comun": "Algarrobo", "sci_fragmentos": ["hymenaea courbaril"]},
-            {"nombre_comun": "Guayacán amarillo", "sci_fragmentos": ["tabebuia chrysanta", "handroanthus chrysanthus"]},
-            {"nombre_comun": "Chaquiro", "sci_fragmentos": ["podocarpus oleifolius"]},
-            {"nombre_comun": "Roble andino", "sci_fragmentos": ["quercus humboldtii"]},
+            # ANACARDIACEAE
+            {"nombre_comun": "Diomato / Santacruz",
+             "sci_fragmentos": ["astronium graveolens", "astronium conzattii",
+                                "astronium gracile"]},
+            # ARECACEAE
+            {"nombre_comun": "Palma de cera",
+             "sci_fragmentos": ["ceroxylon alpinum", "ceroxylon andicola",
+                                "iriartea andicola"]},
+            {"nombre_comun": "Palma de cera",
+             "sci_fragmentos": ["ceroxylon quindiuense", "ceroxylon floccosum",
+                                "klopstockia quindiuensis"]},
+            {"nombre_comun": "Palma de cera", "sci_fragmentos": ["ceroxylon sasaimae"]},
+            {"nombre_comun": "Palma de ramo",
+             "sci_fragmentos": ["ceroxylon parvifrons", "ceroxylon latisectum",
+                                "ceroxylon mooreanum", "klopstockia parvifrons"]},
+            {"nombre_comun": "Palmito real",
+             "sci_fragmentos": ["ceroxylon vogelianum", "ceroxylon coarctatum",
+                                "ceroxylon crispum", "ceroxylon flexuosum",
+                                "ceroxylon hexandrum", "ceroxylon sclerophyllum",
+                                "ceroxylon verruculosum", "klopstockia coarctata",
+                                "klopstockia vogeliana"]},
+            {"nombre_comun": "Nolí",
+             "sci_fragmentos": ["elaeis oleifera", "alfonsia oleifera",
+                                "corozo oleifera", "elaeis melanococca"]},
+            {"nombre_comun": "Pholidostachys sanluisensis",
+             "sci_fragmentos": ["pholidostachys sanluisensis"]},
+            {"nombre_comun": "Macana", "sci_fragmentos": ["wettinia hirsuta"]},
+            {"nombre_comun": "Macana",
+             "sci_fragmentos": ["wettinia kalbreyeri", "catoblastus inconstans",
+                                "catoblastus kalbreyeri", "catoblastus megalocarpus",
+                                "catoblastus microcaryus", "catoblastus sphaerocarpus",
+                                "catostigma sphaerocarpum"]},
+            # BIGNONIACEAE
+            {"nombre_comun": "Guayacán amarillo",
+             "sci_fragmentos": ["handroanthus chrysanthus", "tabebuia chrysantha",
+                                "tabebuia chrysanta", "bignonia chrysantha",
+                                "tecoma chrysantha"]},
+            # CARYOCARACEAE
+            {"nombre_comun": "Cagüí",
+             "sci_fragmentos": ["caryocar amygdaliferum", "rhizobolus amygdaliferus"]},
+            {"nombre_comun": "Cagüí",
+             "sci_fragmentos": ["caryocar glabrum", "pekea ternata",
+                                "rhizobolus glaber", "rhizobolus saouvari",
+                                "rhizobolus souari", "saouari glabra"]},
+            # CHRYSOBALANACEAE
+            {"nombre_comun": "Caimo",
+             "sci_fragmentos": ["moquilea cabrerae", "licania cabrerae"]},
+            # LAURACEAE
+            {"nombre_comun": "Comino crespo",
+             "sci_fragmentos": ["aniba perutilis", "aniba compacta"]},
+            {"nombre_comun": "Yumbe", "sci_fragmentos": ["caryodaphnopsis cogolloi"]},
+            {"nombre_comun": "Piedro", "sci_fragmentos": ["persea rigens"]},
+            # FABACEAE
+            {"nombre_comun": "Tipiri / Balaústre / Guayacán hobo",
+             "sci_fragmentos": ["centrolobium paraense", "centrolobium patinense"]},
+            {"nombre_comun": "Sapán", "sci_fragmentos": ["clathrotropis brunnea"]},
+            {"nombre_comun": "Sapán / Aramata",
+             "sci_fragmentos": ["clathrotropis brachypetala"]},
+            {"nombre_comun": "Choibá / Almendro",
+             "sci_fragmentos": ["dipteryx oleifera", "dipteryx panamensis",
+                                "dipterix panamensis", "coumarouna oleifera"]},
+            {"nombre_comun": "Algarrobo",
+             "sci_fragmentos": ["hymenaea courbaril", "hymenaea animifera",
+                                "hymenaea candolleana", "hymenaea confertifolia"]},
+            {"nombre_comun": "Nazareno", "sci_fragmentos": ["peltogyne paniculata"]},
             {"nombre_comun": "Cativo", "sci_fragmentos": ["prioria copaifera"]},
-            {"nombre_comun": "Diomato", "sci_fragmentos": ["astronium graveolens"]},
+            # FAGACEAE
+            {"nombre_comun": "Roble",
+             "sci_fragmentos": ["quercus humboldtii", "erythrobalanus humboldtii",
+                                "erythrobalanus duqueana", "erythrobalanus lindenii",
+                                "erythrobalanus tolimensis", "quercus almaguerensis",
+                                "quercus tolimensis", "quercus lindenii"]},
+            {"nombre_comun": "Roble morado / Roble negro",
+             "sci_fragmentos": ["trigonobalanus excelsa", "colombobalanus excelsa"]},
+            # HUMIRIACEAE
+            {"nombre_comun": "Aceituno / Chanul",
+             "sci_fragmentos": ["humiriastrum colombianum", "sacoglottis excelsa"]},
+            # JUGLANDACEAE
+            {"nombre_comun": "Cedro negro",
+             "sci_fragmentos": ["juglans neotropica", "juglans columbiensis",
+                                "juglans equatoriensis", "juglans granatensis",
+                                "juglans honorei"]},
+            # LECYTHIDACEAE
+            {"nombre_comun": "Abarco",
+             "sci_fragmentos": ["cariniana pyriformis", "cariniana clavata",
+                                "cariniana exigua"]},
+            {"nombre_comun": "Olleto / Coco cristal",
+             "sci_fragmentos": ["lecythis tuyrana", "chytroma glossiniformis",
+                                "lecythis calycocarpa", "lecythis elata",
+                                "lecythis melliana"]},
+            # MAGNOLIACEAE
+            {"nombre_comun": "Hojarasco",
+             "sci_fragmentos": ["magnolia espinalii", "talauma espinalii"]},
+            {"nombre_comun": "Almanegra", "sci_fragmentos": ["magnolia jardinensis"]},
+            {"nombre_comun": "Almanegra de ventanas",
+             "sci_fragmentos": ["magnolia polyhypsophylla", "talauma polyhypsophylla"]},
+            {"nombre_comun": "Guanábano de monte",
+             "sci_fragmentos": ["magnolia hernandezii", "talauma hernandezii",
+                                "talauma hernandezi"]},
+            {"nombre_comun": "Almanegra",
+             "sci_fragmentos": ["magnolia urraoensis", "dugandiodendron urraoense"]},
+            {"nombre_comun": "Almanegra",
+             "sci_fragmentos": ["magnolia yarumalensis", "dugandiodendron yarumalense"]},
+            # MELIACEAE
+            {"nombre_comun": "Cedro de altura",
+             "sci_fragmentos": ["cedrela montana", "cedrela bogotensis",
+                                "cedrela rosei", "cedrela subandina",
+                                "surenus bogotensis", "surenus montana"]},
+            {"nombre_comun": "Cedro",
+             "sci_fragmentos": ["cedrela odorata", "cedrela amara",
+                                "cedrela brachystachya", "cedrela brownei",
+                                "cedrela caldasana", "cedrela cedro",
+                                "cedrela cubensis", "cedrela glaziovii",
+                                "cedrela guianensis", "cedrela hassleri",
+                                "cedrela huberi", "cedrela imparipinnata"]},
+            {"nombre_comun": "Caoba",
+             "sci_fragmentos": ["swietenia macrophylla", "swietenia belizensis",
+                                "swietenia candollei", "swietenia krukovii",
+                                "swietenia tessmannii"]},
+            # OCHNACEAE
+            {"nombre_comun": "Caunce",
+             "sci_fragmentos": ["godoya antioquiensis", "godoya antioquensis"]},
+            # PODOCARPACEAE
+            {"nombre_comun": "Pino romerón / Chaquiro",
+             "sci_fragmentos": ["podocarpus oleifolius", "nageia oleifolia"]},
+            {"nombre_comun": "Romerillo azuceno / Chaquiro",
+             "sci_fragmentos": ["prumnopitys montana", "podocarpus montanus",
+                                "podocarpus taxifolius", "dacrydium distichum",
+                                "stachycarpus meridensis", "taxus montana"]},
+            {"nombre_comun": "Chaquiro / Romerón / Pino colombiano",
+             "sci_fragmentos": ["retrophyllum rospigliosii", "decussocarpus rospigliosii",
+                                "nageia rospigliosii", "podocarpus rospigliosii"]},
+            # TRIGONIACEAE
+            {"nombre_comun": "Marfil", "sci_fragmentos": ["isidodendron tripterocarpum"]},
+            # ZAMIACEAE
+            {"nombre_comun": "Zamia incognita", "sci_fragmentos": ["zamia incognita"]},
         ]
     },
     "CORPOURABA": {
