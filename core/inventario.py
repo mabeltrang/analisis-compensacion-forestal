@@ -327,7 +327,8 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
         # aquí en un valor B — son especies que de entrada no deberían
         # estar en un aprovechamiento forestal autorizado.
         _veda_por_especie[sp_sci] = (
-            settings.VEDA_VALOR_UNERGY if info_v['en_veda_regional'] else 0.0
+            settings.VEDA_VALOR_UNERGY
+            if info_v['nivel'] in ('regional', 'nacional+regional') else 0.0
         )
     df_filtrado['valor_b_veda'] = (
         df_filtrado['Nombre cientifico'].map(_veda_por_especie).fillna(0.0)
@@ -416,7 +417,10 @@ def procesar_inventario(excel_path, dap_min=settings.DAP_MIN_DEFAULT, car: str =
                     'n_individuos':      n_sp,
                     'nivel':             info_v['nivel'],
                     'norma': (
-                        info_v['veda_nacional_info']['norma']
+                        f"{info_v['veda_nacional_info']['norma']} + "
+                        f"{info_v['veda_regional_info']['norma']}"
+                        if info_v['nivel'] == 'nacional+regional'
+                        else info_v['veda_nacional_info']['norma']
                         if info_v['en_veda_nacional']
                         else info_v['veda_regional_info']['norma']
                     ),
