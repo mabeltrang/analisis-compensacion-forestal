@@ -22,8 +22,9 @@ REGIONALES (VEDAS_REGIONALES) con lista de especies verificada en fuente:
   CORPOCESAR Res. 0035/2026 · CAS Acuerdo 386-19/2019 · CAR Acuerdo 021/2018 ·
   CDMB Res. 1986/1984 · CARDER Res. 177/1997 · CVC Acuerdo 17/1973 ·
   CORTOLIMA Acuerdo 10/1983 · CORPOURABA Res. 076395/1995 + 126198/1998 ·
-  CODECHOCO Res. 2535/1987 (solo Riosucio, Unguía, Acandí) · CRA Res. 0025/1996.
-  CORPOCALDAS y CRC: registros heredados, pendientes de re-verificar en fuente.
+  CODECHOCO Res. 2535/1987 (solo Riosucio, Unguía, Acandí) · CRA Res. 0025/1996 ·
+  CORPOCALDAS Res. 810/1996 (actualizada oct/2026).
+  CRC: registro heredado, pendiente de re-verificar en fuente.
 
 Con acto regional identificado pero lista no verificada: CORPOCHIVOR (Res.
   495/2015), CAM (Acuerdo 009/2018, estatuto forestal), CARSUCRE (Res.
@@ -447,13 +448,44 @@ VEDAS_REGIONALES = {
         ]
     },
     "CORPOCALDAS": {
-        "norma": "Res. 810/1996 CORPOCALDAS",
+        "norma": "Res. 810 de 1996 CORPOCALDAS",
         "tipo": "indefinida",
-        "nota": "Veda indefinida en todo el territorio de Caldas (registro heredado; no re-verificado en fuente en la revisión sep/2026)",
+        "nota": ("Veda en la jurisdicción de CORPOCALDAS (Caldas) para tres grupos: "
+                 "(1) maderables — pino colombiano, nogal/cedro negro, hojarasco, "
+                 "molinillo, aceite de caparrapí y roble; (2) musgos, líquenes, "
+                 "quiches y parásitas diferentes a las orquídeas, y productos "
+                 "vegetales conocidos como lama, capote y broza; (3) palma boba / "
+                 "helecho macho (Cyatheaceae y Dicksoniaceae). Las orquídeas no "
+                 "están en esta resolución, pero siguen vedadas por la Res. "
+                 "0213/1977 INDERENA (nacional)."),
         "spp": [
+            {"nombre_comun": "Pino colombiano",
+             "sci_fragmentos": ["podocarpus rospigliosii", "podocarpus montanus",
+                                "podocarpus oleifolius", "retrophyllum rospigliosii",
+                                "decussocarpus rospigliosii", "nageia rospigliosii",
+                                "prumnopitys montana", "nageia oleifolia"]},
             {"nombre_comun": "Nogal / Cedro negro", "sci_fragmentos": ["juglans"]},
-            {"nombre_comun": "Roble andino", "sci_fragmentos": ["quercus humboldtii"]},
-            {"nombre_comun": "Caparrapí", "sci_fragmentos": ["ocotea caparrapi"]},
+            {"nombre_comun": "Hojarasco",
+             "sci_fragmentos": ["talauma caracifragans", "talauma caricifragans",
+                                "talauma caricifragrans", "magnolia caricifragrans"]},
+            {"nombre_comun": "Molinillo",
+             "sci_fragmentos": ["talauma hernandezi", "magnolia hernandezii"]},
+            {"nombre_comun": "Aceite de caparrapí", "sci_fragmentos": ["ocotea caparrapi"]},
+            {"nombre_comun": "Roble",
+             "sci_fragmentos": ["quercus humboldtii", "quercus lindenii",
+                                "quercus tolimensis", "quercus almaguerensis"]},
+            {"nombre_comun": "Musgos, líquenes, quiches y parásitas (excepto orquídeas); "
+                             "lama, capote y broza",
+             "sci_fragmentos": ["bryophyta", "briofita", "musgo", "liquen", "lichen",
+                                "quiche", "bromeliaceae", "tillandsia", "guzmania",
+                                "vriesea", "werauhia", "catopsis", "aechmea"]},
+            # "lama", "capote" y "broza" son productos, no taxones: no se usan
+            # como fragmentos ("lama" haría falso positivo con p. ej. Calamagrostis).
+            {"nombre_comun": "Palma boba / Helecho macho / Palma de helecho",
+             "sci_fragmentos": ["cyatheaceae", "dicksoniaceae", "dicksonia",
+                                "alsophila", "cyathea", "nephelea", "sphaeropteris",
+                                "trichipteris", "cnemidaria", "palma boba",
+                                "helecho macho", "palma de helecho"]},
         ]
     },
     "CAS": {
