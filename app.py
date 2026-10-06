@@ -594,6 +594,19 @@ def _cargar_especies_por_zona_vida():
         return pd.DataFrame()
     df = pd.read_csv(path).fillna("")
 
+    # Solo especies nativas de Colombia: se descarta cualquier exótica o
+    # especie que no se distribuya en el país (config/especies_no_nativas.py).
+    # Doble control: (1) la fila debe estar marcada explícitamente como
+    # "Nativa" en la columna 'Origen en Colombia' — una fila nueva sin esa
+    # marca no se muestra; (2) aunque esté marcada, se descarta si figura en
+    # la lista de exóticas / no presentes en Colombia.
+    from config.especies_no_nativas import es_no_apta_colombia
+    if "Origen en Colombia" in df.columns:
+        df = df[df["Origen en Colombia"].str.strip().str.lower() == "nativa"]
+    else:
+        df = df.iloc[0:0]
+    df = df[~df["Nombre científico"].apply(es_no_apta_colombia)].reset_index(drop=True)
+
     mads_idx, _cites_idx, iucn_idx, _mg, _cg = _cargar_indices_amenaza()
 
     def _amenaza_repo(nombre_cientifico):
@@ -2548,7 +2561,8 @@ with tab7:
                     "Código zona de vida": 14, "Zona de vida": 28,
                     "Nombre científico": 24, "Nombre común": 22,
                     "Familia": 18, "Grupo sucesional": 16,
-                    "Amenaza (IUCN/Nacional)": 14, "Observaciones": 55,
+                    "Amenaza (IUCN/Nacional)": 14, "Origen en Colombia": 14,
+                    "Observaciones": 55,
                 }
                 for i, h in enumerate(headers, start=1):
                     ws.column_dimensions[get_column_letter(i)].width = widths.get(h, 18)
