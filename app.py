@@ -1262,48 +1262,47 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
     # ── Navegador de vedas por CAR (las 31 CAR de Colombia) ──────────────────
     st.markdown("---")
     _section("Vedas Nacionales y por CAR — Mapa Completo (31 CAR)", "🏛️")
-    cars_disponibles = ["NACIONAL"] + sorted(VEDAS_REGIONALES.keys())
+    # La veda NACIONAL se muestra siempre, sin importar la CAR elegida.
+    st.markdown("### 🇨🇴 NACIONAL — 🔴 Veda indefinida (todo el territorio)")
+    st.caption(
+        "Aplica siempre, en cualquier jurisdicción, además de la veda regional de la CAR. "
+        "Fuentes: Res. 0316/1974, 0213/1977 y 0801/1977 INDERENA · "
+        "Ley 61/1985 · Res. 1602/1995 + Res. 020/1996 MADS"
+    )
+    rows_nac = [
+        {
+            "Nombre común": sp["nombre_comun"],
+            "sci": sp["sci_fragmentos"],
+            **{f"Amenaza {k}": v for k, v in
+               _amenaza_de_fragmentos(tuple(sp["sci_fragmentos"])).items()},
+            "Norma": sp["norma"],
+            "Nota": sp["nota"],
+        }
+        for sp in VEDAS_NACIONALES
+    ]
+    st.markdown(_tabla_vedas_html(rows_nac, [
+        ("Nombre común", "Nombre común", "texto"),
+        ("Nombre científico", "sci", "sci"),
+        ("MADS", "Amenaza MADS", "badge"), ("UICN", "Amenaza UICN", "badge"),
+        ("CITES", "Amenaza CITES", "badge"),
+        ("Norma", "Norma", "texto"),
+        ("Nota", "Nota", "largo"),
+    ]), unsafe_allow_html=True)
+    st.markdown("---")
+
+    cars_disponibles = sorted(VEDAS_REGIONALES.keys())
     default_cars = [car_proyecto] if car_proyecto and car_proyecto in VEDAS_REGIONALES else []
     cars_sel = st.multiselect(
-        "Selecciona 'NACIONAL' y/o una o varias CAR para ver su listado de especies vedadas",
+        "Selecciona una o varias CAR para ver su veda regional (la nacional ya se muestra arriba)",
         options=cars_disponibles,
         default=default_cars,
-        help="Si seleccionaste una CAR en el sidebar, aparece preseleccionada. "
-             "Elige 'NACIONAL' para ver las vedas que aplican en todo el país.",
+        help="Si seleccionaste una CAR en el sidebar, aparece preseleccionada.",
         key=f"vedas_cars_sel{key_suffix}"
     )
     if not cars_sel:
-        st.caption("Selecciona al menos una opción para ver sus vedas.")
+        st.caption("Selecciona una CAR para ver su veda regional.")
     else:
         for car_key in cars_sel:
-            if car_key == "NACIONAL":
-                st.markdown("### 🇨🇴 NACIONAL — 🔴 Veda indefinida (todo el territorio)")
-                st.caption(
-                    "Fuentes: Res. 0316/1974, 0213/1977 y 0801/1977 INDERENA · "
-                    "Ley 61/1985 · Res. 1602/1995 + Res. 020/1996 MADS"
-                )
-                rows_nac = [
-                    {
-                        "Nombre común": sp["nombre_comun"],
-                        "sci": sp["sci_fragmentos"],
-                        **{f"Amenaza {k}": v for k, v in
-                           _amenaza_de_fragmentos(tuple(sp["sci_fragmentos"])).items()},
-                        "Norma": sp["norma"],
-                        "Nota": sp["nota"],
-                    }
-                    for sp in VEDAS_NACIONALES
-                ]
-                st.markdown(_tabla_vedas_html(rows_nac, [
-                    ("Nombre común", "Nombre común", "texto"),
-                    ("Nombre científico", "sci", "sci"),
-                    ("MADS", "Amenaza MADS", "badge"), ("UICN", "Amenaza UICN", "badge"),
-                    ("CITES", "Amenaza CITES", "badge"),
-                    ("Norma", "Norma", "texto"),
-                    ("Nota", "Nota", "largo"),
-                ]), unsafe_allow_html=True)
-                st.markdown("---")
-                continue
-
             datos = VEDAS_REGIONALES[car_key]
             tipo_badge = (
                 "🔴 Veda indefinida" if datos.get("tipo") == "indefinida"
@@ -1332,7 +1331,7 @@ def _render_tab_consulta_vedas(key_suffix="", todas_vedas=None, car_proyecto="")
                     ("CITES", "Amenaza CITES", "badge"),
                 ]), unsafe_allow_html=True)
             elif datos.get("solo_nacional"):
-                st.caption("👉 Sin especies propias — consulta la fila 'NACIONAL' de arriba.")
+                st.caption("👉 Sin especies propias — aplica la veda NACIONAL de arriba.")
             st.markdown("---")
 
 
