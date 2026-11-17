@@ -489,9 +489,12 @@ def build_excel(datos):
         )
         hi.nota("Fuentes: RUNAP, REAA, OMEC, Bosque Seco Tropical (IAvH), Reservas Forestales Ley 2.ª "
                 "y portafolio de la CAR, consultados en Google Earth Engine.")
+    elif datos["iniciativas"] == []:
+        hi.nota("No se encontraron iniciativas de conservación en el municipio ni en la subzona hidrográfica.",
+                color="1E7B34", italica=False)
     else:
-        hi.nota("Aún no se consultaron las iniciativas. En la pestaña Contexto pulsa "
-                "«Consultar iniciativas de conservación (GEE)» y vuelve a descargar el Excel.",
+        hi.nota("No se pudieron obtener las iniciativas desde Google Earth Engine al generar este archivo. "
+                "En la pestaña Contexto usa «Reintentar consulta» y vuelve a descargar el Excel.",
                 color="A04A00", italica=False, alto=30)
 
     # ── 9. Especies para compensación (Tabla 14) ─────────────────────────────
