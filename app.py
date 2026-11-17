@@ -1671,13 +1671,21 @@ with tab1:
 
     _cache_key = f"iniciativas_{ctx.get('municipio','')}_{ctx.get('szh','')}"
 
-    if st.button("🌿 Consultar iniciativas de conservación (GEE)", key="btn_iniciativas"):
-        with st.spinner("Consultando RUNAP / REAA / OMEC / BST / Reservas en GEE..."):
+    # Se consultan solas al procesar el proyecto (antes había que pulsar un
+    # botón). Quedan en caché por municipio + SZH, así que cambiar de pestaña
+    # o mover un selector no vuelve a consultar GEE, y la pestaña Exportar
+    # siempre las encuentra para el Excel.
+    @st.cache_data(show_spinner=False, ttl=6 * 3600, max_entries=16)
+    def _iniciativas_cache(clave, _ctx):
+        return iniciativas.obtener_iniciativas(_ctx)
+
+    if _cache_key not in st.session_state:
+        with st.spinner("Consultando iniciativas de conservación en GEE (RUNAP, REAA, OMEC, BST, reservas)..."):
             try:
-                filas_iniciativas = iniciativas.obtener_iniciativas(ctx)
-                st.session_state[_cache_key] = filas_iniciativas
+                st.session_state[_cache_key] = _iniciativas_cache(_cache_key, ctx)
             except Exception as e:
-                st.error(f"❌ Error consultando iniciativas: {e}")
+                st.error(f"❌ No se pudieron consultar las iniciativas en GEE: {e}")
+                st.button("🔄 Reintentar consulta", key="btn_iniciativas_reintentar")
 
     if _cache_key in st.session_state:
         df_ini = iniciativas.deduplicar_iniciativas(st.session_state[_cache_key])
@@ -2258,8 +2266,8 @@ with tab5:
         nombre_mun = ctx.get("municipio", "proyecto").replace(" ", "_")
         _key_ini = f"iniciativas_{ctx.get('municipio','')}_{ctx.get('szh','')}"
         if _key_ini not in st.session_state:
-            st.info("Las iniciativas de conservación aún no se han consultado. Si las quieres en el Excel, "
-                    "pulsa «Consultar iniciativas de conservación (GEE)» en la pestaña Contexto antes de descargar.")
+            st.warning("No se pudieron obtener las iniciativas de conservación desde GEE, así que el Excel "
+                       "saldrá sin ellas. Usa «Reintentar consulta» en la pestaña Contexto y vuelve a descargar.")
         st.download_button(
             label="⬇️ Descargar Excel del plan de compensación",
             data=_build_excel_informe(_datos_excel()),
