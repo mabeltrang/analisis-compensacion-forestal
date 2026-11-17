@@ -1545,14 +1545,17 @@ _zv_auto, _zv_motivo = detectar_zona_vida(_bioma_ctx, _elev_ctx)
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS PRINCIPALES
 # ══════════════════════════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+# Orden del flujo: datos → cálculo → apoyo → exportar al final.
+# (El código de cada pestaña sigue en el mismo orden del archivo; solo cambia
+# el orden visual, así que la nota de session_state de Exportar sigue valiendo.)
+tab1, tab2, tab3, tab4, tab6, tab7, tab5 = st.tabs([
     "📍 Contexto",
     "🌳 FCAFU",
     "📐 ATC",
     "🌱 Adicionalidad",
-    "📥 Exportar",
     "🔍 Consulta y Vedas",
-    "🌳 Especies Zona de Vida",
+    "🌿 Especies por zona de vida",
+    "📥 Exportar",
 ])
 
 
@@ -1661,227 +1664,189 @@ for cob, d in fcafu_por_cobertura.items():
 # TAB 2 — FCAFU
 # ════════════════════════════════════════════════════════════════════════
 with tab2:
-
-    if todas_vedas:
-        n_nac = sum(v['n_individuos'] for v in todas_vedas if 'nacional' in v['nivel'])
-        n_reg = sum(v['n_individuos'] for v in todas_vedas if v['nivel'] == 'regional')
-        st.error(
-            f"🚫 **Especies en veda detectadas** — "
-            f"{n_nac} ind. en veda nacional · {n_reg} ind. en veda regional"
-        )
-        with st.expander(f"📋 Detalle especies en veda ({len(todas_vedas)} registros)", expanded=True):
-            df_v = pd.DataFrame(todas_vedas)[
-                ['cobertura','nombre_cientifico','n_individuos','nivel','norma','alerta']
-            ]
-            df_v.columns = ['Cobertura','Nombre científico','N ind.','Nivel','Norma','Alerta']
-            _am = df_v['Nombre científico'].apply(_amenaza_de_nombre).apply(pd.Series)
-            _am.columns = [f"Amenaza {c}" for c in _am.columns]
-            df_v = pd.concat([df_v, _am], axis=1)
-            _nivel_txt = {"nacional": "Nacional", "regional": "Regional",
-                          "nacional+regional": "Nacional + regional"}
-            st.markdown(_tabla_vedas_html(
-                [{**r, "Nivel": _nivel_txt.get(r["Nivel"], r["Nivel"])}
-                 for r in df_v.to_dict("records")],
-                [("Cobertura", "Cobertura", "texto"),
-                 ("Nombre científico", "Nombre científico", "sci"),
-                 ("N ind.", "N ind.", "texto"),
-                 ("Nivel de veda", "Nivel", "texto"),
-                 ("MADS", "Amenaza MADS", "badge"), ("UICN", "Amenaza UICN", "badge"),
-                 ("CITES", "Amenaza CITES", "badge"),
-                 ("Norma", "Norma", "texto"),
-                 ("Alerta", "Alerta", "largo")]), unsafe_allow_html=True)
-            if any('nacional' in v['nivel'] for v in todas_vedas):
-                st.warning(
-                    "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
-                    "1. Censo al 100% de individuos fustales de especies vedadas.\n"
-                    "2. Medidas de manejo in situ: rescate y reubicación.\n"
-                    "3. Medidas ex situ: propagación en vivero y siembra en área de compensación.\n"
-                    "4. Shapefile con localización de cada individuo vedado."
-                )
-            if any(v['nivel'] == 'regional' for v in todas_vedas):
-                car_txt = car_proyecto or "la CAR competente"
-                st.warning(
-                    f"**Obligaciones — veda regional {car_txt}:**\n"
-                    "1. Solicitud formal ante GIT Forestal de la CAR.\n"
-                    "2. Concepto técnico favorable.\n"
-                    "3. Justificación de interés público o riesgo.\n"
-                    "4. Medidas de compensación/reposición que determine la CAR."
-                )
-
-    # ── Tabla FCAFU resumen ──────────────────────────────────────────────
-    _section("Resumen FCAFU por Cobertura", "🌳")
-    st.markdown(
-        f"**Fórmula Manual 2026:** `FCAFU = 1 + A + B + C`  "
-        f"&nbsp;&nbsp;Criterio B: `CR=1.0 · EN=0.6 · VU=0.4 · NT=0` (Tabla 4, Res. 0305/2026)",
-        unsafe_allow_html=True
-    )
+    _section("FCAFU por cobertura", "🌳")
+    st.caption("FCAFU = 1 + A + B + C  ·  Manual 2026 (Res. 0305/2026 MADS)")
 
     if fcafu_por_cobertura:
-        filas_fcafu = []
-        for cob, d in fcafu_por_cobertura.items():
-            filas_fcafu.append({
-                "Cobertura":          cob,
-                "N":                  d.get('N', 0),
-                "S":                  d.get('S', 0),
-                "A":                  round(d.get('A', 0), 3),
-                "B":                  round(d.get('B', 0), 4),
-                "C":                  round(d.get('C', 0), 3),
-                "FCAFU":              round(d.get('FCAFU', 0), 3),
-            })
-        df_fcafu = pd.DataFrame(filas_fcafu)
+        # ── Alerta de vedas: una línea; el detalle va plegado ─────────────
+        if todas_vedas:
+            n_nac = sum(v['n_individuos'] for v in todas_vedas if 'nacional' in v['nivel'])
+            n_reg = sum(v['n_individuos'] for v in todas_vedas if v['nivel'] == 'regional')
+            st.error(
+                f"🚫 Hay especies en veda: {n_nac} ind. en veda nacional y "
+                f"{n_reg} ind. en veda regional. No cambian el FCAFU, pero generan "
+                f"obligaciones ante la CAR."
+            )
+            with st.expander(f"Ver especies en veda y obligaciones ({len(todas_vedas)} registros)"):
+                df_v = pd.DataFrame(todas_vedas)[
+                    ['cobertura', 'nombre_cientifico', 'n_individuos', 'nivel', 'norma', 'alerta']
+                ]
+                df_v.columns = ['Cobertura', 'Nombre científico', 'N ind.', 'Nivel', 'Norma', 'Alerta']
+                _am = df_v['Nombre científico'].apply(_amenaza_de_nombre).apply(pd.Series)
+                _am.columns = [f"Amenaza {c}" for c in _am.columns]
+                df_v = pd.concat([df_v, _am], axis=1)
+                _nivel_txt = {"nacional": "Nacional", "regional": "Regional",
+                              "nacional+regional": "Nacional + regional"}
+                st.markdown(_tabla_vedas_html(
+                    [{**r, "Nivel": _nivel_txt.get(r["Nivel"], r["Nivel"])}
+                     for r in df_v.to_dict("records")],
+                    [("Cobertura", "Cobertura", "texto"),
+                     ("Nombre científico", "Nombre científico", "sci"),
+                     ("N ind.", "N ind.", "texto"),
+                     ("Nivel de veda", "Nivel", "texto"),
+                     ("MADS", "Amenaza MADS", "badge"), ("UICN", "Amenaza UICN", "badge"),
+                     ("CITES", "Amenaza CITES", "badge"),
+                     ("Norma", "Norma", "texto"),
+                     ("Alerta", "Alerta", "largo")]), unsafe_allow_html=True)
+                if any('nacional' in v['nivel'] for v in todas_vedas):
+                    st.warning(
+                        "**Obligaciones — veda nacional (Circular MADS 8201-2-808/2019):**\n"
+                        "1. Censo al 100% de individuos fustales de especies vedadas.\n"
+                        "2. Medidas de manejo in situ: rescate y reubicación.\n"
+                        "3. Medidas ex situ: propagación en vivero y siembra en área de compensación.\n"
+                        "4. Shapefile con localización de cada individuo vedado."
+                    )
+                if any(v['nivel'] == 'regional' for v in todas_vedas):
+                    car_txt = car_proyecto or "la CAR competente"
+                    st.warning(
+                        f"**Obligaciones — veda regional {car_txt}:**\n"
+                        "1. Solicitud formal ante GIT Forestal de la CAR.\n"
+                        "2. Concepto técnico favorable.\n"
+                        "3. Justificación de interés público o riesgo.\n"
+                        "4. Medidas de compensación/reposición que determine la CAR."
+                    )
+
+        # ── Resultado: una tarjeta por cobertura + tabla con los criterios en orden ──
+        if len(fcafu_por_cobertura) <= 4:
+            _cols = st.columns(len(fcafu_por_cobertura))
+            for _col, (cob, d) in zip(_cols, fcafu_por_cobertura.items()):
+                with _col:
+                    _metric_card(
+                        cob, f"{d.get('FCAFU', 0):.2f}",
+                        f"A {d.get('A', 0):.2f} · B {d.get('B', 0):.2f} · C {d.get('C', 0):.2f}"
+                    )
+
+        df_fcafu = pd.DataFrame([{
+            "Cobertura":           cob,
+            "N ind.":              d.get('N', 0),
+            "S spp.":              d.get('S', 0),
+            "A · transformación":  round(d.get('A', 0), 3),
+            "B · amenaza":         round(d.get('B', 0), 4),
+            "C · diversidad":      round(d.get('C', 0), 3),
+            "FCAFU":               round(d.get('FCAFU', 0), 3),
+        } for cob, d in fcafu_por_cobertura.items()])
         st.dataframe(df_fcafu, use_container_width=True, hide_index=True)
 
-        st.info(
-            "**Criterio B** toma en cuenta las tres fuentes de amenaza "
-            "(MADS Res. 0126/2024, CITES e IUCN) y usa el **valor máximo** "
-            "por individuo — un solo valor, sin escenarios separados. "
-            "`[MARCA_VERSION: max-B-v2]`"
-        )
+        # ── Detalle por criterio, en el orden de la fórmula ───────────────
+        st.markdown("#### Cómo se calculó cada criterio")
+        t_a, t_b, t_c = st.tabs(["A · Transformación", "B · Amenaza", "C · Diversidad"])
 
-        # ── Resumen de TODAS las especies y su estado de amenaza ──────────
-        # A diferencia del "Desglose Criterio B" (que solo aparece si hay
-        # especies amenazadas/vedadas), este resumen se muestra siempre,
-        # aunque ninguna especie esté en peligro — mismo estilo de tabla
-        # que la pestaña "Consulta y Vedas".
-        todas_especies_proyecto = sorted({
-            sp for d in fcafu_por_cobertura.values()
-            for sp in d.get('todas_especies', [])
-        })
-        if todas_especies_proyecto:
-            with st.expander(
-                f"📋 Resumen de especies y estado de amenaza ({len(todas_especies_proyecto)} spp.)",
-                expanded=True
-            ):
-                mads_idx, cites_idx, iucn_idx, mads_genero_idx, cites_genero_idx = _cargar_indices_amenaza()
-                resultados_resumen = [
-                    _consultar_amenaza_sp(
-                        sp, mads_idx, cites_idx, iucn_idx,
-                        car_filtro=car_proyecto, mads_genero_idx=mads_genero_idx,
-                        cites_genero_idx=cites_genero_idx,
-                    )
-                    for sp in todas_especies_proyecto
-                ]
-                st.markdown(
-                    _tabla_consulta_html(
-                        resultados_resumen,
-                        mostrar_mads=True, mostrar_cites=True, mostrar_iucn=True,
-                        mostrar_veda=True, car_filtro=car_proyecto,
-                    ),
-                    unsafe_allow_html=True
-                )
+        with t_a:
+            st.caption(
+                "Valor fijo por tipo de cobertura (Tabla 3, Res. 0305/2026). "
+                "Coberturas transformadas → A = 0; naturales → A > 0 (hasta 1,0 en bosque denso)."
+            )
+            st.dataframe(pd.DataFrame([{
+                "Cobertura":      cob,
+                "N ind.":         d.get('N', 0),
+                "Grado":          "Natural" if d.get('A', 0) > 0 else "Transformado",
+                "A":              round(d.get('A', 0), 3),
+            } for cob, d in fcafu_por_cobertura.items()]),
+                use_container_width=True, hide_index=True)
 
-        # ── Desglose criterio B ──────────────────────────────────────────
-        amenazadas_total = []
-        for cob, d in fcafu_por_cobertura.items():
-            for sp in d.get('amenazadas', []):
-                amenazadas_total.append({**sp, 'cobertura': cob, 'N_cob': d.get('N', 0)})
+        with t_b:
+            st.markdown(
+                r"$B = \dfrac{\sum_{i=1}^{N} v_i}{N}$, donde $v_i$ es el valor de amenaza "
+                r"del individuo $i$: CR = 1,0 · EN = 0,6 · VU = 0,4 · NT y LC = 0 "
+                "(Tabla 4, Res. 0305/2026)."
+            )
+            st.caption(
+                "Para cada individuo se toma la categoría más alta entre MADS (Res. 0126/2024), "
+                "CITES e IUCN."
+            )
 
-        if amenazadas_total:
-            n_sp_amen = len({sp['nombre_cientifico'] for sp in amenazadas_total})
-            n_ind_amen = sum(sp['n_individuos'] for sp in amenazadas_total)
-            with st.expander(
-                f"🔍 Desglose Criterio B — {n_ind_amen} individuos en {n_sp_amen} spp.",
-                expanded=False
-            ):
-                st.markdown(
-                    r"**Fórmula:** $B = \dfrac{\sum_{i=1}^{N} v_i}{N}$  "
-                    "donde **vᵢ** = valor de amenaza del individuo *i*"
-                )
-
+            amenazadas_total = [
+                {**sp, 'cobertura': cob}
+                for cob, d in fcafu_por_cobertura.items() for sp in d.get('amenazadas', [])
+            ]
+            if amenazadas_total:
                 for cob, d in fcafu_por_cobertura.items():
                     spp_cob = d.get('amenazadas', [])
                     if not spp_cob:
                         continue
-                    N  = d.get('N', 0)
-                    B  = round(d.get('B', 0), 4)
-
-                    st.markdown(
-                        f"**{cob}** — N={N} ind. &nbsp; B=`{B}`",
-                        unsafe_allow_html=True
-                    )
+                    N = d.get('N', 0)
+                    st.markdown(f"**{cob}** — N = {N} ind., B = `{round(d.get('B', 0), 4)}`")
                     rows_b = []
                     for sp in spp_cob:
                         n_sp = sp.get('n_individuos', 1)
-                        v    = sp.get('valor_b', 0.0)
-                        ap     = sp.get('cites_apendice',  '—')
-                        cat    = sp.get('categoria_amenaza','—')
-                        cat_ui = sp.get('cat_uicn',        '—')
+                        v = sp.get('valor_b', 0.0)
                         origen = []
                         if sp.get('categoria_por_genero'):
                             origen.append('🧬 género')
                         if sp.get('valor_b_por_veda'):
                             origen.append('🚫 veda')
                         rows_b.append({
-                            'Nombre científico': sp.get('nombre_cientifico',''),
-                            'Cat. Res.0126':     cat,
-                            'CITES':             ap,
-                            'Cat. UICN':         cat_ui,
-                            'Valor B (máximo)':  v,
+                            'Nombre científico': sp.get('nombre_cientifico', ''),
+                            'MADS':              sp.get('categoria_amenaza', '—'),
+                            'CITES':             sp.get('cites_apendice', '—'),
+                            'IUCN':              sp.get('cat_uicn', '—'),
+                            'v (máximo)':        v,
                             'N ind.':            n_sp,
-                            'Aporte a B':        sp.get('aporte_b', round(v*n_sp/N,4) if N else 0),
+                            'Aporte a B':        sp.get('aporte_b', round(v * n_sp / N, 4) if N else 0),
                             'Origen':            ' + '.join(origen) if origen else '—',
                         })
-                    st.dataframe(
-                        pd.DataFrame(rows_b),
-                        use_container_width=True, hide_index=True
+                    st.dataframe(pd.DataFrame(rows_b), use_container_width=True, hide_index=True)
+                if any(sp.get('categoria_por_genero') for sp in amenazadas_total):
+                    st.caption(
+                        "🧬 género: categoría MADS inferida por el género (nombre indeterminado "
+                        "en un género de config/generos_alta_amenaza.py)."
                     )
-                    if any(sp.get('categoria_por_genero') for sp in spp_cob):
-                        st.caption(
-                            "🧬 género: categoría MADS inferida por fallback de género "
-                            "curado (nombre indeterminado en un género de "
-                            "config/generos_alta_amenaza.py)."
+            else:
+                st.success("Ninguna especie del inventario tiene categoría de amenaza: B = 0 en todas las coberturas.")
+
+            todas_especies_proyecto = sorted({
+                sp for d in fcafu_por_cobertura.values() for sp in d.get('todas_especies', [])
+            })
+            if todas_especies_proyecto:
+                with st.expander(f"Estado de amenaza de todas las especies ({len(todas_especies_proyecto)} spp.)"):
+                    mads_idx, cites_idx, iucn_idx, mads_genero_idx, cites_genero_idx = _cargar_indices_amenaza()
+                    resultados_resumen = [
+                        _consultar_amenaza_sp(
+                            sp, mads_idx, cites_idx, iucn_idx,
+                            car_filtro=car_proyecto, mads_genero_idx=mads_genero_idx,
+                            cites_genero_idx=cites_genero_idx,
                         )
-                    st.markdown("---")
+                        for sp in todas_especies_proyecto
+                    ]
+                    st.markdown(
+                        _tabla_consulta_html(
+                            resultados_resumen,
+                            mostrar_mads=True, mostrar_cites=True, mostrar_iucn=True,
+                            mostrar_veda=True, car_filtro=car_proyecto,
+                        ),
+                        unsafe_allow_html=True
+                    )
 
-        # ── Desglose criterio A ──────────────────────────────────────────
-        with st.expander("🌿 Desglose Criterio A — Grado de transformación por cobertura", expanded=False):
+        with t_c:
             st.markdown(
-                r"**Fórmula:** valor A fijo por tipo de cobertura según Tabla 3, Res. 0305/2026.  "
-                "Coberturas transformadas → A=0; coberturas naturales → A>0 (hasta 1.0 para bosque denso)."
-            )
-            filas_a = []
-            for cob, d in fcafu_por_cobertura.items():
-                filas_a.append({
-                    "Cobertura":    cob,
-                    "N ind.":       d.get('N', 0),
-                    "Valor A":      round(d.get('A', 0), 3),
-                    "Grado transf.": "Natural" if d.get('A', 0) > 0 else "Transformado",
-                    "Aporte a FCAFU": f"+{round(d.get('A',0),3)}"
-                })
-            st.dataframe(pd.DataFrame(filas_a), use_container_width=True, hide_index=True)
-            st.caption(
-                "Fuente: Tabla 3 (Resolución 0305/2026 MADS). "
-                "Para coberturas transformadas (pastos, cultivos, urbano) A=0 — "
-                "el factor de ajuste viene exclusivamente de B y C."
-            )
-
-        # ── Desglose criterio C ──────────────────────────────────────────
-        with st.expander("🔢 Desglose Criterio C — Diversidad (S/N) por cobertura", expanded=False):
-            st.markdown(
-                r"**Fórmula:** $C = f\!\left(\dfrac{S}{N}\right)$  "
-                "donde **S** = riqueza de especies y **N** = total de individuos inventariados."
+                r"$C = f\!\left(\dfrac{S}{N}\right)$, donde $S$ es la riqueza de especies y "
+                r"$N$ el total de individuos. Mayor diversidad relativa → mayor C; S/N = 1 fuerza C = 1,0."
             )
             filas_c = []
             for cob, d in fcafu_por_cobertura.items():
-                n  = d.get('N', 0)
-                s  = d.get('S', 0)
-                sn = round(d.get('SN', s/n if n else 0), 4)
-                c  = round(d.get('C', 0), 3)
+                n = d.get('N', 0)
+                s = d.get('S', 0)
+                sn = round(d.get('SN', s / n if n else 0), 4)
                 filas_c.append({
-                    "Cobertura":   cob,
-                    "N ind.":      n,
-                    "S spp.":      s,
-                    "S/N":         sn,
-                    "Rango S/N":   f"[{round((sn//0.1)*0.1,1):.1f} – {round((sn//0.1)*0.1+0.1,1):.1f})",
-                    "Valor C":     c,
-                    "Aporte a FCAFU": f"+{c}",
+                    "Cobertura": cob,
+                    "N ind.":    n,
+                    "S spp.":    s,
+                    "S/N":       sn,
+                    "Rango S/N": f"[{round((sn // 0.1) * 0.1, 1):.1f} – {round((sn // 0.1) * 0.1 + 0.1, 1):.1f})",
+                    "C":         round(d.get('C', 0), 3),
                 })
             st.dataframe(pd.DataFrame(filas_c), use_container_width=True, hide_index=True)
-            st.caption(
-                "Fuente: Tabla de rangos S/N (Resolución 0305/2026 MADS). "
-                "Mayor diversidad relativa → mayor C → mayor FCAFU. "
-                "S/N=1 (todos distintos) fuerza C=1.0."
-            )
+            st.caption("Fuente: tabla de rangos S/N, Res. 0305/2026 MADS.")
 
     else:
         st.warning(
@@ -1894,328 +1859,232 @@ with tab2:
 # TAB 3 — ATC
 # ════════════════════════════════════════════════════════════════════════
 with tab3:
-    _section("Área Total a Compensar (ATC) por Rango", "📐")
-    st.markdown(
-        "**Fórmula:** `ATC = Σ (área_cobertura × (FCAFU + factor_rango))`  "
-        "El criterio B usa el valor máximo entre MADS, CITES e IUCN por individuo."
-    )
+    _section("Área total a compensar (ATC)", "📐")
+    st.caption("ATC = Σ área de la cobertura × (FCAFU + factor del rango)")
 
     if atc_resultados:
-        filas_atc = []
-        for rango_id, data in atc_resultados.items():
-            filas_atc.append({
-                "Rango":               rango_id,
-                "Factor adicional":    data['factor_adicional'],
-                "ATC (ha)":            round(data['atc_total'], 3),
-            })
-        st.dataframe(
-            pd.DataFrame(filas_atc),
-            use_container_width=True, hide_index=True
-        )
+        _rangos = list(atc_resultados.keys())
+        _min_r = min(_rangos, key=lambda r: atc_resultados[r]['atc_total'])
+        _max_r = max(_rangos, key=lambda r: atc_resultados[r]['atc_total'])
+        _m1, _m2 = st.columns(2)
+        with _m1:
+            _metric_card("ATC mínimo", f"{atc_resultados[_min_r]['atc_total']:.2f} ha",
+                         f"{_min_r} (factor +{atc_resultados[_min_r]['factor_adicional']})")
+        with _m2:
+            _metric_card("ATC máximo", f"{atc_resultados[_max_r]['atc_total']:.2f} ha",
+                         f"{_max_r} (factor +{atc_resultados[_max_r]['factor_adicional']})")
 
-        st.markdown("---")
-        st.caption("Criterio B: max(MADS, CITES, UICN) por individuo")
-        for rango_id, data in atc_resultados.items():
-            with st.expander(
-                f"{rango_id} — ATC = {round(data['atc_total'],3)} ha  "
-                f"(factor +{data['factor_adicional']})"
-            ):
-                if data.get('detalles'):
-                    st.dataframe(pd.DataFrame(data['detalles']), use_container_width=True, hide_index=True)
+        # Una sola tabla: filas = coberturas, columnas = rangos (antes: 6 tablas plegadas)
+        _primero = atc_resultados[_rangos[0]].get('detalles', [])
+        _filas = []
+        for det in _primero:
+            cob = det.get('cobertura', '')
+            fila = {
+                "Cobertura":         cob,
+                "Área impacto (ha)": round(det.get('area_impacto_ha', 0), 4),
+                "FCAFU":             det.get('fcafu_base', 0),
+            }
+            for r in _rangos:
+                parcial = next((x.get('atc_parcial', 0) for x in atc_resultados[r].get('detalles', [])
+                                if x.get('cobertura') == cob), 0)
+                fila[f"{r} (+{atc_resultados[r]['factor_adicional']})"] = round(parcial, 3)
+            _filas.append(fila)
+        _total = {"Cobertura": "Total",
+                  "Área impacto (ha)": round(sum(f["Área impacto (ha)"] for f in _filas), 4),
+                  "FCAFU": None}
+        for r in _rangos:
+            _total[f"{r} (+{atc_resultados[r]['factor_adicional']})"] = round(atc_resultados[r]['atc_total'], 3)
+        _filas.append(_total)
+        st.dataframe(pd.DataFrame(_filas), use_container_width=True, hide_index=True)
+        st.caption(
+            "Cada columna de rango muestra el ATC en hectáreas; el número entre paréntesis es el "
+            "factor que se suma al FCAFU. La última fila es el ATC total del rango."
+        )
 
 
 # ════════════════════════════════════════════════════════════════════════
 # TAB 4 — ADICIONALIDAD
 # ════════════════════════════════════════════════════════════════════════
 with tab4:
-    _section("Adicionalidad Esperada por Escenario y Horizonte", "🌱")
+    import math
+    import io as _io
+    import altair as alt
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from PIL import Image
 
-    st.markdown(
-        f"Tasas BAU: **Municipio** `{tasa_bau*100:.3f}%` · "
-        f"**SZH** `{tasa_bau_szh*100:.3f}%` · "
-        f"**ZH** `{tasa_bau_zh*100:.3f}%`"
-    )
+    def _fig_a_jpg_bytes(fig, dpi=150, calidad=92):
+        buf_png = _io.BytesIO()
+        fig.savefig(buf_png, format="png", dpi=dpi, bbox_inches="tight")
+        buf_png.seek(0)
+        img = Image.open(buf_png).convert("RGB")
+        buf_jpg = _io.BytesIO()
+        img.save(buf_jpg, format="JPEG", quality=calidad)
+        plt.close(fig)
+        return buf_jpg.getvalue()
+
+    _section("Adicionalidad esperada", "🌱")
+    _b1, _b2, _b3 = st.columns(3)
+    with _b1:
+        _metric_card("Tasa BAU municipio", f"{tasa_bau*100:.3f} %")
+    with _b2:
+        _metric_card("Tasa BAU subzona hidrográfica", f"{tasa_bau_szh*100:.3f} %")
+    with _b3:
+        _metric_card("Tasa BAU zona hidrográfica", f"{tasa_bau_zh*100:.3f} %")
+
+    if atc_resultados:
+        # ── 1. Hectáreas adicionales por rango: un escenario a la vez ─────
+        st.markdown("#### Hectáreas adicionales por rango")
+        _esc = st.radio(
+            "Escenario", ["Conservar", "Restaurar", "Mix 50/50"],
+            horizontal=True, key="escenario_adic", label_visibility="collapsed",
+        )
+        _filas_e = []
+        for rango_id, data in atc_resultados.items():
+            atc_total = data['atc_total']
+            tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
+            fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
+            if _esc != "Restaurar":
+                fila["Tasa BAU"] = f"{tasa_rango*100:.3f} %"
+            for n in HORIZONTES:
+                if _esc == "Conservar":
+                    v = adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR)
+                elif _esc == "Restaurar":
+                    v = adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR)
+                else:
+                    v = (adicionalidad_conservar(atc_total * 0.5, n, tasa_rango, F_CONSERVAR)
+                         + adicionalidad_restaurar(atc_total * 0.5, n, K_RESTAURAR, F_RESTAURAR))
+                fila[f"{n} años (ha)"] = round(v, 4)
+            _filas_e.append(fila)
+        st.dataframe(pd.DataFrame(_filas_e), use_container_width=True, hide_index=True)
+        st.caption({
+            "Conservar": "Hectáreas que no se pierden frente a la deforestación esperada (tasa BAU del nivel de cada rango).",
+            "Restaurar": f"Hectáreas de cobertura que se recuperan (Chapman-Richards, k = {K_RESTAURAR}, ecosistema: {ecosistema_sel}).",
+            "Mix 50/50": "Mitad del ATC en conservación y mitad en restauración.",
+        }[_esc])
+
+        # ── 2. Curva por hectárea: una sola gráfica ───────────────────────
+        st.markdown("#### Ganancia por hectárea compensada")
+        _alcance = st.radio(
+            "Alcance", ["15 años", "Hasta estabilización"],
+            horizontal=True, key="alcance_curva_adic", label_visibility="collapsed",
+        )
+        _max_full = min(100, max(40, int(round(-math.log(0.05) / K_RESTAURAR / 5) * 5)))
+        _hasta = 15 if _alcance == "15 años" else _max_full
+        _anios = list(range(0, _hasta + 1))
+        _df_wide = pd.DataFrame({
+            "Año": _anios,
+            "Conservar (ha/ha)": [adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) for n in _anios],
+            "Restaurar (ha/ha)": [adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR) for n in _anios],
+        }).set_index("Año")
+        _df_long = _df_wide.reset_index().melt("Año", var_name="Escenario", value_name="Valor")
+        _marcas = [3, 5, 10, 15]
+        _df_m = _df_long[_df_long["Año"].isin(_marcas)]
+
+        _color = alt.Color("Escenario:N", legend=alt.Legend(title=None, orient="top"),
+                           scale=alt.Scale(range=["#2D1B4E", "#9B6FE8"]))
+        _chart = (
+            alt.Chart(pd.DataFrame({"Año": _marcas})).mark_rule(strokeDash=[4, 4], color="gray", opacity=0.35).encode(x="Año:Q")
+            + alt.Chart(_df_long).mark_line(strokeWidth=2.5).encode(
+                x=alt.X("Año:Q", title="Años"),
+                y=alt.Y("Valor:Q", title="ha adicionales / ha compensada"), color=_color)
+            + alt.Chart(_df_m).mark_point(size=60, filled=True).encode(x="Año:Q", y="Valor:Q", color=_color)
+            + alt.Chart(_df_m).mark_text(dy=-10, fontSize=11).encode(
+                x="Año:Q", y="Valor:Q", text=alt.Text("Valor:Q", format=".2f"), color=_color)
+        ).properties(height=360)
+        st.altair_chart(_chart, use_container_width=True)
+        st.caption(
+            f"Conservar usa la tasa BAU del municipio ({tasa_bau*100:.3f} %); Restaurar, el ecosistema "
+            f"{ecosistema_sel} (k = {K_RESTAURAR}). Líneas punteadas: horizontes de 3, 5, 10 y 15 años."
+        )
+
+        _fig, _ax = plt.subplots(figsize=(10, 5.5))
+        for _serie, _c in [("Conservar (ha/ha)", "#2D1B4E"), ("Restaurar (ha/ha)", "#9B6FE8")]:
+            _ax.plot(_df_wide.index, _df_wide[_serie], label=_serie, color=_c, linewidth=2)
+            for _n in _marcas:
+                if _n in _df_wide.index:
+                    _val = _df_wide.loc[_n, _serie]
+                    _ax.plot(_n, _val, "o", color=_c, markersize=5)
+                    _ax.annotate(f"{_val:.2f}", (_n, _val), textcoords="offset points",
+                                 xytext=(0, 8), fontsize=8, ha="center")
+        for _n in _marcas:
+            _ax.axvline(_n, color="gray", linestyle="--", alpha=0.35)
+        _ax.set_xlabel("Años")
+        _ax.set_ylabel("ha adicionales / ha compensada")
+        _ax.set_title(f"Ganancia de cobertura — {ecosistema_sel} ({_alcance.lower()})")
+        _ax.legend()
+        _ax.grid(alpha=0.3)
+
+        _sufijo = "15anios" if _alcance == "15 años" else "completa"
+        _d1, _d2 = st.columns(2)
+        with _d1:
+            st.download_button(
+                "🖼️ Descargar gráfica (JPG)", data=_fig_a_jpg_bytes(_fig),
+                file_name=f"curva_adicionalidad_{_sufijo}_{ecosistema_sel}.jpg",
+                mime="image/jpeg", key="descarga_curva_jpg", use_container_width=True,
+            )
+        with _d2:
+            st.download_button(
+                "⬇️ Descargar datos (CSV)", data=_df_wide.to_csv(index=True).encode("utf-8"),
+                file_name=f"curva_adicionalidad_{_sufijo}_{ecosistema_sel}.csv",
+                mime="text/csv", key="descarga_curva_csv", use_container_width=True,
+            )
+
+        with st.expander("Comparación por hectárea y datos a mayor resolución"):
+            st.dataframe(pd.DataFrame([{
+                "Horizonte":         f"{n} años",
+                "Conservar (ha/ha)": round(adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR), 4),
+                "Restaurar (ha/ha)": round(adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR), 4),
+                "Restaurar / Conservar": (
+                    round(adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
+                          / adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR), 1)
+                    if adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) > 0 else None),
+            } for n in HORIZONTES]), use_container_width=True, hide_index=True)
+
+            _resolucion = st.radio(
+                "Resolución del CSV (15 años)", ["Bimestral", "Mensual"],
+                horizontal=True, key="resolucion_curva_adic",
+            )
+            _paso = {"Bimestral": 2 / 12, "Mensual": 1 / 12}[_resolucion]
+            _t = [round((i + 1) * _paso, 4) for i in range(int(round(15 / _paso)))]
+            _df_fino = pd.DataFrame({
+                "Año": _t,
+                "Conservar (ha/ha)": [round(adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR), 4) for n in _t],
+                "Restaurar (ha/ha)": [round(adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR), 4) for n in _t],
+            })
+            st.download_button(
+                f"⬇️ Descargar CSV {_resolucion.lower()}",
+                data=_df_fino.to_csv(index=False).encode("utf-8"),
+                file_name=f"curva_adicionalidad_{_resolucion.lower()}_{ecosistema_sel}.csv",
+                mime="text/csv", key="descarga_curva_fina",
+            )
+
+        st.info(
+            "**¿Qué horizonte usar?** Compra, usufructo predial (≥ 30 años) o acuerdo de "
+            "conservación a 15 años → columna de 15 años. Acuerdos de 3 a 5 años → la columna "
+            "correspondiente. Restaurar da más hectáreas adicionales; conservar protege "
+            "bosque existente con menor riesgo de falla."
+        )
 
     with st.expander("📖 Metodología y fuentes"):
         st.markdown(f"""
-**CONSERVAR — Fórmula exponencial acumulada**
+**Conservar — fórmula exponencial acumulada**
 ```
 ha_adicional(n) = ha × [1 - (1 - tasa_BAU)ⁿ] × 0.85
 ```
 - Tasa BAU: **Hansen et al. (2013)** [DOI:10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
 - Factor 0.85: **Andam et al. (2008)** [DOI:10.1073/pnas.0800437105](https://doi.org/10.1073/pnas.0800437105) · **Pfaff et al. (2014)** [DOI:10.1016/j.worlddev.2013.01.011](https://doi.org/10.1016/j.worlddev.2013.01.011)
 
----
-**RESTAURAR — Curva Chapman-Richards, recuperación de COBERTURA (no biomasa)**
+**Restaurar — curva Chapman-Richards, recuperación de cobertura (no biomasa)**
 ```
 ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
 ```
 - La variable modelada es **extensión de cobertura vegetal recuperada** — el criterio que exige el Manual 2026 (Cap. I, num. 5.3 Adicionalidad), no biomasa ni carbono.
-- k depende del ecosistema (seleccionable en el sidebar) y corresponde a la categoría "estructura" de **Poorter et al. (2021)** *Science* 374:1370-1376 [DOI:10.1126/science.abh3629](https://doi.org/10.1126/science.abh3629) — recuperación al 90% en 2.5 a 6 décadas según el sitio (mucho más rápido que la curva de *biomasa*, que toma >12 décadas).
-- k actual: **{K_RESTAURAR}** ({ECOSISTEMAS_K[ecosistema_sel]['nombre']}, confianza {ECOSISTEMAS_K[ecosistema_sel]['confianza']}). Ver `config/ecosistemas_k.py` para el detalle y las fuentes por ecosistema.
+- k depende del ecosistema (seleccionable en el sidebar) y corresponde a la categoría "estructura" de **Poorter et al. (2021)** *Science* 374:1370-1376 [DOI:10.1126/science.abh3629](https://doi.org/10.1126/science.abh3629).
+- k actual: **{K_RESTAURAR}** ({ECOSISTEMAS_K[ecosistema_sel]['nombre']}, confianza {ECOSISTEMAS_K[ecosistema_sel]['confianza']}). Ver `config/ecosistemas_k.py`.
 - Factor 0.75: **Crouzeilles et al. (2017)** [DOI:10.1126/sciadv.1701345](https://doi.org/10.1126/sciadv.1701345) · **González-M. et al. (2018)** IAvH BST Colombia
         """)
-
-    if atc_resultados:
-        adic_tab1, adic_tab2, adic_tab3 = st.tabs([
-            "🌳 Conservar", "🌱 Restaurar", "⚖️ Mix & Comparación"
-        ])
-
-        with adic_tab1:
-            st.caption(
-                "Hectáreas que NO se pierden — tasa BAU según unidad del nivel jerárquico"
-            )
-            filas_c = []
-            for rango_id, data in atc_resultados.items():
-                atc_total  = data['atc_total']
-                tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
-                fila = {
-                    "Rango":         rango_id,
-                    "ATC (ha)":      round(atc_total, 2),
-                    "Tasa BAU":      f"{tasa_rango*100:.3f}%",
-                    "Adic/año (ha)": round(adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 4),
-                }
-                for n in HORIZONTES:
-                    fila[f"{n} años (ha)"] = round(
-                        adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR), 4
-                    )
-                filas_c.append(fila)
-            st.dataframe(pd.DataFrame(filas_c), use_container_width=True, hide_index=True)
-
-        with adic_tab2:
-            st.caption(
-                f"Hectáreas que SE ganan — curva Chapman-Richards "
-                f"(k={K_RESTAURAR}, f={F_RESTAURAR}, ecosistema: {ecosistema_sel})"
-            )
-            filas_r = []
-            for rango_id, data in atc_resultados.items():
-                atc_total = data['atc_total']
-                fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
-                for n in HORIZONTES:
-                    fila[f"{n} años (ha)"] = round(
-                        adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR), 4
-                    )
-                filas_r.append(fila)
-            st.dataframe(pd.DataFrame(filas_r), use_container_width=True, hide_index=True)
-            st.caption("💡 Crece rápido los primeros años y se estabiliza conforme el ecosistema madura.")
-
-        with adic_tab3:
-            # Mix 50/50
-            _section("Escenario Mix 50/50", "⚖️")
-            st.caption("50% Conservar + 50% Restaurar del ATC total — tasa BAU por nivel")
-            filas_m = []
-            for rango_id, data in atc_resultados.items():
-                atc_total  = data['atc_total']
-                mitad      = atc_total * 0.5
-                tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
-                fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
-                for n in HORIZONTES:
-                    cons = adicionalidad_conservar(mitad, n, tasa_rango, F_CONSERVAR)
-                    rest = adicionalidad_restaurar(mitad, n, K_RESTAURAR, F_RESTAURAR)
-                    fila[f"Mix {n} años (ha)"] = round(cons + rest, 4)
-                filas_m.append(fila)
-            st.dataframe(pd.DataFrame(filas_m), use_container_width=True, hide_index=True)
-
-            # Comparación por ha
-            _section("Conservar vs Restaurar (por ha compensada)", "📊")
-            st.caption(f"Referencia: tasa BAU municipio `{tasa_bau*100:.3f}%`")
-            filas_comp = []
-            for n in HORIZONTES:
-                cons_ha = adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR)
-                rest_ha = adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
-                filas_comp.append({
-                    "Horizonte":        f"{n} años",
-                    "Conservar (ha/ha)":round(cons_ha, 4),
-                    "Restaurar (ha/ha)":round(rest_ha, 4),
-                    "Ratio Rest/Cons":  round(rest_ha/cons_ha, 1) if cons_ha > 0 else "—",
-                })
-            st.dataframe(pd.DataFrame(filas_comp), use_container_width=True, hide_index=True)
-
-            # ─── Curva de ganancia — resolución seleccionable — ambos métodos ────
-            # ─── Helper: exportar cualquier figura matplotlib a bytes JPG ────
-            import matplotlib
-            matplotlib.use("Agg")
-            import matplotlib.pyplot as plt
-            from PIL import Image
-            import io as _io
-
-            def _fig_a_jpg_bytes(fig, dpi=150, calidad=92):
-                buf_png = _io.BytesIO()
-                fig.savefig(buf_png, format="png", dpi=dpi, bbox_inches="tight")
-                buf_png.seek(0)
-                img = Image.open(buf_png).convert("RGB")
-                buf_jpg = _io.BytesIO()
-                img.save(buf_jpg, format="JPEG", quality=calidad)
-                plt.close(fig)
-                return buf_jpg.getvalue()
-
-            _section("Curva de Ganancia de Cobertura — Año 1 a 15", "📈")
-            st.caption(
-                f"Por hectárea compensada · Conservar (tasa BAU municipio "
-                f"`{tasa_bau*100:.3f}%`) vs Restaurar (`{ecosistema_sel}`, k={K_RESTAURAR})"
-            )
-            _resolucion = st.radio(
-                "Resolución temporal", ["Anual", "Bimestral (cada 2 meses)", "Mensual"],
-                horizontal=True, key="resolucion_curva_adic",
-            )
-            _paso = {"Anual": 1.0, "Bimestral (cada 2 meses)": 2/12, "Mensual": 1/12}[_resolucion]
-            _n_puntos = int(round(15 / _paso))
-            anios_curva = [round((i + 1) * _paso, 4) for i in range(_n_puntos)]
-            df_curva = pd.DataFrame({
-                "Año": anios_curva,
-                "Conservar (ha/ha)": [
-                    round(adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR), 4)
-                    for n in anios_curva
-                ],
-                "Restaurar (ha/ha)": [
-                    round(adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR), 4)
-                    for n in anios_curva
-                ],
-            }).set_index("Año")
-            st.line_chart(df_curva)
-
-            _fig15, _ax15 = plt.subplots(figsize=(9, 5))
-            _ax15.plot(df_curva.index, df_curva["Conservar (ha/ha)"], marker="o",
-                       markersize=3, label="Conservar (ha/ha)", color="#1f4e8c")
-            _ax15.plot(df_curva.index, df_curva["Restaurar (ha/ha)"], marker="o",
-                       markersize=3, label="Restaurar (ha/ha)", color="#5aa9e6")
-            _ax15.set_xlabel("Años")
-            _ax15.set_ylabel("ha adicionales / ha compensada")
-            _ax15.set_title(f"Ganancia de cobertura — 15 años ({ecosistema_sel})")
-            _ax15.legend()
-            _ax15.grid(alpha=0.3)
-
-            _col_d1, _col_d2 = st.columns(2)
-            with _col_d1:
-                st.download_button(
-                    "🖼️ Descargar imagen (JPG) — curva 15 años",
-                    data=_fig_a_jpg_bytes(_fig15),
-                    file_name=f"curva_adicionalidad_15anios_{ecosistema_sel}.jpg",
-                    mime="image/jpeg",
-                    key="descarga_curva_15_jpg",
-                )
-            with _col_d2:
-                st.download_button(
-                    "⬇️ Descargar datos (CSV) — curva 15 años",
-                    data=df_curva.to_csv(index=True).encode("utf-8"),
-                    file_name=f"curva_adicionalidad_15anios_{ecosistema_sel}.csv",
-                    mime="text/csv",
-                    key="descarga_curva_15",
-                )
-            st.caption(
-                "Restaurar parte más rápido (curva asintótica) pero ambas siguen "
-                "creciendo a 15 años sin llegar a estabilizarse del todo. "
-                "Nota: más resolución no cambia la forma de la curva — "
-                "el aplanamiento real ocurre más allá de los 15 años para bs-T."
-            )
-
-            # ─── Vista completa hasta estabilización, con marcadores 3/5/10/15 ────
-            import math
-            import altair as alt
-
-            st.markdown("**Vista completa — curva hasta estabilización**")
-            _max_years_full = min(100, max(40, int(round(-math.log(0.05) / K_RESTAURAR / 5) * 5)))
-            _anios_full = list(range(0, _max_years_full + 1))
-            df_full = pd.DataFrame({
-                "Año": _anios_full * 2,
-                "Escenario": (
-                    ["Conservar (ha/ha)"] * len(_anios_full)
-                    + ["Restaurar (ha/ha)"] * len(_anios_full)
-                ),
-                "Valor": (
-                    [adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) for n in _anios_full]
-                    + [adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR) for n in _anios_full]
-                ),
-            })
-
-            _lineas = alt.Chart(df_full).mark_line().encode(
-                x=alt.X("Año:Q", title="Años"),
-                y=alt.Y("Valor:Q", title="ha adicionales / ha compensada"),
-                color=alt.Color("Escenario:N", legend=alt.Legend(title=None)),
-            )
-
-            _anios_marca = [3, 5, 10, 15]
-            df_marcas = pd.DataFrame({
-                "Año": _anios_marca * 2,
-                "Escenario": (
-                    ["Conservar (ha/ha)"] * len(_anios_marca)
-                    + ["Restaurar (ha/ha)"] * len(_anios_marca)
-                ),
-                "Valor": (
-                    [adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) for n in _anios_marca]
-                    + [adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR) for n in _anios_marca]
-                ),
-            })
-            _puntos = alt.Chart(df_marcas).mark_point(size=70, filled=True).encode(
-                x="Año:Q", y="Valor:Q", color="Escenario:N",
-            )
-            _etiquetas = alt.Chart(df_marcas).mark_text(dy=-10, fontSize=11).encode(
-                x="Año:Q", y="Valor:Q", text=alt.Text("Valor:Q", format=".2f"),
-                color="Escenario:N",
-            )
-            _reglas = alt.Chart(pd.DataFrame({"Año": _anios_marca})).mark_rule(
-                strokeDash=[4, 4], color="gray", opacity=0.4
-            ).encode(x="Año:Q")
-
-            st.altair_chart(
-                (_reglas + _lineas + _puntos + _etiquetas).properties(height=380),
-                use_container_width=True,
-            )
-            _df_full_wide = df_full.pivot(index="Año", columns="Escenario", values="Valor")
-
-            _figF, _axF = plt.subplots(figsize=(10, 5.5))
-            _axF.plot(_df_full_wide.index, _df_full_wide["Conservar (ha/ha)"],
-                      label="Conservar (ha/ha)", color="#1f4e8c")
-            _axF.plot(_df_full_wide.index, _df_full_wide["Restaurar (ha/ha)"],
-                      label="Restaurar (ha/ha)", color="#5aa9e6")
-            for _n in _anios_marca:
-                _axF.axvline(_n, color="gray", linestyle="--", alpha=0.4)
-                for _serie, _color in [("Conservar (ha/ha)", "#1f4e8c"), ("Restaurar (ha/ha)", "#5aa9e6")]:
-                    _val = _df_full_wide.loc[_n, _serie]
-                    _axF.plot(_n, _val, "o", color=_color, markersize=6)
-                    _axF.annotate(f"{_val:.2f}", (_n, _val), textcoords="offset points",
-                                  xytext=(0, 8), fontsize=8, ha="center")
-            _axF.set_xlabel("Años")
-            _axF.set_ylabel("ha adicionales / ha compensada")
-            _axF.set_title(
-                f"Ganancia de cobertura hasta estabilización — {ecosistema_sel} "
-                f"(marcadores en 3/5/10/15 años)"
-            )
-            _axF.legend()
-            _axF.grid(alpha=0.3)
-
-            _col_dF1, _col_dF2 = st.columns(2)
-            with _col_dF1:
-                st.download_button(
-                    "🖼️ Descargar imagen (JPG) — curva completa",
-                    data=_fig_a_jpg_bytes(_figF),
-                    file_name=f"curva_adicionalidad_completa_{ecosistema_sel}.jpg",
-                    mime="image/jpeg",
-                    key="descarga_curva_full_jpg",
-                )
-            with _col_dF2:
-                st.download_button(
-                    "⬇️ Descargar datos (CSV) — curva completa",
-                    data=_df_full_wide.to_csv(index=True).encode("utf-8"),
-                    file_name=f"curva_adicionalidad_completa_{ecosistema_sel}.csv",
-                    mime="text/csv",
-                    key="descarga_curva_full",
-                )
-            st.caption(
-                f"Curva extendida hasta {_max_years_full} años para mostrar el "
-                f"aplanamiento completo (asíntota ≈ {F_RESTAURAR} ha/ha para Restaurar). "
-                f"Líneas grises punteadas: horizontes de decisión (3, 5, 10, 15 años) — "
-                f"los mismos que usa el resto de la app."
-            )
-
-            st.info(
-                "**¿Qué horizonte usar?**\n\n"
-                "- Compra / Usufructo predial (≥ 30 años) → columna de 15 años\n"
-                "- Acuerdo de conservación 15 años → columna de 15 años\n"
-                "- Acuerdo 3–5 años → columna correspondiente\n\n"
-                "**Restaurar** genera más adicionalidad numérica. "
-                "**Conservar** protege bosque existente con menor riesgo de falla."
-            )
 
 
 # ════════════════════════════════════════════════════════════════════════
