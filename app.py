@@ -1381,35 +1381,67 @@ if not impacto_file or not excel_file:
 # ══════════════════════════════════════════════════════════════════════════════
 # PROCESAMIENTO
 # ══════════════════════════════════════════════════════════════════════════════
+@st.cache_resource(show_spinner=False)
+def _init_gee():
+    """Inicializa GEE una sola vez por proceso (antes: en cada interacción)."""
+    ok, msg = utils.init_gee_session()
+    if not ok:
+        raise RuntimeError(msg)   # si falla no se guarda en caché y se reintenta
+    return msg
+
+
 with st.spinner("Conectando a Google Earth Engine..."):
-    success, msg = utils.init_gee_session()
-    if not success:
-        st.error(f"❌ {msg}")
+    try:
+        _init_gee()
+    except RuntimeError as e:
+        st.error(f"❌ {e}")
         st.stop()
 
-with st.spinner("Leyendo polígono de impacto..."):
+# Las etapas pesadas (KMZ + GEE + inventario) se guardan en caché según el
+# contenido de los archivos. Así, mover un selector o cambiar de pestaña ya no
+# vuelve a consultar GEE ni a reprocesar el inventario.
+@st.cache_resource(show_spinner=False, ttl=6 * 3600, max_entries=8)
+def _procesar_geo(kmz_bytes, nombre):
+    gdf = inputs.cargar_poligono_impacto(io.BytesIO(kmz_bytes), nombre)
+    ok, msg = inputs.validar_geometria(gdf)
+    if not ok:
+        raise ValueError(msg)
     try:
-        gdf_impacto = inputs.cargar_poligono_impacto(impacto_file, impacto_file.name)
-        ok, msg = inputs.validar_geometria(gdf_impacto)
-        if not ok:
-            st.error(f"❌ {msg}"); st.stop()
-        gdf_proj = gdf_impacto.to_crs(epsg=3116)
-        area_impacto_ha = gdf_proj.geometry.area.sum() / 10000
+        cob = inputs.extraer_coberturas_de_kmz(io.BytesIO(kmz_bytes), nombre)
+        cob_err = None
     except Exception as e:
-        st.error(f"❌ Error leyendo polígono: {e}"); st.stop()
+        cob, cob_err = {}, str(e)
+    ctx = contexto.obtener_contexto_impacto(gdf)
+    return gdf, cob, cob_err, ctx
 
-with st.spinner("Leyendo coberturas del KMZ..."):
-    try:
-        coberturas_kmz = inputs.extraer_coberturas_de_kmz(impacto_file, impacto_file.name)
-    except Exception as e:
-        st.warning(f"⚠️ No se pudieron leer coberturas del KMZ: {e}")
-        coberturas_kmz = {}
 
-with st.spinner("Obteniendo contexto geográfico + tasas BAU (Hansen GFC)..."):
+@st.cache_data(show_spinner=False, max_entries=8)
+def _procesar_inventario(excel_bytes, dap_min, car):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        tmp.write(excel_bytes)
+        ruta = tmp.name
     try:
-        ctx = contexto.obtener_contexto_impacto(gdf_impacto)
+        return inventario.procesar_inventario(ruta, dap_min=dap_min, car=car)
+    finally:
+        os.unlink(ruta)
+
+
+with st.spinner("Leyendo el KMZ y obteniendo contexto geográfico + tasas BAU (GEE)..."):
+    try:
+        _gdf, _cob, _cob_err, _ctx = _procesar_geo(impacto_file.getvalue(), impacto_file.name)
+    except ValueError as e:
+        st.error(f"❌ {e}"); st.stop()
     except Exception as e:
-        st.error(f"❌ Error contexto GEE: {e}"); st.stop()
+        st.error(f"❌ Error leyendo el KMZ o consultando GEE: {e}"); st.stop()
+
+# Copias: lo que sigue modifica ctx y coberturas, y no debe tocar el caché
+gdf_impacto = _gdf.copy()
+gdf_proj = gdf_impacto.to_crs(epsg=3116)
+area_impacto_ha = gdf_proj.geometry.area.sum() / 10000
+coberturas_kmz = dict(_cob)
+ctx = dict(_ctx)
+if _cob_err:
+    st.warning(f"⚠️ No se pudieron leer coberturas del KMZ: {_cob_err}")
 
 # ─── CAR competente: automática por municipio/departamento, con override manual ───
 _car_detectada = ctx.get('car')
@@ -1443,13 +1475,7 @@ else:
 
 with st.spinner("Procesando inventario forestal (criterios A, B, C)..."):
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-            tmp.write(excel_file.getbuffer())
-            excel_path = tmp.name
-        fcafu_por_cobertura = inventario.procesar_inventario(
-            excel_path, dap_min=dap_min, car=car_proyecto
-        )
-        os.unlink(excel_path)
+        fcafu_por_cobertura = _procesar_inventario(excel_file.getvalue(), dap_min, car_proyecto)
     except Exception as e:
         st.error(f"❌ Error procesando inventario: {e}"); st.stop()
 
@@ -1936,100 +1962,100 @@ with tab4:
     if atc_resultados:
         # ── 1. Hectáreas adicionales por rango: un escenario a la vez ─────
         st.markdown("#### Hectáreas adicionales por rango")
-        _esc = st.radio(
-            "Escenario", ["Conservar", "Restaurar", "Mix 50/50"],
-            horizontal=True, key="escenario_adic", label_visibility="collapsed",
-        )
-        _filas_e = []
-        for rango_id, data in atc_resultados.items():
-            atc_total = data['atc_total']
-            tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
-            fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
-            if _esc != "Restaurar":
-                fila["Tasa BAU"] = f"{tasa_rango*100:.3f} %"
-            for n in HORIZONTES:
-                if _esc == "Conservar":
-                    v = adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR)
-                elif _esc == "Restaurar":
-                    v = adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR)
-                else:
-                    v = (adicionalidad_conservar(atc_total * 0.5, n, tasa_rango, F_CONSERVAR)
-                         + adicionalidad_restaurar(atc_total * 0.5, n, K_RESTAURAR, F_RESTAURAR))
-                fila[f"{n} años (ha)"] = round(v, 4)
-            _filas_e.append(fila)
-        st.dataframe(pd.DataFrame(_filas_e), use_container_width=True, hide_index=True)
-        st.caption({
+        _desc = {
             "Conservar": "Hectáreas que no se pierden frente a la deforestación esperada (tasa BAU del nivel de cada rango).",
             "Restaurar": f"Hectáreas de cobertura que se recuperan (Chapman-Richards, k = {K_RESTAURAR}, ecosistema: {ecosistema_sel}).",
             "Mix 50/50": "Mitad del ATC en conservación y mitad en restauración.",
-        }[_esc])
+        }
+        for _esc, _tab in zip(_desc, st.tabs(list(_desc))):
+            with _tab:
+                _filas_e = []
+                for rango_id, data in atc_resultados.items():
+                    atc_total = data['atc_total']
+                    tasa_rango = TASA_POR_NIVEL.get(rango_id, tasa_bau)
+                    fila = {"Rango": rango_id, "ATC (ha)": round(atc_total, 2)}
+                    if _esc != "Restaurar":
+                        fila["Tasa BAU"] = f"{tasa_rango*100:.3f} %"
+                    for n in HORIZONTES:
+                        if _esc == "Conservar":
+                            v = adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR)
+                        elif _esc == "Restaurar":
+                            v = adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR)
+                        else:
+                            v = (adicionalidad_conservar(atc_total * 0.5, n, tasa_rango, F_CONSERVAR)
+                                 + adicionalidad_restaurar(atc_total * 0.5, n, K_RESTAURAR, F_RESTAURAR))
+                        fila[f"{n} años (ha)"] = round(v, 4)
+                    _filas_e.append(fila)
+                st.dataframe(pd.DataFrame(_filas_e), use_container_width=True, hide_index=True)
+                st.caption(_desc[_esc])
 
         # ── 2. Curva por hectárea: una sola gráfica ───────────────────────
         st.markdown("#### Ganancia por hectárea compensada")
-        _alcance = st.radio(
-            "Alcance", ["15 años", "Hasta estabilización"],
-            horizontal=True, key="alcance_curva_adic", label_visibility="collapsed",
-        )
         _max_full = min(100, max(40, int(round(-math.log(0.05) / K_RESTAURAR / 5) * 5)))
-        _hasta = 15 if _alcance == "15 años" else _max_full
-        _anios = list(range(0, _hasta + 1))
-        _df_wide = pd.DataFrame({
-            "Año": _anios,
-            "Conservar (ha/ha)": [adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) for n in _anios],
-            "Restaurar (ha/ha)": [adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR) for n in _anios],
-        }).set_index("Año")
-        _df_long = _df_wide.reset_index().melt("Año", var_name="Escenario", value_name="Valor")
         _marcas = [3, 5, 10, 15]
-        _df_m = _df_long[_df_long["Año"].isin(_marcas)]
 
-        _color = alt.Color("Escenario:N", legend=alt.Legend(title=None, orient="top"),
-                           scale=alt.Scale(range=["#2D1B4E", "#9B6FE8"]))
-        _chart = (
-            alt.Chart(pd.DataFrame({"Año": _marcas})).mark_rule(strokeDash=[4, 4], color="gray", opacity=0.35).encode(x="Año:Q")
-            + alt.Chart(_df_long).mark_line(strokeWidth=2.5).encode(
-                x=alt.X("Año:Q", title="Años"),
-                y=alt.Y("Valor:Q", title="ha adicionales / ha compensada"), color=_color)
-            + alt.Chart(_df_m).mark_point(size=60, filled=True).encode(x="Año:Q", y="Valor:Q", color=_color)
-            + alt.Chart(_df_m).mark_text(dy=-10, fontSize=11).encode(
-                x="Año:Q", y="Valor:Q", text=alt.Text("Valor:Q", format=".2f"), color=_color)
-        ).properties(height=360)
-        st.altair_chart(_chart, use_container_width=True)
+        def _render_curva(hasta, sufijo, etiqueta):
+            anios = list(range(0, hasta + 1))
+            df_wide = pd.DataFrame({
+                "Año": anios,
+                "Conservar (ha/ha)": [adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) for n in anios],
+                "Restaurar (ha/ha)": [adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR) for n in anios],
+            }).set_index("Año")
+            df_long = df_wide.reset_index().melt("Año", var_name="Escenario", value_name="Valor")
+            df_m = df_long[df_long["Año"].isin(_marcas)]
+            color = alt.Color("Escenario:N", legend=alt.Legend(title=None, orient="top"),
+                              scale=alt.Scale(range=["#2D1B4E", "#9B6FE8"]))
+            chart = (
+                alt.Chart(pd.DataFrame({"Año": _marcas})).mark_rule(strokeDash=[4, 4], color="gray", opacity=0.35).encode(x="Año:Q")
+                + alt.Chart(df_long).mark_line(strokeWidth=2.5).encode(
+                    x=alt.X("Año:Q", title="Años"),
+                    y=alt.Y("Valor:Q", title="ha adicionales / ha compensada"), color=color)
+                + alt.Chart(df_m).mark_point(size=60, filled=True).encode(x="Año:Q", y="Valor:Q", color=color)
+                + alt.Chart(df_m).mark_text(dy=-10, fontSize=11).encode(
+                    x="Año:Q", y="Valor:Q", text=alt.Text("Valor:Q", format=".2f"), color=color)
+            ).properties(height=360)
+            st.altair_chart(chart, use_container_width=True)
+
+            fig, ax = plt.subplots(figsize=(10, 5.5))
+            for serie, c in [("Conservar (ha/ha)", "#2D1B4E"), ("Restaurar (ha/ha)", "#9B6FE8")]:
+                ax.plot(df_wide.index, df_wide[serie], label=serie, color=c, linewidth=2)
+                for n in _marcas:
+                    if n in df_wide.index:
+                        val = df_wide.loc[n, serie]
+                        ax.plot(n, val, "o", color=c, markersize=5)
+                        ax.annotate(f"{val:.2f}", (n, val), textcoords="offset points",
+                                    xytext=(0, 8), fontsize=8, ha="center")
+            for n in _marcas:
+                ax.axvline(n, color="gray", linestyle="--", alpha=0.35)
+            ax.set_xlabel("Años")
+            ax.set_ylabel("ha adicionales / ha compensada")
+            ax.set_title(f"Ganancia de cobertura — {ecosistema_sel} ({etiqueta})")
+            ax.legend()
+            ax.grid(alpha=0.3)
+
+            d1, d2 = st.columns(2)
+            with d1:
+                st.download_button(
+                    "🖼️ Descargar gráfica (JPG)", data=_fig_a_jpg_bytes(fig),
+                    file_name=f"curva_adicionalidad_{sufijo}_{ecosistema_sel}.jpg",
+                    mime="image/jpeg", key=f"descarga_curva_jpg_{sufijo}", use_container_width=True,
+                )
+            with d2:
+                st.download_button(
+                    "⬇️ Descargar datos (CSV)", data=df_wide.to_csv(index=True).encode("utf-8"),
+                    file_name=f"curva_adicionalidad_{sufijo}_{ecosistema_sel}.csv",
+                    mime="text/csv", key=f"descarga_curva_csv_{sufijo}", use_container_width=True,
+                )
+
+        _t15, _tfull = st.tabs(["15 años", f"Hasta estabilización ({_max_full} años)"])
+        with _t15:
+            _render_curva(15, "15anios", "15 años")
+        with _tfull:
+            _render_curva(_max_full, "completa", "hasta estabilización")
         st.caption(
             f"Conservar usa la tasa BAU del municipio ({tasa_bau*100:.3f} %); Restaurar, el ecosistema "
             f"{ecosistema_sel} (k = {K_RESTAURAR}). Líneas punteadas: horizontes de 3, 5, 10 y 15 años."
         )
-
-        _fig, _ax = plt.subplots(figsize=(10, 5.5))
-        for _serie, _c in [("Conservar (ha/ha)", "#2D1B4E"), ("Restaurar (ha/ha)", "#9B6FE8")]:
-            _ax.plot(_df_wide.index, _df_wide[_serie], label=_serie, color=_c, linewidth=2)
-            for _n in _marcas:
-                if _n in _df_wide.index:
-                    _val = _df_wide.loc[_n, _serie]
-                    _ax.plot(_n, _val, "o", color=_c, markersize=5)
-                    _ax.annotate(f"{_val:.2f}", (_n, _val), textcoords="offset points",
-                                 xytext=(0, 8), fontsize=8, ha="center")
-        for _n in _marcas:
-            _ax.axvline(_n, color="gray", linestyle="--", alpha=0.35)
-        _ax.set_xlabel("Años")
-        _ax.set_ylabel("ha adicionales / ha compensada")
-        _ax.set_title(f"Ganancia de cobertura — {ecosistema_sel} ({_alcance.lower()})")
-        _ax.legend()
-        _ax.grid(alpha=0.3)
-
-        _sufijo = "15anios" if _alcance == "15 años" else "completa"
-        _d1, _d2 = st.columns(2)
-        with _d1:
-            st.download_button(
-                "🖼️ Descargar gráfica (JPG)", data=_fig_a_jpg_bytes(_fig),
-                file_name=f"curva_adicionalidad_{_sufijo}_{ecosistema_sel}.jpg",
-                mime="image/jpeg", key="descarga_curva_jpg", use_container_width=True,
-            )
-        with _d2:
-            st.download_button(
-                "⬇️ Descargar datos (CSV)", data=_df_wide.to_csv(index=True).encode("utf-8"),
-                file_name=f"curva_adicionalidad_{_sufijo}_{ecosistema_sel}.csv",
-                mime="text/csv", key="descarga_curva_csv", use_container_width=True,
-            )
 
         with st.expander("Comparación por hectárea y datos a mayor resolución"):
             st.dataframe(pd.DataFrame([{
@@ -2042,23 +2068,21 @@ with tab4:
                     if adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR) > 0 else None),
             } for n in HORIZONTES]), use_container_width=True, hide_index=True)
 
-            _resolucion = st.radio(
-                "Resolución del CSV (15 años)", ["Bimestral", "Mensual"],
-                horizontal=True, key="resolucion_curva_adic",
-            )
-            _paso = {"Bimestral": 2 / 12, "Mensual": 1 / 12}[_resolucion]
-            _t = [round((i + 1) * _paso, 4) for i in range(int(round(15 / _paso)))]
-            _df_fino = pd.DataFrame({
-                "Año": _t,
-                "Conservar (ha/ha)": [round(adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR), 4) for n in _t],
-                "Restaurar (ha/ha)": [round(adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR), 4) for n in _t],
-            })
-            st.download_button(
-                f"⬇️ Descargar CSV {_resolucion.lower()}",
-                data=_df_fino.to_csv(index=False).encode("utf-8"),
-                file_name=f"curva_adicionalidad_{_resolucion.lower()}_{ecosistema_sel}.csv",
-                mime="text/csv", key="descarga_curva_fina",
-            )
+            st.caption("Curva de 15 años a mayor resolución (CSV):")
+            _r1, _r2 = st.columns(2)
+            for _col_r, (_nombre_r, _paso) in zip((_r1, _r2), (("bimestral", 2 / 12), ("mensual", 1 / 12))):
+                _t = [round((i + 1) * _paso, 4) for i in range(int(round(15 / _paso)))]
+                _df_fino = pd.DataFrame({
+                    "Año": _t,
+                    "Conservar (ha/ha)": [round(adicionalidad_conservar(1.0, n, tasa_bau, F_CONSERVAR), 4) for n in _t],
+                    "Restaurar (ha/ha)": [round(adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR), 4) for n in _t],
+                })
+                with _col_r:
+                    st.download_button(
+                        f"⬇️ CSV {_nombre_r}", data=_df_fino.to_csv(index=False).encode("utf-8"),
+                        file_name=f"curva_adicionalidad_{_nombre_r}_{ecosistema_sel}.csv",
+                        mime="text/csv", key=f"descarga_curva_{_nombre_r}", use_container_width=True,
+                    )
 
         st.info(
             "**¿Qué horizonte usar?** Compra, usufructo predial (≥ 30 años) o acuerdo de "
