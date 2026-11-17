@@ -2117,209 +2117,146 @@ ha_adicional(n) = ha × [1 - e^(-k×n)] × 0.75
 with tab5:
     _section("Descarga de Resultados", "📥")
 
-    def _aplicar_estilo_encabezado(ws):
-        """Encabezado en negrilla sobre fondo gris, para todas las hojas del
-        Excel de resultados (mismo tratamiento visual en todo el archivo)."""
-        fill_gris = PatternFill("solid", fgColor="D9D9D9")
-        for c in range(1, ws.max_column + 1):
-            cell = ws.cell(row=1, column=c)
-            cell.font = Font(bold=True)
-            cell.fill = fill_gris
-            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        ws.freeze_panes = "A2"
+    from core.exportar_excel import build_excel as _build_excel_informe, RANGOS_DESCRIPCION
 
-    def _build_excel(ctx, fcafu_por_cobertura,
-                     atc_resultados,
-                     TASA_BAU, tasa_bau_szh, tasa_bau_zh,
-                     TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR,
-                     K_RESTAURAR, HORIZONTES, area_impacto_ha):
-        buf = io.BytesIO()
-        with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+    def _veda_texto(veda):
+        """Texto corto de veda para el Excel (mismo criterio que la tabla en pantalla)."""
+        if veda.get("_modo") == "car_unica":
+            return {
+                "sin_veda": "Sin veda",
+                "nacional": "Veda nacional",
+                "regional": f"Veda regional ({veda.get('_car', '')})",
+                "nacional+regional": f"Veda nacional + regional ({veda.get('_car', '')})",
+            }.get(veda.get("nivel"), str(veda.get("nivel", "")))
+        partes = []
+        if veda.get("en_veda_nacional"):
+            partes.append("Veda nacional")
+        if veda.get("regionales"):
+            partes.append(f"Veda regional en {len(veda['regionales'])} CAR")
+        return " + ".join(partes) if partes else "Sin veda"
 
-            # Hoja 1 – Resumen
-            pd.DataFrame({
-                "Variable": [
-                    "Municipio","Departamento","BIOMA-IAvH",
-                    "Zona Hidrográfica","Subzona Hidrográfica",
-                    "Área de impacto (ha)",
-                    "Tasa BAU Municipio (%)","Tasa BAU SZH (%)","Tasa BAU ZH (%)",
-                ],
-                "Valor": [
-                    ctx.get("municipio","n/d"), ctx.get("departamento","n/d"),
-                    ctx.get("bioma_principal","n/d"),
-                    ctx.get("zh","n/d"), ctx.get("szh","n/d"),
-                    round(area_impacto_ha, 4),
-                    round(TASA_BAU*100, 4),
-                    round(tasa_bau_szh*100, 4),
-                    round(tasa_bau_zh*100, 4),
-                ]
-            }).to_excel(writer, sheet_name="Resumen", index=False)
-            _aplicar_estilo_encabezado(writer.sheets["Resumen"])
+    def _datos_excel():
+        # Coberturas: área de impacto (de ATC) + criterios (de FCAFU)
+        detalles = next(iter(atc_resultados.values())).get("detalles", [])
+        areas = {d["cobertura"]: d.get("area_impacto_ha", 0) for d in detalles}
+        coberturas = []
+        for cob, d in fcafu_por_cobertura.items():
+            coberturas.append({
+                "cobertura": cob, "area_ha": round(areas.get(cob, 0), 4),
+                "N": d.get("N", 0), "S": d.get("S", 0),
+                "A": d.get("A", 0), "B": d.get("B", 0), "C": d.get("C", 0),
+                "n_amenazadas": len({sp.get("nombre_cientifico") for sp in d.get("amenazadas", [])}),
+                "n_veda": len({v["nombre_cientifico"] for v in todas_vedas if v["cobertura"] == cob}),
+            })
 
-            # Hoja 2 – FCAFU
-            rows_f = []
-            for cob, d in fcafu_por_cobertura.items():
-                rows_f.append({
-                    "Cobertura":        cob,
-                    "N":                d["N"], "S": d["S"],
-                    "S/N":              round(d["SN"], 4),
-                    "A":                d["A"],
-                    "B":                round(d.get("B", 0), 4),
-                    "C":                d["C"],
-                    "FCAFU":            round(d["FCAFU"], 4),
-                    "AB total (m²)":    round(d.get("area_basal_total",0), 4),
-                })
-            pd.DataFrame(rows_f).to_excel(writer, sheet_name="FCAFU", index=False)
-            _aplicar_estilo_encabezado(writer.sheets["FCAFU"])
+        rangos = [{
+            "rango": rid, "factor": data["factor_adicional"],
+            "descripcion": RANGOS_DESCRIPCION.get(i, rid),
+            "tasa_bau": TASA_POR_NIVEL.get(rid, tasa_bau),
+        } for i, (rid, data) in enumerate(atc_resultados.items(), start=1)]
 
-            # Hoja 3 – ATC
-            rows_a = []
-            for rid, data in atc_resultados.items():
-                rows_a.append({
-                    "Rango": rid,
-                    "Factor adicional": data.get("factor_adicional",""),
-                    "ATC (ha)": round(data["atc_total"], 4),
-                })
-            pd.DataFrame(rows_a).to_excel(writer, sheet_name="ATC_por_Rango", index=False)
-            _aplicar_estilo_encabezado(writer.sheets["ATC_por_Rango"])
+        especies_proy = sorted({sp for d in fcafu_por_cobertura.values() for sp in d.get("todas_especies", [])})
+        mads_idx, cites_idx, iucn_idx, mads_gen, cites_gen = _cargar_indices_amenaza()
+        especies = []
+        for sp in especies_proy:
+            r = _consultar_amenaza_sp(sp, mads_idx, cites_idx, iucn_idx, car_filtro=car_proyecto,
+                                      mads_genero_idx=mads_gen, cites_genero_idx=cites_gen)
+            especies.append({"nombre": r["nombre"], "nombre_comun": r["nombre_comun"],
+                             "familia": r["familia"], "mads": r["mads"], "cites": r["cites"],
+                             "iucn": r["iucn"], "veda": _veda_texto(r["veda"])})
 
-            # Hoja 4 – Adicionalidad Conservar
-            rows_c = []
-            for rid, data in atc_resultados.items():
-                atc_total  = data["atc_total"]
-                tasa_rango = TASA_POR_NIVEL.get(rid, TASA_BAU)
-                fila = {
-                    "Rango": rid,
-                    "ATC (ha)": round(atc_total, 4),
-                    "Tasa BAU (%)": round(tasa_rango*100, 4),
-                    "Adic/año (ha)": round(
-                        adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 6
-                    ),
-                }
-                for n in HORIZONTES:
-                    fila[f"A {n} años (ha)"] = round(
-                        adicionalidad_conservar(atc_total, n, tasa_rango, F_CONSERVAR), 6
-                    )
-                rows_c.append(fila)
-            pd.DataFrame(rows_c).to_excel(writer, sheet_name="Adicionalidad_Conservar", index=False)
-            _aplicar_estilo_encabezado(writer.sheets["Adicionalidad_Conservar"])
+        amenazadas = [{
+            "cobertura": cob, "nombre": sp.get("nombre_cientifico", ""),
+            "mads": sp.get("categoria_amenaza", "—"), "cites": sp.get("cites_apendice", "—"),
+            "iucn": sp.get("cat_uicn", "—"), "v": sp.get("valor_b", 0),
+            "n": sp.get("n_individuos", 0), "aporte": sp.get("aporte_b", 0),
+        } for cob, d in fcafu_por_cobertura.items() for sp in d.get("amenazadas", [])]
 
-            # Hoja 5 – Adicionalidad Restaurar
-            rows_r = []
-            for rid, data in atc_resultados.items():
-                atc_total = data["atc_total"]
-                fila = {"Rango": rid, "ATC (ha)": round(atc_total, 4)}
-                for n in HORIZONTES:
-                    fila[f"A {n} años (ha)"] = round(
-                        adicionalidad_restaurar(atc_total, n, K_RESTAURAR, F_RESTAURAR), 6
-                    )
-                rows_r.append(fila)
-            pd.DataFrame(rows_r).to_excel(writer, sheet_name="Adicionalidad_Restaurar", index=False)
-            _aplicar_estilo_encabezado(writer.sheets["Adicionalidad_Restaurar"])
+        _nivel = {"nacional": "Veda nacional", "regional": "Veda regional",
+                  "nacional+regional": "Veda nacional + regional"}
+        vedas = [{"cobertura": v["cobertura"], "nombre": v["nombre_cientifico"], "n": v["n_individuos"],
+                  "nivel": _nivel.get(v["nivel"], v["nivel"]), "norma": v.get("norma", ""),
+                  "alerta": str(v.get("alerta", "")).replace("⚠️", "").strip()} for v in todas_vedas]
+        obligaciones = []
+        if any("nacional" in v["nivel"] for v in todas_vedas):
+            obligaciones.append(("Obligaciones — veda nacional (Circular MADS 8201-2-808/2019)", [
+                "Censo al 100% de individuos fustales de especies vedadas.",
+                "Medidas de manejo in situ: rescate y reubicación.",
+                "Medidas ex situ: propagación en vivero y siembra en área de compensación.",
+                "Shapefile con localización de cada individuo vedado."]))
+        if any(v["nivel"] == "regional" for v in todas_vedas):
+            obligaciones.append((f"Obligaciones — veda regional {car_proyecto or 'de la CAR competente'}", [
+                "Solicitud formal ante GIT Forestal de la CAR.",
+                "Concepto técnico favorable.",
+                "Justificación de interés público o riesgo.",
+                "Medidas de compensación/reposición que determine la CAR."]))
 
-            # Hoja 6 – Resumen por jerarquía (Rango): ATC + Adicionalidad de
-            # preservar y restaurar juntas en una sola tabla, tal como se
-            # pidió — antes esta misma información estaba repartida entre
-            # las hojas ATC_por_Rango / Adicionalidad_Conservar / _Restaurar.
-            # NOTA: no incluye "TPACB (%)" — falta confirmar con Miguel a
-            # qué corresponde esa columna (no existe en el cálculo actual
-            # del app; ver mensaje de chat).
-            rows_res = []
-            for rid, data in atc_resultados.items():
-                atc_total  = data["atc_total"]
-                tasa_rango = TASA_POR_NIVEL.get(rid, TASA_BAU)
-                rows_res.append({
-                    "Rango": rid,
-                    "ATC (ha)": round(atc_total, 4),
-                    "Adicionalidad por preservar (ha/año)": round(
-                        adicionalidad_conservar_anual(atc_total, tasa_rango, F_CONSERVAR), 6
-                    ),
-                    "Adicionalidad por preservar a 3 años (ha)": round(
-                        adicionalidad_conservar(atc_total, 3, tasa_rango, F_CONSERVAR), 6
-                    ),
-                    "Adicionalidad por restaurar a 3 años (ha)": round(
-                        adicionalidad_restaurar(atc_total, 3, K_RESTAURAR, F_RESTAURAR), 6
-                    ),
-                })
-            pd.DataFrame(rows_res).to_excel(writer, sheet_name="Resumen_por_Jerarquia", index=False)
-            _aplicar_estilo_encabezado(writer.sheets["Resumen_por_Jerarquia"])
+        key_ini = f"iniciativas_{ctx.get('municipio','')}_{ctx.get('szh','')}"
+        filas_ini = None
+        if key_ini in st.session_state:
+            df_ini = iniciativas.deduplicar_iniciativas(st.session_state[key_ini])
+            filas_ini = df_ini.fillna("").to_dict("records") if df_ini is not None and len(df_ini) else []
 
-            # Hoja 7 – Comparación por ha
-            rows_cp = []
-            for n in HORIZONTES:
-                cons_ha = adicionalidad_conservar(1.0, n, TASA_BAU, F_CONSERVAR)
-                rest_ha = adicionalidad_restaurar(1.0, n, K_RESTAURAR, F_RESTAURAR)
-                rows_cp.append({
-                    "Horizonte (años)":  n,
-                    "Conservar (ha/ha)": round(cons_ha, 6),
-                    "Restaurar (ha/ha)": round(rest_ha, 6),
-                    "Ratio Rest/Cons":   round(rest_ha/cons_ha, 2) if cons_ha > 0 else None,
-                })
-            pd.DataFrame(rows_cp).to_excel(writer, sheet_name="Comparacion_por_ha", index=False)
-            _aplicar_estilo_encabezado(writer.sheets["Comparacion_por_ha"])
+        df_zv = _cargar_especies_por_zona_vida()
+        zv_sel = st.session_state.get("zona_vida_sel_key")
+        if not df_zv.empty and zv_sel:
+            df_zv = df_zv[df_zv["Zona de vida"] == ZONAS_VIDA[zv_sel]]
+            titulo_zv = ZONAS_VIDA[zv_sel]
+        else:
+            titulo_zv = "todas las zonas de vida"
+        filas_zv = [{"zona": r["Zona de vida"], "nombre": r["Nombre científico"], "comun": r["Nombre común"],
+                     "familia": r.get("Familia", ""), "grupo": r.get("Grupo sucesional", ""),
+                     "amenaza": r.get("Amenaza (IUCN/Nacional)", "")} for _, r in df_zv.iterrows()]
 
-            # Hoja 8 – Especies amenazadas + CITES
-            rows_sp = []
-            for cob, d in fcafu_por_cobertura.items():
-                for sp in d.get("amenazadas", []):
-                    rows_sp.append({
-                        "Cobertura":        cob,
-                        "Nombre científico":sp.get("nombre_cientifico",""),
-                        "Cat. Res.0126":    sp.get("categoria_amenaza",""),
-                        "CITES":            sp.get("cites_apendice","—"),
-                        "Cat. UICN":        sp.get("cat_uicn","—"),
-                        "Valor B (máximo)": sp.get("valor_b", 0),
-                        "N individuos":     sp.get("n_individuos", 0),
-                        "Aporte a B":       sp.get("aporte_b", 0),
-                        "Cat. inferida por género": "Sí" if sp.get("categoria_por_genero") else "No",
-                        "Valor B por veda regional": "Sí" if sp.get("valor_b_por_veda") else "No",
-                    })
-            if rows_sp:
-                pd.DataFrame(rows_sp).to_excel(
-                    writer, sheet_name="Especies_Amenazadas", index=False
-                )
-                _aplicar_estilo_encabezado(writer.sheets["Especies_Amenazadas"])
-
-            # Hoja 9 – Especies recomendadas por zona de vida del área de
-            # impacto (filtrado por el menú de Tab 7 — ver session_state).
-            # Si no hay zona elegida, se exporta el catálogo completo como
-            # fallback, igual que se muestra en pantalla.
-            df_zv = _cargar_especies_por_zona_vida()
-            if not df_zv.empty:
-                _zv_export_sel = st.session_state.get("zona_vida_sel_key")
-                if _zv_export_sel:
-                    df_zv_export = df_zv[
-                        df_zv["Zona de vida"] == ZONAS_VIDA[_zv_export_sel]
-                    ]
-                    hoja_zv = "Especies_Zona_de_Vida"
-                else:
-                    df_zv_export = df_zv
-                    hoja_zv = "Especies_Todas_Zonas_Vida"
-                df_zv_export.to_excel(writer, sheet_name=hoja_zv, index=False)
-                _aplicar_estilo_encabezado(writer.sheets[hoja_zv])
-
-        buf.seek(0)
-        return buf.getvalue()
+        import math as _m
+        return {
+            "proyecto": {
+                "municipio": ctx.get("municipio", "n/d"), "departamento": ctx.get("departamento", "n/d"),
+                "car": car_proyecto, "bioma": ctx.get("bioma_principal", "n/d"),
+                "zh": ctx.get("zh", "n/d"), "szh": ctx.get("szh", "n/d"),
+                "ecosistema": ECOSISTEMAS_K[ecosistema_sel]["nombre"],
+                "area_impacto_ha": round(area_impacto_ha, 4),
+            },
+            "coberturas": coberturas, "rangos": rangos,
+            "tasas": {"municipio": tasa_bau, "szh": tasa_bau_szh, "zh": tasa_bau_zh},
+            "params": {
+                "f_conservar": F_CONSERVAR, "f_restaurar": F_RESTAURAR, "k": K_RESTAURAR,
+                "horizontes": HORIZONTES,
+                "max_anios": min(100, max(40, int(round(-_m.log(0.05) / K_RESTAURAR / 5) * 5))),
+            },
+            "especies": especies, "amenazadas": amenazadas,
+            "vedas": vedas, "obligaciones": obligaciones,
+            "iniciativas": filas_ini,
+            "especies_zona_vida": (titulo_zv, filas_zv),
+            "fuentes": [
+                "Manual de compensaciones del componente biótico 2026 — Resolución 0305 de 2026, MADS.",
+                "Categorías de amenaza nacionales: Resolución 0126 de 2024, MADS. CITES: Apéndices vigentes. IUCN: Lista Roja global.",
+                "Tasa de pérdida de cobertura (TPACB): Hansen et al. (2013) Science 342:850-853. https://doi.org/10.1126/science.1244693",
+                "Efectividad de conservación (0,85): Andam et al. (2008) PNAS https://doi.org/10.1073/pnas.0800437105; Pfaff et al. (2014) World Development https://doi.org/10.1016/j.worlddev.2013.01.011",
+                "Recuperación de cobertura (k por ecosistema): Poorter et al. (2021) Science 374:1370-1376. https://doi.org/10.1126/science.abh3629",
+                "Efectividad de restauración (0,75): Crouzeilles et al. (2017) Science Advances https://doi.org/10.1126/sciadv.1701345; González-M. et al. (2018) IAvH.",
+                "Vedas: Res. 0316/1974, 0213/1977 y 0801/1977 INDERENA; Ley 61/1985; Circular MADS 8201-2-808/2019; normas regionales de cada CAR (config/vedas.py).",
+            ],
+        }
 
     if atc_resultados and fcafu_por_cobertura:
-        nombre_mun  = ctx.get("municipio","proyecto").replace(" ","_")
-        excel_bytes = _build_excel(
-            ctx, fcafu_por_cobertura,
-            atc_resultados,
-            TASA_BAU, tasa_bau_szh, tasa_bau_zh,
-            TASA_POR_NIVEL, F_CONSERVAR, F_RESTAURAR,
-            K_RESTAURAR, HORIZONTES, area_impacto_ha
-        )
+        nombre_mun = ctx.get("municipio", "proyecto").replace(" ", "_")
+        _key_ini = f"iniciativas_{ctx.get('municipio','')}_{ctx.get('szh','')}"
+        if _key_ini not in st.session_state:
+            st.info("Las iniciativas de conservación aún no se han consultado. Si las quieres en el Excel, "
+                    "pulsa «Consultar iniciativas de conservación (GEE)» en la pestaña Contexto antes de descargar.")
         st.download_button(
-            label="⬇️ Descargar Excel de resultados",
-            data=excel_bytes,
-            file_name=f"compensacion_{nombre_mun}.xlsx",
+            label="⬇️ Descargar Excel del plan de compensación",
+            data=_build_excel_informe(_datos_excel()),
+            file_name=f"plan_compensacion_{nombre_mun}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
         )
         st.caption(
-            "Hojas incluidas: Resumen · FCAFU · ATC por Rango · "
-            "Adicionalidad Conservar · Adicionalidad Restaurar · Comparación por ha · "
-            "Especies Amenazadas"
+            "Un solo libro con las tablas del formato de informe: información del proyecto (T3), "
+            "coberturas (T4), FCAFU (T10), rangos y ATC (T9, T11), TPACB (T17), iniciativas (T18), "
+            "adicionalidad (T19 y horizontes), curvas con gráficos, especies y amenaza, vedas, "
+            "especies para compensación (T14) y fuentes. Los cálculos van como fórmulas de Excel."
         )
     else:
         st.warning("⚠️ No hay resultados aún. Carga el KMZ y el inventario.")
