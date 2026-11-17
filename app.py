@@ -145,6 +145,20 @@ st.markdown(f"""
     font-weight: 800;
     color: {PURPLE_DARK} !important;
   }}
+  .metric-grid {{
+    display: grid;
+    gap: 14px;
+    align-items: stretch;        /* todas las tarjetas de la fila con el mismo alto */
+    margin-bottom: 14px;
+  }}
+  .metric-grid .metric-card {{ margin-bottom: 0; height: 100%; box-sizing: border-box; }}
+  @media (max-width: 760px) {{
+    .metric-grid {{ grid-template-columns: 1fr !important; }}
+  }}
+  .metric-card .value.texto {{
+    font-size: 1.02rem;
+    line-height: 1.35;
+  }}
   .metric-card .sub {{
     font-size: 0.76rem;
     color: #5A5A72 !important;
@@ -426,6 +440,28 @@ def _metric_card(label, value, sub=""):
       <div class="value">{value}</div>
       {sub_html}
     </div>""", unsafe_allow_html=True)
+
+
+def _metric_row(items, columnas=None):
+    """Fila de tarjetas con el mismo alto. items: [(label, value, sub), ...].
+    Los valores de texto largo (nombres de bioma, SZH...) usan una letra más
+    pequeña para no estirar la fila."""
+    n = columnas or len(items)
+    tarjetas = []
+    for it in items:
+        label, value = it[0], str(it[1])
+        sub = it[2] if len(it) > 2 else ""
+        cls = "value texto" if len(value) > 22 else "value"
+        sub_html = f'<div class="sub">{sub}</div>' if sub else ""
+        tarjetas.append(
+            f'<div class="metric-card"><div class="label">{label}</div>'
+            f'<div class="{cls}">{value}</div>{sub_html}</div>'
+        )
+    st.markdown(
+        f'<div class="metric-grid" style="grid-template-columns: repeat({n}, minmax(0, 1fr));">'
+        + "".join(tarjetas) + "</div>",
+        unsafe_allow_html=True,
+    )
 
 
 def _section(title, icon=""):
@@ -1591,45 +1627,29 @@ tab1, tab2, tab3, tab4, tab6, tab7, tab5 = st.tabs([
 with tab1:
     _section("Contexto Geográfico del Proyecto", "📍")
 
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        _metric_card("Área de Impacto", f"{area_impacto_ha:.4f} ha")
-    with c2:
-        _metric_card("Municipio", ctx.get('municipio','n/d'))
-    with c3:
-        _metric_card("Departamento", ctx.get('departamento','n/d'))
-    with c4:
-        _metric_card("BIOMA-IAvH", ctx.get('bioma_principal','n/d'))
-
-    c5, c6 = st.columns(2)
-    with c5:
-        _metric_card("Zona Hidrográfica (ZH)", ctx.get('zh','n/d'))
-    with c6:
-        _metric_card("Subzona Hidrográfica (SZH)", ctx.get('szh','n/d'))
+    _metric_row([
+        ("Área de impacto", f"{area_impacto_ha:.4f} ha"),
+        ("Municipio", ctx.get('municipio', 'n/d')),
+        ("Departamento", ctx.get('departamento', 'n/d')),
+    ])
+    _metric_row([
+        ("Bioma IAvH", ctx.get('bioma_principal', 'n/d')),
+        ("Zona hidrográfica (ZH)", ctx.get('zh', 'n/d')),
+        ("Subzona hidrográfica (SZH)", ctx.get('szh', 'n/d')),
+    ])
 
     _section("Tasa de Pérdida de Bosque BAU (Hansen GFC)", "🌲")
     st.caption("Calculada con Hansen GFC 2001–2023 sobre cada unidad espacial. "
                "Cada nivel jerárquico usa la tasa de su unidad.")
 
-    c7, c8, c9 = st.columns(3)
-    with c7:
-        _metric_card(
-            f"Municipio · {ctx.get('municipio','n/d')}",
-            f"{tasa_bau*100:.3f} %",
-            f"Usada en R1 y R4 · {fuente_bau}"
-        )
-    with c8:
-        _metric_card(
-            f"SZH · {ctx.get('szh','n/d')}",
-            f"{tasa_bau_szh*100:.3f} %",
-            f"Usada en R2 y R5 · {fuente_bau_szh}"
-        )
-    with c9:
-        _metric_card(
-            f"ZH · {ctx.get('zh','n/d')}",
-            f"{tasa_bau_zh*100:.3f} %",
-            f"Usada en R3 y R6 · {fuente_bau_zh}"
-        )
+    _metric_row([
+        (f"Municipio · {ctx.get('municipio','n/d')}", f"{tasa_bau*100:.3f} %",
+         f"Usada en R1 y R4 · {fuente_bau}"),
+        (f"SZH · {ctx.get('szh','n/d')}", f"{tasa_bau_szh*100:.3f} %",
+         f"Usada en R2 y R5 · {fuente_bau_szh}"),
+        (f"ZH · {ctx.get('zh','n/d')}", f"{tasa_bau_zh*100:.3f} %",
+         f"Usada en R3 y R6 · {fuente_bau_zh}"),
+    ])
 
     _section(f"Coberturas Impactadas · {fuente_coberturas}", "🗺️")
     if ctx.get('areas_cobertura'):
@@ -1744,13 +1764,11 @@ with tab2:
 
         # ── Resultado: una tarjeta por cobertura + tabla con los criterios en orden ──
         if len(fcafu_por_cobertura) <= 4:
-            _cols = st.columns(len(fcafu_por_cobertura))
-            for _col, (cob, d) in zip(_cols, fcafu_por_cobertura.items()):
-                with _col:
-                    _metric_card(
-                        cob, f"{d.get('FCAFU', 0):.2f}",
-                        f"A {d.get('A', 0):.2f} · B {d.get('B', 0):.2f} · C {d.get('C', 0):.2f}"
-                    )
+            _metric_row([
+                (cob, f"{d.get('FCAFU', 0):.2f}",
+                 f"A {d.get('A', 0):.2f} · B {d.get('B', 0):.2f} · C {d.get('C', 0):.2f}")
+                for cob, d in fcafu_por_cobertura.items()
+            ])
 
         df_fcafu = pd.DataFrame([{
             "Cobertura":           cob,
@@ -1892,13 +1910,12 @@ with tab3:
         _rangos = list(atc_resultados.keys())
         _min_r = min(_rangos, key=lambda r: atc_resultados[r]['atc_total'])
         _max_r = max(_rangos, key=lambda r: atc_resultados[r]['atc_total'])
-        _m1, _m2 = st.columns(2)
-        with _m1:
-            _metric_card("ATC mínimo", f"{atc_resultados[_min_r]['atc_total']:.2f} ha",
-                         f"{_min_r} (factor +{atc_resultados[_min_r]['factor_adicional']})")
-        with _m2:
-            _metric_card("ATC máximo", f"{atc_resultados[_max_r]['atc_total']:.2f} ha",
-                         f"{_max_r} (factor +{atc_resultados[_max_r]['factor_adicional']})")
+        _metric_row([
+            ("ATC mínimo", f"{atc_resultados[_min_r]['atc_total']:.2f} ha",
+             f"{_min_r} (factor +{atc_resultados[_min_r]['factor_adicional']})"),
+            ("ATC máximo", f"{atc_resultados[_max_r]['atc_total']:.2f} ha",
+             f"{_max_r} (factor +{atc_resultados[_max_r]['factor_adicional']})"),
+        ])
 
         # Una sola tabla: filas = coberturas, columnas = rangos (antes: 6 tablas plegadas)
         _primero = atc_resultados[_rangos[0]].get('detalles', [])
@@ -1951,13 +1968,11 @@ with tab4:
         return buf_jpg.getvalue()
 
     _section("Adicionalidad esperada", "🌱")
-    _b1, _b2, _b3 = st.columns(3)
-    with _b1:
-        _metric_card("Tasa BAU municipio", f"{tasa_bau*100:.3f} %")
-    with _b2:
-        _metric_card("Tasa BAU subzona hidrográfica", f"{tasa_bau_szh*100:.3f} %")
-    with _b3:
-        _metric_card("Tasa BAU zona hidrográfica", f"{tasa_bau_zh*100:.3f} %")
+    _metric_row([
+        ("Tasa BAU municipio", f"{tasa_bau*100:.3f} %"),
+        ("Tasa BAU subzona hidrográfica", f"{tasa_bau_szh*100:.3f} %"),
+        ("Tasa BAU zona hidrográfica", f"{tasa_bau_zh*100:.3f} %"),
+    ])
 
     if atc_resultados:
         # ── 1. Hectáreas adicionales por rango: un escenario a la vez ─────
@@ -2337,15 +2352,13 @@ with tab7:
             )
             df_zv_show = df_zv_full
 
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            _metric_card("Especies listadas", str(len(df_zv_show)))
-        with c2:
-            _n_amenazadas = df_zv_show["Amenaza (IUCN/Nacional)"].isin(["VU", "EN", "CR"]).sum()
-            _metric_card("Con categoría de amenaza", str(_n_amenazadas))
-        with c3:
-            _n_pioneras = (df_zv_show["Grupo sucesional"] == "Pionera").sum()
-            _metric_card("Pioneras", str(_n_pioneras))
+        _n_amenazadas = df_zv_show["Amenaza (IUCN/Nacional)"].isin(["VU", "EN", "CR"]).sum()
+        _n_pioneras = (df_zv_show["Grupo sucesional"] == "Pionera").sum()
+        _metric_row([
+            ("Especies listadas", len(df_zv_show)),
+            ("Con categoría de amenaza", _n_amenazadas),
+            ("Pioneras", _n_pioneras),
+        ])
 
         st.markdown(_tabla_especies_zona_vida_html(df_zv_show), unsafe_allow_html=True)
         st.caption(
